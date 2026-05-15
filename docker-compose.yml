@@ -35,12 +35,17 @@ services:
           cpus: "1.0"
           memory: 1g
 
-  # java:
-  #   build:
-  #     context: .
-  #     dockerfile: java/Dockerfile
-  #   ports:
-  #     - "8002:8002"
+  java:
+    build:
+      context: .
+      dockerfile: java/Dockerfile
+    ports:
+      - "8002:8002"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
 
   # go:
   #   build:

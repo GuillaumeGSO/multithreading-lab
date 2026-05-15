@@ -6,8 +6,8 @@ A personal learning project to experiment with multithreading across multiple la
 
 Implement, then progressively optimize, identical concurrent programs in:
 
-- **Python** ✅ (baseline + improved)
-- **Java** _(planned)_
+- **Python** ✅ (baseline + improved + indexed)
+- **Java** ✅ (virtual threads)
 - **Go** _(planned)_
 - **C++** _(planned)_
 
@@ -36,7 +36,8 @@ multithreading-lab/
 │   └── results/             # Per-run JSON outputs (gitignored)
 ├── python-base/             # Reference implementation — no concurrency
 ├── python-improved/         # Python with threading / concurrent.futures
-├── java/                    # (planned)
+├── python-indexed/          # Python with pre-built positional + frequency indexes
+├── java/                    # Spring Boot + virtual threads (Java 21)
 ├── go/                      # (planned)
 ├── cpp/                     # (planned)
 └── docker-compose.yml       # One service per implementation
@@ -75,7 +76,7 @@ docker compose up python-improved
 
 ## Load testing
 
-Artillery runs the same scenarios against every container. Results are collected and compared in a single HTML report.
+Artillery runs the same scenarios against every container. Results are collected and compared in a single HTML report: [compare-report.html](load-tests/compare-report.html).
 
 ```bash
 # Run against all reachable containers and generate the comparative report
