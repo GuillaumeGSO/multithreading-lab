@@ -97,19 +97,18 @@ CASES: list[TestCase] = [
     ),
     TestCase(
         name="Multi-length — words from 'guillaume' letters",
-        description="Words of any length (1–9) using only the letters from 'guillaume'",
+        description="Words of any length (1-9) using only the letters from 'guillaume'",
         params="lang=fr, cars='guillaume'",
         fn=timed_many,
         kwargs=dict(lang="fr", cars="guillaume"),
     ),
-    # Not working at the moment, hint is crashing out of index for search in smaller words
-    # TestCase(
-    #     name="Multi-length — words from 'guillaume' letters",
-    #     description="Words of any length (1–9) using only the letters from 'guillaume'",
-    #     params="lang=fr, cars='guillaume'",
-    #     fn=timed_many,
-    #     kwargs=dict(lang="fr", cars="guillaume", lst_hint=[Hint(4, "a")]),
-    # ),
+    TestCase(
+        name="Multi-length with hint — words from 'guillaume' letters with 'a' at pos 4",
+        description="Words of any length (1-9) using only the letters from 'guillaume', with 'a' at position 4",
+        params="lang=fr, cars='guillaume', lst_hint=[Hint(4, 'a'),Hint(1, 'a', inverted=True)]",
+        fn=timed_many,
+        kwargs=dict(lang="fr", cars="guillaume", lst_hint=[Hint(4, "a"), Hint(1, "a", inverted=True)]),
+    ),
 ]
 
 

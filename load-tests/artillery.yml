@@ -130,3 +130,17 @@ scenarios:
             cars: guillaume
           expect:
             - statusCode: 200
+
+  - name: "search/many — 'guillaume' letters with 'a' at pos 4 (expect count=43)"
+    weight: 1
+    flow:
+      - post:
+          url: "/search/many"
+          json:
+            lang: fr
+            cars: guillaume
+            lst_hint:
+              - {pos: 4, car: a}
+              - {pos: 1, car: a, inverted: true}
+          expect:
+            - statusCode: 200

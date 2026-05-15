@@ -67,7 +67,10 @@ def is_search_by_hint(word: str, hint_list: List[Hint]=[]):
         return True
 
     for hint in (x for x in hint_list if x.car):
-        if hint.inverted:
+        if int(hint.pos) > len(word):
+            if not hint.inverted:
+                return False
+        elif hint.inverted:
             if word[int(hint.pos)-1] == hint.car:
                 return False
         else:
