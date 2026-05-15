@@ -10,7 +10,7 @@ Python implementation of the multithreading lab word-search API.
 python/
 ├── seek_words.py   # Core search logic (no HTTP dependency)
 ├── api.py          # FastAPI HTTP layer
-├── main.py         # Integration runner — generates report.md
+├── main.py         # Integration runner — generates report.html
 ├── Dockerfile
 └── pyproject.toml
 ```
@@ -45,12 +45,12 @@ docker run -p 8000:8000 seek-words-python
 
 ## Integration tests
 
-`main.py` runs all search scenarios against the real asset files and writes a markdown report.
+`main.py` runs all search scenarios against the real asset files and writes an HTML report.
 
 ```bash
 # From repo root
 uv run --project python python python/main.py
-# → prints results and writes python/report.md
+# → prints results and writes python/report.html
 ```
 
 ## API

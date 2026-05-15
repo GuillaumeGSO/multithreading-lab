@@ -103,8 +103,8 @@ CASES: list[TestCase] = [
         kwargs=dict(lang="fr", cars="guillaume"),
     ),
     TestCase(
-        name="Multi-length with hint — words from 'guillaume' letters with 'a' at pos 4",
-        description="Words of any length (1-9) using only the letters from 'guillaume', with 'a' at position 4",
+        name="Multi-length with hint — words from 'guillaume' letters with 'a' at pos 4 and not starting with an 'a'",
+        description="Words of any length (1-9) using only the letters from 'guillaume', with 'a' at position 4 and not starting with an 'a'",
         params="lang=fr, cars='guillaume', lst_hint=[Hint(4, 'a'),Hint(1, 'a', inverted=True)]",
         fn=timed_many,
         kwargs=dict(lang="fr", cars="guillaume", lst_hint=[Hint(4, "a"), Hint(1, "a", inverted=True)]),
@@ -123,44 +123,60 @@ def run_tests() -> list[TestResult]:
 
 
 def generate_report(results: list[TestResult]) -> str:
-    lines = [
-        "# seek_words Integration Report",
-        f"_{date.today()}_",
-        "",
-        "## Summary",
-        "",
-        "| # | Test | Count | Time |",
-        "|---|------|-------|------|",
-    ]
+    summary_rows = "".join(
+        f"<tr><td>{i}</td><td>{r.case.name}</td><td>{len(r.words)}</td><td>{r.elapsed_ms:.2f} ms</td></tr>"
+        for i, r in enumerate(results, 1)
+    )
 
+    detail_sections = ""
     for i, r in enumerate(results, 1):
-        lines.append(f"| {i} | {r.case.name} | {len(r.words)} words | {r.elapsed_ms:.2f} ms |")
+        words_html = (
+            '<p class="words">' + ", ".join(f"<code>{w}</code>" for w in r.words) + "</p>"
+            if r.words else "<p><em>No results.</em></p>"
+        )
+        detail_sections += f"""
+        <h3>{i}. {r.case.name}</h3>
+        <p><em>{r.case.description}</em></p>
+        <p><strong>Params:</strong> <code>{r.case.params}</code><br>
+           <strong>Time:</strong> {r.elapsed_ms:.2f} ms &nbsp;|&nbsp; <strong>Count:</strong> {len(r.words)}</p>
+        {words_html}
+        """
 
-    lines += ["", "---", "", "## Details", ""]
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>seek_words Integration Report</title>
+  <style>
+    body {{ font-family: sans-serif; max-width: 900px; margin: 2rem auto; color: #222; }}
+    h1 {{ border-bottom: 2px solid #ddd; padding-bottom: 0.4rem; }}
+    table {{ border-collapse: collapse; width: 100%; margin-bottom: 2rem; }}
+    th, td {{ border: 1px solid #ddd; padding: 8px 12px; text-align: left; }}
+    th {{ background: #f4f4f4; }}
+    .words {{ font-size: 0.85em; line-height: 1.8; }}
+    hr {{ border: none; border-top: 1px solid #ddd; margin: 2rem 0; }}
+  </style>
+</head>
+<body>
+  <h1>seek_words Integration Report</h1>
+  <p><em>{date.today()}</em></p>
 
-    for i, r in enumerate(results, 1):
-        lines += [
-            f"### {i}. {r.case.name}",
-            "",
-            f"_{r.case.description}_",
-            "",
-            f"**Params**: `{r.case.params}`  ",
-            f"**Time**: {r.elapsed_ms:.2f} ms | **Count**: {len(r.words)}",
-            "",
-        ]
-        if r.words:
-            lines.append(", ".join(f"`{w}`" for w in r.words))
-        else:
-            lines.append("_No results._")
-        lines.append("")
+  <h2>Summary</h2>
+  <table>
+    <thead><tr><th>#</th><th>Test</th><th>Count</th><th>Time</th></tr></thead>
+    <tbody>{summary_rows}</tbody>
+  </table>
 
-    return "\n".join(lines)
+  <hr>
+  <h2>Details</h2>
+  {detail_sections}
+</body>
+</html>"""
 
 
 if __name__ == "__main__":
     results = run_tests()
     report = generate_report(results)
-    print(report)
-    report_path = Path(__file__).parent / "report.md"
+    report_path = Path(__file__).parent / "report.html"
     report_path.write_text(report, encoding="utf-8")
     print(f"\nReport written to {report_path}")

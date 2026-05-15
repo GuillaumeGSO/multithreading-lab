@@ -106,6 +106,10 @@ def search_in_file(lang="fr", nb_car=0, lst_car: List[str]=[], lst_hint: List[Hi
 
 
 def search_in_many_files(lang="fr", cars="", lst_hint=[]):
-    for i in reversed(range(1, len(cars)+1)):
+    min_len = max(
+        (int(h.pos) for h in lst_hint if h.car and not h.inverted),
+        default=1
+    )
+    for i in reversed(range(min_len, len(cars)+1)):
         for m in search_in_file(lang=lang, nb_car=i, lst_car=list(cars), lst_hint=lst_hint):
             yield m

@@ -131,7 +131,7 @@ scenarios:
           expect:
             - statusCode: 200
 
-  - name: "search/many — 'guillaume' letters with 'a' at pos 4 (expect count=43)"
+  - name: "search/many — 'guillaume' letters with hint and inverted hint  (expected count=35)"
     weight: 1
     flow:
       - post:
