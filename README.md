@@ -62,8 +62,7 @@ See any implementation's README for request/response schemas.
 docker compose up --build
 
 # Start a specific implementation
-docker compose up python-base
-docker compose up python-improved
+docker compose up <service-name>
 ```
 
 | Implementation   | Port |
@@ -73,6 +72,7 @@ docker compose up python-improved
 | Java            | 8002 |
 | Go              | 8003 |
 | C++             | 8004 |
+| python-indexed  | 8005 |
 
 ## Load testing
 
@@ -83,21 +83,15 @@ Artillery runs the same scenarios against every container. Results are collected
 cd load-tests && bash run-all.sh
 # → load-tests/compare-report.html
 
-# Run against a single implementation
-npx artillery run --environment python-base load-tests/artillery.yml
-npx artillery run --environment python-improved load-tests/artillery.yml
+# Run against a single implementation (environment names match service names)
+npx artillery run --environment <service-name> load-tests/artillery.yml
 ```
 
 The test mix covers 8 scenarios (6 × `search/file`, 2 × `search/many`) with weights biased toward lighter queries.
 
 ## Unit tests
 
-Each implementation has its own pytest suite covering the core search logic:
-
-```bash
-cd python-base && .venv/bin/pytest -v
-cd python-improved && .venv/bin/pytest -v
-```
+Each implementation has its own test suite covering the core search logic. See the implementation's README for how to run them.
 
 ## Languages & threading models
 
