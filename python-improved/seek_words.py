@@ -1,9 +1,26 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import unidecode
 from typing import List
 
 _ASSETS_ROOT = Path(os.environ.get("ASSETS_ROOT") or str(Path(__file__).parent.parent / "assets"))
+
+# Word lists loaded once per (lang, length) key; subsequent requests skip disk I/O entirely.
+_word_cache: dict[str, list[str]] = {}
+
+def _load_words(lang: str, nb_car: int) -> list[str]:
+    key = f"{lang}/{nb_car}"
+    if key not in _word_cache:
+        file_name = _ASSETS_ROOT / lang / f"{nb_car}.txt"
+        try:
+            with open(file_name, "r", encoding="utf-8") as f:
+                words = [line.strip() for line in f]
+        except FileNotFoundError:
+            words = []
+        _word_cache[key] = words
+    return _word_cache[key]
+
 
 class Hint:
     pos: int
@@ -86,15 +103,7 @@ def search_in_file(lang="fr", nb_car=0, lst_car: List[str]=[], lst_hint: List[Hi
         raise Exception(
             "Parameters lstCar et lstHint cannot be empty at the same time")
 
-    file_name = _ASSETS_ROOT / lang / f"{nb_car}.txt"
-    try:
-        with open(file_name, "r", encoding="utf-8") as file_content:
-            lines = file_content.readlines()
-    except FileNotFoundError:
-        return []
-
-    for line in lines:
-        word = line.strip()
+    for word in _load_words(lang, nb_car):
         searchByContent = is_search_by_content(word, list(lst_car), strict)
         searchByHint = is_search_by_hint(word, lst_hint)
         if searchByContent and is_empty_hint:
@@ -110,6 +119,12 @@ def search_in_many_files(lang="fr", cars="", lst_hint=[]):
         (int(h.pos) for h in lst_hint if h.car and not h.inverted),
         default=1
     )
-    for i in reversed(range(min_len, len(cars)+1)):
-        for m in search_in_file(lang=lang, nb_car=i, lst_car=list(cars), lst_hint=lst_hint):
-            yield m
+    lengths = list(reversed(range(min_len, len(cars) + 1)))
+
+    def search_one(nb_car):
+        return list(search_in_file(lang=lang, nb_car=nb_car, lst_car=list(cars), lst_hint=lst_hint))
+
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(search_one, nb_car) for nb_car in lengths]
+        for future in futures:
+            yield from future.result()

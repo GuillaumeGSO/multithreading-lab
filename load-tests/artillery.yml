@@ -17,6 +17,10 @@ config:
     - name: Sustained
       duration: 60
       arrivalRate: 20
+    - name: Ramp down
+      duration: 30
+      arrivalRate: 20
+      rampTo: 2
   defaults:
     headers:
       Content-Type: application/json
@@ -149,3 +153,4 @@ scenarios:
               - {pos: 1, car: a, inverted: true}
           expect:
             - statusCode: 200
+

@@ -4,10 +4,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 WORKDIR /app
 
-COPY python/pyproject.toml python/uv.lock ./
+COPY python-base/pyproject.toml python-base/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY python/seek_words.py python/api.py ./
+COPY python-base/seek_words.py python-base/api.py ./
 COPY assets/ ./assets/
 
 ENV ASSETS_ROOT=/app/assets

@@ -5,14 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: main.py",
+            "name": "Python-base: main.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/python/main.py",
-            "python": "${workspaceFolder}/python/.venv/bin/python",
+            "program": "${workspaceFolder}/python-base/main.py",
+            "python": "${workspaceFolder}/python-base/.venv/bin/python",
             "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/python"
+                "PYTHONPATH": "${workspaceFolder}/python-base"
+            },
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python-improved: main.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/python-improved/main.py",
+            "python": "${workspaceFolder}/python-improved/.venv/bin/python",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/python-improved"
             },
             "console": "integratedTerminal"
         }
