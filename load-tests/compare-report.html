@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Comparative Load Test Report</title>
+  <style>
+    body { font-family: sans-serif; max-width: 960px; margin: 2rem auto; color: #222; }
+    h1 { border-bottom: 2px solid #ddd; padding-bottom: 0.4rem; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+    th { background: #f4f4f4; }
+    td:first-child { white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <h1>Comparative Load Test Report</h1>
+  <p><em>2026-05-15</em> — implementations tested: python-base, python-improved</p>
+
+  <h2>Response time by endpoint</h2>
+  <table>
+    <thead>
+      <tr><th>Endpoint</th><th>Metric</th><th>python-base</th><th>python-improved</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>/health</code></td><td>p50</td><td>4147 ms</td><td>1023 ms</td></tr>
+<tr><td><code>/health</code></td><td>p95</td><td>7261 ms</td><td>3198 ms</td></tr>
+<tr><td><code>/health</code></td><td>p99</td><td>7408 ms</td><td>6570 ms</td></tr>
+<tr><td><code>/search/file</code></td><td>p50</td><td>4676 ms</td><td>983 ms</td></tr>
+<tr><td><code>/search/file</code></td><td>p95</td><td>7557 ms</td><td>4404 ms</td></tr>
+<tr><td><code>/search/file</code></td><td>p99</td><td>9417 ms</td><td>6703 ms</td></tr>
+<tr><td><code>/search/many</code></td><td>p50</td><td>5168 ms</td><td>2952 ms</td></tr>
+<tr><td><code>/search/many</code></td><td>p95</td><td>8868 ms</td><td>7408 ms</td></tr>
+<tr><td><code>/search/many</code></td><td>p99</td><td>9801 ms</td><td>8693 ms</td></tr>
+
+    </tbody>
+  </table>
+
+  <h2>Overall</h2>
+  <table>
+    <thead>
+      <tr><th colspan="2">Metric</th><th>python-base</th><th>python-improved</th></tr>
+    </thead>
+    <tbody>
+      <tr><td colspan='2'>Total requests</td><td>1550</td><td>1550</td></tr>
+<tr><td colspan='2'>Failures</td><td>4</td><td>0</td></tr>
+<tr><td colspan='2'>Req/sec</td><td>15</td><td>15</td></tr>
+
+    </tbody>
+  </table>
+</body>
+</html>

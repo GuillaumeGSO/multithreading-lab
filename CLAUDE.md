@@ -24,22 +24,47 @@ The word search logic filters words from dictionary files (`assets/{lang}/{n}.tx
 multithreading-lab/
 ├── assets/             # Shared word lists
 ├── load-tests/
-│   └── artillery.yml   # Container-agnostic load tests (change --target per language)
-├── python/             # See python/README.md
-├── docker-compose.yml  # Python=8000, Java=8001, Go=8002, C++=8003
+│   └── artillery.yml   # Single test file, environments select the target
+├── python-base/        # Reference implementation (no concurrency)
+├── python-improved/    # Python with threading/concurrent.futures
+├── docker-compose.yml  # python-base=8000, python-improved=8001, Java=8002, Go=8003, C++=8004
 └── CLAUDE.md
 ```
 
-## Per-language READMEs
+## Per-implementation READMEs
 
-Each language directory has its own README covering local dev, Docker, and API details:
-- [`python/README.md`](python/README.md)
+Each directory has its own README covering local dev, Docker, and API details:
+- [`python-base/README.md`](python-base/README.md)
+- [`python-improved/README.md`](python-improved/README.md)
 
-## Concurrency Models by Language
+## Load testing
 
-| Language | Model |
-|----------|-------|
-| Python   | `threading`, `concurrent.futures` (GIL-constrained for CPU work) |
-| Java     | `Thread`, `ExecutorService`, `java.util.concurrent` |
-| Go       | Goroutines + channels |
-| C++      | `std::thread`, `std::mutex`, atomics |
+`load-tests/artillery.yml` is the single test file for all implementations. Environments map names to ports — do not create per-language YAML files.
+
+```bash
+# Run all reachable containers and generate compare-report.html
+cd load-tests && bash run-all.sh
+
+# Run a single environment manually
+npx artillery run --environment python-base load-tests/artillery.yml
+```
+
+## Unit tests
+
+Each implementation has a `test_seek_words.py` pytest suite. Run with:
+
+```bash
+cd python-base && .venv/bin/pytest -v
+```
+
+The test suite must pass before and after any change to `seek_words.py`. The `python-base` suite is the correctness reference — `python-improved` must produce identical results.
+
+## Concurrency models by implementation
+
+| Implementation   | Model |
+|-----------------|-------|
+| python-base     | None (single-threaded reference) |
+| python-improved | `threading`, `concurrent.futures` (GIL-constrained for CPU work) |
+| Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
+| Go              | Goroutines + channels |
+| C++             | `std::thread`, `std::mutex`, atomics |

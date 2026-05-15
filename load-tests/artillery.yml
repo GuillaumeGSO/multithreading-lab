@@ -1,6 +1,11 @@
 config:
-  # Override with: artillery run --target http://localhost:8001 artillery.yml
   target: "http://localhost:8000"
+  environments:
+    python-base:     { target: "http://localhost:8000" }
+    python-improved: { target: "http://localhost:8001" }
+    java:            { target: "http://localhost:8002" }
+    go:              { target: "http://localhost:8003" }
+    cpp:             { target: "http://localhost:8004" }
   phases:
     - name: Warm up
       duration: 10

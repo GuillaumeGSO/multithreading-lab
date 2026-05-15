@@ -1,1 +1,3 @@
 __pycache__/
+load-tests/results/
+load-tests/artillery-report.*

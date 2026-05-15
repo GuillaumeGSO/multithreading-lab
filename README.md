@@ -6,7 +6,7 @@ A personal learning project to experiment with multithreading across multiple la
 
 Implement, then progressively optimize, identical concurrent programs in:
 
-- **Python** ✅
+- **Python** ✅ (baseline + improved)
 - **Java** _(planned)_
 - **Go** _(planned)_
 - **C++** _(planned)_
@@ -19,23 +19,27 @@ Each implementation exposes a word-search API over a shared dictionary dataset (
 
 ## Approach
 
-Each language gets its own directory with a self-contained HTTP API wrapping the same search logic. Implementations go through two phases:
+Each language gets a baseline directory and an improved directory, both wrapping the same search logic behind the same HTTP API:
 
-1. **Baseline** — a straightforward multithreaded solution
-2. **Optimized** — applying language-specific techniques (thread pools, lock-free structures, async runtimes, etc.)
+1. **Baseline** (`*-base`) — straightforward single-threaded solution, used as the reference
+2. **Improved** (`*-improved`) — applying language-specific concurrency techniques (thread pools, lock-free structures, async runtimes, etc.)
 
 ## Structure
 
 ```
 multithreading-lab/
-├── assets/              # Shared word lists: assets/{lang}/{nb_letters}.txt
+├── assets/                  # Shared word lists: assets/{lang}/{nb_letters}.txt
 ├── load-tests/
-│   └── artillery.yml    # Language-agnostic load test (change --target per container)
-├── python/              # Python implementation (FastAPI + uvicorn)
-├── java/                # (planned)
-├── go/                  # (planned)
-├── cpp/                 # (planned)
-└── docker-compose.yml   # One service per language
+│   ├── artillery.yml        # Single test file, environments select the target
+│   ├── run-all.sh           # Runs Artillery against all reachable containers
+│   ├── compare.py           # Generates compare-report.html from results/
+│   └── results/             # Per-run JSON outputs (gitignored)
+├── python-base/             # Reference implementation — no concurrency
+├── python-improved/         # Python with threading / concurrent.futures
+├── java/                    # (planned)
+├── go/                      # (planned)
+├── cpp/                     # (planned)
+└── docker-compose.yml       # One service per implementation
 ```
 
 ## API contract
@@ -48,7 +52,7 @@ All containers expose the same three endpoints:
 | `POST` | `/search/file` | Search words of a fixed length |
 | `POST` | `/search/many` | Search words across all lengths |
 
-See any language's README for request/response schemas.
+See any implementation's README for request/response schemas.
 
 ## Running containers
 
@@ -56,39 +60,50 @@ See any language's README for request/response schemas.
 # Start all implemented containers
 docker compose up --build
 
-# Start a specific language
-docker compose up python
+# Start a specific implementation
+docker compose up python-base
+docker compose up python-improved
 ```
 
-| Language | Port |
-|----------|------|
-| Python   | 8000 |
-| Java     | 8001 |
-| Go       | 8002 |
-| C++      | 8003 |
+| Implementation   | Port |
+|-----------------|------|
+| python-base     | 8000 |
+| python-improved | 8001 |
+| Java            | 8002 |
+| Go              | 8003 |
+| C++             | 8004 |
 
 ## Load testing
 
-Artillery is used to load test each container with identical scenarios.
+Artillery runs the same scenarios against every container. Results are collected and compared in a single HTML report.
 
 ```bash
-# Install Artillery (one-time)
-npm install -g artillery
+# Run against all reachable containers and generate the comparative report
+cd load-tests && bash run-all.sh
+# → load-tests/compare-report.html
 
-# Run against Python
-artillery run --target http://localhost:8000 load-tests/artillery.yml
-
-# Run against Java (once implemented)
-artillery run --target http://localhost:8001 load-tests/artillery.yml
+# Run against a single implementation
+npx artillery run --environment python-base load-tests/artillery.yml
+npx artillery run --environment python-improved load-tests/artillery.yml
 ```
 
-The test mix covers 7 scenarios (6 × `search/file`, 1 × `search/many`) with weights biased toward lighter queries. The heavy multi-length query (`search/many`) has weight 1 vs. weight 4 for the others.
+The test mix covers 8 scenarios (6 × `search/file`, 2 × `search/many`) with weights biased toward lighter queries.
+
+## Unit tests
+
+Each implementation has its own pytest suite covering the core search logic:
+
+```bash
+cd python-base && .venv/bin/pytest -v
+cd python-improved && .venv/bin/pytest -v
+```
 
 ## Languages & threading models
 
-| Language | Primary concurrency model |
-|----------|--------------------------|
-| Python   | `threading`, `concurrent.futures`, GIL constraints |
-| Java     | `Thread`, `ExecutorService`, `java.util.concurrent` |
-| Go       | Goroutines + channels |
-| C++      | `std::thread`, `std::mutex`, atomics |
+| Implementation   | Concurrency model |
+|-----------------|-------------------|
+| python-base     | None (reference) |
+| python-improved | `threading`, `concurrent.futures` (GIL-constrained for CPU work) |
+| Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
+| Go              | Goroutines + channels |
+| C++             | `std::thread`, `std::mutex`, atomics |

@@ -1,28 +1,35 @@
 services:
-  python:
+  python-base:
     build:
       context: .
-      dockerfile: python/Dockerfile
+      dockerfile: python-base/Dockerfile
     ports:
       - "8000:8000"
+
+  python-improved:
+    build:
+      context: .
+      dockerfile: python-improved/Dockerfile
+    ports:
+      - "8001:8001"
 
   # java:
   #   build:
   #     context: .
   #     dockerfile: java/Dockerfile
   #   ports:
-  #     - "8001:8001"
+  #     - "8002:8002"
 
   # go:
   #   build:
   #     context: .
   #     dockerfile: go/Dockerfile
   #   ports:
-  #     - "8002:8002"
+  #     - "8003:8003"
 
   # cpp:
   #   build:
   #     context: .
   #     dockerfile: cpp/Dockerfile
   #   ports:
-  #     - "8003:8003"
+  #     - "8004:8004"
