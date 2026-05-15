@@ -9,6 +9,7 @@ services:
       resources:
         limits:
           cpus: "1.0"
+          memory: 1g
 
   python-improved:
     build:
@@ -20,6 +21,19 @@ services:
       resources:
         limits:
           cpus: "1.0"
+          memory: 1g
+
+  python-indexed:
+    build:
+      context: .
+      dockerfile: python-indexed/Dockerfile
+    ports:
+      - "8005:8005"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
 
   # java:
   #   build:

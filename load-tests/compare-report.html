@@ -14,23 +14,23 @@
 </head>
 <body>
   <h1>Comparative Load Test Report</h1>
-  <p><em>2026-05-15</em> — implementations tested: python-base, python-improved</p>
+  <p><em>2026-05-15</em> — implementations tested: python-base, python-improved, python-indexed</p>
 
   <h2>Response time by endpoint</h2>
   <table>
     <thead>
-      <tr><th>Endpoint</th><th>Metric</th><th>python-base</th><th>python-improved</th></tr>
+      <tr><th>Endpoint</th><th>Metric</th><th>python-base</th><th>python-improved</th><th>python-indexed</th></tr>
     </thead>
     <tbody>
-      <tr><td><code>/health</code></td><td>p50</td><td>5272 ms</td><td>5168 ms</td></tr>
-<tr><td><code>/health</code></td><td>p95</td><td>8024 ms</td><td>9607 ms</td></tr>
-<tr><td><code>/health</code></td><td>p99</td><td>8352 ms</td><td>9999 ms</td></tr>
-<tr><td><code>/search/file</code></td><td>p50</td><td>6312 ms</td><td>6312 ms</td></tr>
-<tr><td><code>/search/file</code></td><td>p95</td><td>8868 ms</td><td>9801 ms</td></tr>
-<tr><td><code>/search/file</code></td><td>p99</td><td>9048 ms</td><td>9999 ms</td></tr>
-<tr><td><code>/search/many</code></td><td>p50</td><td>6703 ms</td><td>5827 ms</td></tr>
-<tr><td><code>/search/many</code></td><td>p95</td><td>9607 ms</td><td>9801 ms</td></tr>
-<tr><td><code>/search/many</code></td><td>p99</td><td>9801 ms</td><td>9999 ms</td></tr>
+      <tr><td><code>/health</code></td><td>p50</td><td>4676 ms</td><td>5488 ms</td><td>3 ms</td></tr>
+<tr><td><code>/health</code></td><td>p95</td><td>8024 ms</td><td>9607 ms</td><td>15 ms</td></tr>
+<tr><td><code>/health</code></td><td>p99</td><td>8521 ms</td><td>9607 ms</td><td>33 ms</td></tr>
+<tr><td><code>/search/file</code></td><td>p50</td><td>5488 ms</td><td>4147 ms</td><td>8 ms</td></tr>
+<tr><td><code>/search/file</code></td><td>p95</td><td>8693 ms</td><td>9801 ms</td><td>35 ms</td></tr>
+<tr><td><code>/search/file</code></td><td>p99</td><td>9048 ms</td><td>9999 ms</td><td>73 ms</td></tr>
+<tr><td><code>/search/many</code></td><td>p50</td><td>7261 ms</td><td>4584 ms</td><td>98 ms</td></tr>
+<tr><td><code>/search/many</code></td><td>p95</td><td>9607 ms</td><td>9801 ms</td><td>187 ms</td></tr>
+<tr><td><code>/search/many</code></td><td>p99</td><td>9607 ms</td><td>9999 ms</td><td>302 ms</td></tr>
 
     </tbody>
   </table>
@@ -38,12 +38,12 @@
   <h2>Overall</h2>
   <table>
     <thead>
-      <tr><th colspan="2">Metric</th><th>python-base</th><th>python-improved</th></tr>
+      <tr><th colspan="2">Metric</th><th>python-base</th><th>python-improved</th><th>python-indexed</th></tr>
     </thead>
     <tbody>
-      <tr><td colspan='2'>Total requests</td><td>1880</td><td>1880</td></tr>
-<tr><td colspan='2'>Failures</td><td>4</td><td>417</td></tr>
-<tr><td colspan='2'>Req/sec</td><td>14</td><td>15</td></tr>
+      <tr><td colspan='2'>Total requests</td><td>1880</td><td>1880</td><td>1880</td></tr>
+<tr><td colspan='2'>Failures</td><td>1340</td><td>1004</td><td>0</td></tr>
+<tr><td colspan='2'>Req/sec</td><td>13</td><td>13</td><td>15</td></tr>
 
     </tbody>
   </table>

@@ -3,6 +3,7 @@ config:
   environments:
     python-base:     { target: "http://localhost:8000" }
     python-improved: { target: "http://localhost:8001" }
+    python-indexed: { target: "http://localhost:8005" }
     java:            { target: "http://localhost:8002" }
     go:              { target: "http://localhost:8003" }
     cpp:             { target: "http://localhost:8004" }

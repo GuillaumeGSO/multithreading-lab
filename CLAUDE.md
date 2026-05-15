@@ -27,7 +27,8 @@ multithreading-lab/
 │   └── artillery.yml   # Single test file, environments select the target
 ├── python-base/        # Reference implementation (no concurrency)
 ├── python-improved/    # Python with threading/concurrent.futures
-├── docker-compose.yml  # python-base=8000, python-improved=8001, Java=8002, Go=8003, C++=8004
+├── python-indexed/     # Python with pre-built positional + frequency indexes
+├── docker-compose.yml  # python-base=8000, python-improved=8001, python-indexed=8005, Java=8002, Go=8003, C++=8004
 └── CLAUDE.md
 ```
 
@@ -36,6 +37,7 @@ multithreading-lab/
 Each directory has its own README covering local dev, Docker, and API details:
 - [`python-base/README.md`](python-base/README.md)
 - [`python-improved/README.md`](python-improved/README.md)
+- [`python-indexed/README.md`](python-indexed/README.md)
 
 ## Load testing
 
@@ -57,7 +59,7 @@ Each implementation has a `test_seek_words.py` pytest suite. Run with:
 cd python-base && .venv/bin/pytest -v
 ```
 
-The test suite must pass before and after any change to `seek_words.py`. The `python-base` suite is the correctness reference — `python-improved` must produce identical results.
+The test suite must pass before and after any change to `seek_words.py`. The `python-base` suite is the correctness reference — `python-improved` and `python-indexed` must produce identical results.
 
 ## Concurrency models by implementation
 
@@ -65,6 +67,7 @@ The test suite must pass before and after any change to `seek_words.py`. The `py
 |-----------------|-------|
 | python-base     | None (single-threaded reference) |
 | python-improved | `threading`, `concurrent.futures` (GIL-constrained for CPU work) |
+| python-indexed  | Pre-built positional + frequency indexes; O(result) search instead of O(vocabulary) |
 | Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
 | Go              | Goroutines + channels |
 | C++             | `std::thread`, `std::mutex`, atomics |
