@@ -4,33 +4,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-A personal learning project implementing the same word-search logic across Python, Java, Go, and C++ to compare concurrency models and performance. Each language directory is self-contained. The `assets/` directory holds shared word lists (`assets/{lang}/{n}.txt`, where `n` is word length) used by all implementations.
-
-## Structure
-
-Each language gets its own directory (`python/`, `java/`, `go/`, `cpp/`). Each implementation goes through two phases:
-1. **Baseline** — straightforward multithreaded solution
-2. **Optimized** — language-specific techniques (thread pools, lock-free structures, async runtimes, etc.)
+A personal learning project implementing the same word-search logic across Python, Java, Go, and C++ to compare concurrency models and performance under HTTP load. Each language exposes the same REST API in its own Docker container. Artillery load tests (`load-tests/artillery.yml`) are container-agnostic — only `--target` changes per language.
 
 ## Core Problem
 
-The word search logic (see `python/seek_words.py`) filters words from dictionary files by:
-- `nb_car`: word length (selects which asset file to open)
-- `lst_car`: available letters (optional, with a `strict` mode that consumes letters)
-- `lst_hint`: positional constraints (`Hint` objects with `pos`, `car`, `inverted`)
+The word search logic filters words from dictionary files (`assets/{lang}/{n}.txt`, where `n` = word length) by available letters, positional hints, and word length. **This logic and the API contract must stay consistent across all language implementations.**
 
-This logic must remain consistent across all language implementations.
+## API Contract (all languages)
 
-## Python
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Liveness check |
+| `POST` | `/search/file` | Search words of fixed length |
+| `POST` | `/search/many` | Search words across all lengths |
 
-No build step. Run directly with Python 3.
+## Structure
 
-```bash
-cd python
-python seek_words.py
+```
+multithreading-lab/
+├── assets/             # Shared word lists
+├── load-tests/
+│   └── artillery.yml   # Container-agnostic load tests (change --target per language)
+├── python/             # See python/README.md
+├── docker-compose.yml  # Python=8000, Java=8001, Go=8002, C++=8003
+└── CLAUDE.md
 ```
 
-Dependencies: `unidecode`. Install with `pip install unidecode`.
+## Per-language READMEs
+
+Each language directory has its own README covering local dev, Docker, and API details:
+- [`python/README.md`](python/README.md)
 
 ## Concurrency Models by Language
 

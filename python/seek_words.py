@@ -1,8 +1,9 @@
+import os
 from pathlib import Path
 import unidecode
 from typing import List
 
-_ASSETS_ROOT = Path(__file__).parent.parent / "assets"
+_ASSETS_ROOT = Path(os.environ.get("ASSETS_ROOT") or str(Path(__file__).parent.parent / "assets"))
 
 class Hint:
     pos: int
