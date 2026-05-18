@@ -1,9 +1,13 @@
+import logging
 import os
 from collections import Counter
 from pathlib import Path
 from typing import List
 
 import unidecode
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
 
 _ASSETS_ROOT = Path(os.environ.get("ASSETS_ROOT") or str(Path(__file__).parent.parent / "assets"))
 
@@ -12,6 +16,10 @@ _word_cache: dict[str, list[str]] = {}
 _pos_index: dict[str, dict[int, dict[str, frozenset]]] = {}
 # freq_index[key] → list of (original_word, Counter(normalized_word))
 _freq_index: dict[str, list[tuple[str, Counter]]] = {}
+
+_index_calls: dict[str, int] = {}   # total calls per key
+_index_hits: dict[str, int] = {}    # hits (index already built) per key
+_LOG_EVERY = 50                      # log hit rate every N calls per key
 
 
 def _load_words(lang: str, nb_car: int) -> list[str]:
@@ -29,9 +37,16 @@ def _load_words(lang: str, nb_car: int) -> list[str]:
 
 def _ensure_index(lang: str, nb_car: int) -> None:
     key = f"{lang}/{nb_car}"
+    _index_calls[key] = _index_calls.get(key, 0) + 1
     if key in _pos_index:
+        _index_hits[key] = _index_hits.get(key, 0) + 1
+        calls = _index_calls[key]
+        if calls % _LOG_EVERY == 0:
+            pct = _index_hits[key] / calls * 100
+            logger.info("index stats [%s] — hit rate %.1f%% (%d hits / %d calls)", key, pct, _index_hits[key], calls)
         return
 
+    logger.info("index build: %s", key)
     words = _load_words(lang, nb_car)
     pos_idx: dict[int, dict[str, set]] = {pos: {} for pos in range(1, nb_car + 1)}
     freq_idx: list[tuple[str, Counter]] = []

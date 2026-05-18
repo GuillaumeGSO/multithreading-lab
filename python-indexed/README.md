@@ -8,10 +8,43 @@ On first access per `(lang, word_length)`, two indexes are built from the word l
 
 - **Positional index** — `pos → char → frozenset of words`  
   Hint filtering becomes set intersection/subtraction instead of per-word iteration.
-  A query like "position 1 = s, position 3 = a" resolves via `index[1]['s'] & index[3]['a']`.
 
 - **Frequency index** — `list of (word, Counter(normalized_word))`  
   Letter availability check compares pre-computed counters instead of scanning characters one by one.
+
+## How the positional index works
+
+Given a word list, the index pre-groups every word by the character at each position:
+
+```
+Word list: sabre, sable, laser, lasse, salir, alise
+                                                       
+           pos 1       pos 2       pos 3       pos 4  ...
+           ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐
+      's' →│ sabre │   │       │   │       │   │       │
+           │ sable │   │ lasse │   │ sabre │   │ laser │
+           │ salir │   │       │   │ sable │   │       │
+           └───────┘   └───────┘   └───────┘   └───────┘
+      'l' →│ laser │   │ sable │   │ salir │   │ sabre │
+           │ lasse │   │ salir │   │ alise │   │ sable │
+           │       │   │ alise │   │       │   │ salir │
+           └───────┘   └───────┘   └───────┘   └───────┘
+      'a' →│ alise │   │ sabre │   │ laser │   │ lasse │
+           │       │   │       │   │ lasse │   │ alise │
+           └───────┘   └───────┘   └───────┘   └───────┘
+```
+
+Query: hints `pos1='s'` AND `pos3='b'`
+
+```
+  pos_index[1]['s'] = { sabre, sable, salir }
+∩ pos_index[3]['b'] = { sabre, sable }
+                     ─────────────────────────
+                     → { sabre, sable }          ✓ 2 candidates, no full scan
+```
+
+Without the index, python-base checks every word in the file one by one.  
+With the index, the result set comes directly from set intersection — O(result) instead of O(vocab).
 
 ## Complexity
 

@@ -25,10 +25,17 @@ config:
   defaults:
     headers:
       Content-Type: application/json
+  payload:
+    path: "./queries.csv"
+    fields:
+      - nb_car
+      - cars
+      - strict
+      - lst_hint
+    order: random
+  processor: "./payload-processor.js"
 
 scenarios:
-  # --- Health ---
-
   - name: "Health check"
     weight: 1
     flow:
@@ -37,121 +44,21 @@ scenarios:
           expect:
             - statusCode: 200
 
-  # --- POST /search/file ---
-  # Scenarios mirror python/main.py CASES.
-  # Expected counts are from python/report.md (Python baseline).
-
-  - name: "search/file — letters strict, anagrams of 'elisa' (expect count=8)"
-    weight: 4
+  - name: "search/file — randomized"
+    weight: 24
     flow:
       - post:
           url: "/search/file"
-          json:
-            lang: fr
-            nb_car: 5
-            lst_car: [e, l, i, s, a]
-            strict: true
+          beforeRequest: buildSearchFile
           expect:
             - statusCode: 200
 
-  - name: "search/file — letters open, anagrams of 'elisa' (expect count=81)"
-    weight: 4
-    flow:
-      - post:
-          url: "/search/file"
-          json:
-            lang: fr
-            nb_car: 5
-            lst_car: [e, l, i, s, a]
-            strict: false
-          expect:
-            - statusCode: 200
-
-  - name: "search/file — hint only, pattern s_a_e (expect count=8)"
-    weight: 4
-    flow:
-      - post:
-          url: "/search/file"
-          json:
-            lang: fr
-            nb_car: 5
-            lst_hint:
-              - {pos: 1, car: s}
-              - {pos: 3, car: a}
-              - {pos: 5, car: e}
-          expect:
-            - statusCode: 200
-
-  - name: "search/file — letters + 2 hints, starts l ends s (expect count=11)"
-    weight: 4
-    flow:
-      - post:
-          url: "/search/file"
-          json:
-            lang: fr
-            nb_car: 5
-            lst_car: [e, l, i, s, a]
-            lst_hint:
-              - {pos: 1, car: l}
-              - {pos: 5, car: s}
-          expect:
-            - statusCode: 200
-
-  - name: "search/file — inverted hints + letters (expect count=37)"
-    weight: 4
-    flow:
-      - post:
-          url: "/search/file"
-          json:
-            lang: fr
-            nb_car: 5
-            lst_car: [e, l, i, s, a]
-            lst_hint:
-              - {pos: 1, car: l, inverted: true}
-              - {pos: 2, car: l, inverted: true}
-              - {pos: 3, car: e, inverted: true}
-          expect:
-            - statusCode: 200
-
-  - name: "search/file — strict + hint, anagram of 'elisa' with 'a' at pos 4 (expect count=2)"
-    weight: 4
-    flow:
-      - post:
-          url: "/search/file"
-          json:
-            lang: fr
-            nb_car: 5
-            lst_car: [e, l, i, s, "a", " "]
-            lst_hint:
-              - {pos: 4, car: a}
-            strict: true
-          expect:
-            - statusCode: 200
-
-  # --- POST /search/many ---
-
-  - name: "search/many — all lengths from 'guillaume' letters (expect count=498)"
-    weight: 1
+  - name: "search/many — randomized"
+    weight: 2
     flow:
       - post:
           url: "/search/many"
-          json:
-            lang: fr
-            cars: guillaume
-          expect:
-            - statusCode: 200
-
-  - name: "search/many — 'guillaume' letters with hint and inverted hint  (expected count=35)"
-    weight: 1
-    flow:
-      - post:
-          url: "/search/many"
-          json:
-            lang: fr
-            cars: guillaume
-            lst_hint:
-              - {pos: 4, car: a}
-              - {pos: 1, car: a, inverted: true}
+          beforeRequest: buildSearchMany
           expect:
             - statusCode: 200
 

@@ -1,9 +1,18 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 from seek_words import Hint, search_in_file, search_in_many_files
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logging.getLogger("seek_words").setLevel(logging.INFO)
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 
 class HintModel(BaseModel):
