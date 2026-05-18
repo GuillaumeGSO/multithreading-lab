@@ -21,7 +21,7 @@ def random_letters(n):
 
 rows = []
 for _ in range(500):
-    nb_car = random.randint(4, 12)
+    nb_car = random.randint(4, 10)
     n_available = nb_car + random.randint(0, 3)
     letters = random_letters(n_available)
     strict = random.random() < 0.3

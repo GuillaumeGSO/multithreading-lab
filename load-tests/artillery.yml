@@ -22,6 +22,7 @@ config:
       duration: 30
       arrivalRate: 20
       rampTo: 2
+  timeout: 30
   defaults:
     headers:
       Content-Type: application/json

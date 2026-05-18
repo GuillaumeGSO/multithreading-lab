@@ -13,4 +13,4 @@ COPY assets/ ./assets/
 ENV ASSETS_ROOT=/app/assets
 
 EXPOSE 8001
-CMD [".venv/bin/uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD [".venv/bin/uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "2", "--log-level", "warning"]

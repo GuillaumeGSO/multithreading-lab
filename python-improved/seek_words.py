@@ -1,5 +1,4 @@
 import os
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import unidecode
 from typing import List
@@ -119,12 +118,5 @@ def search_in_many_files(lang="fr", cars="", lst_hint=[]):
         (int(h.pos) for h in lst_hint if h.car and not h.inverted),
         default=1
     )
-    lengths = list(reversed(range(min_len, len(cars) + 1)))
-
-    def search_one(nb_car):
-        return list(search_in_file(lang=lang, nb_car=nb_car, lst_car=list(cars), lst_hint=lst_hint))
-
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(search_one, nb_car) for nb_car in lengths]
-        for future in futures:
-            yield from future.result()
+    for i in reversed(range(min_len, len(cars) + 1)):
+        yield from search_in_file(lang=lang, nb_car=i, lst_car=list(cars), lst_hint=lst_hint)

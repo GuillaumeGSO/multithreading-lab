@@ -1,100 +1,39 @@
-# Python — seek_words
+# python-improved
 
-Python implementation of the multithreading lab word-search API.
+Same brute-force search algorithm as `python-base`, but with the correct Python concurrency model for CPU-bound web work: **multiple OS worker processes**.
 
-**Stack**: FastAPI · uvicorn · uv · Python 3.13
+## Why not threads?
 
-## Structure
+The original implementation used `ThreadPoolExecutor` to parallelize searches across word lengths. It performed *worse* than python-base because Python's GIL (Global Interpreter Lock) serializes CPU-bound bytecode execution across threads — threads add scheduling overhead without achieving real parallelism.
 
-```
-python/
-├── seek_words.py   # Core search logic (no HTTP dependency)
-├── api.py          # FastAPI HTTP layer
-├── main.py         # Integration runner — generates report.html
-├── Dockerfile
-└── pyproject.toml
-```
+## The fix: uvicorn --workers 2
 
-## Local development
+Two separate OS processes serve HTTP requests. Each process has its own Python interpreter and its own GIL, so they genuinely run in parallel on separate CPU cores. Concurrent requests are handled by different workers simultaneously, with no GIL contention between them.
+
+## How each implementation isolates one variable
+
+| Implementation | Algorithm | Concurrency model |
+|---|---|---|
+| python-base | brute force O(vocab) | none |
+| python-improved | brute force O(vocab) | 2 uvicorn OS workers |
+| python-indexed | index O(result) | none |
+
+This makes the load test results directly comparable: python-improved vs python-base measures the concurrency gain; python-indexed vs python-base measures the algorithm gain.
+
+## Port
+
+Runs on **8001**.
+
+## Local dev
 
 ```bash
-# Install dependencies
 uv sync
-
-# Run the API locally (from repo root)
-uv run --project python uvicorn python.api:app --reload
-
-# Or from the python/ directory
-cd python && uv run uvicorn api:app --reload
+uv run pytest -v
+uv run uvicorn api:app --port 8001
 ```
-
-The API starts on `http://localhost:8000`. Swagger UI is available at `http://localhost:8000/docs`.
-
-> **Note**: the server must be started from the repo root, or `ASSETS_ROOT` must point to the `assets/` directory.
 
 ## Docker
 
 ```bash
-# Build and run (from repo root)
-docker compose up python --build
-
-# Or build the image directly
-docker build -f python/Dockerfile -t seek-words-python .
-docker run -p 8000:8000 seek-words-python
+docker compose up python-improved
 ```
-
-## Integration tests
-
-`main.py` runs all search scenarios against the real asset files and writes an HTML report.
-
-```bash
-# From repo root
-uv run --project python python python/main.py
-# → prints results and writes python/report.html
-```
-
-## API
-
-### `GET /health`
-
-```json
-{"status": "ok"}
-```
-
-### `POST /search/file`
-
-Search words of a fixed length using available letters and/or positional hints.
-
-```json
-// Request
-{
-  "lang": "fr",          // language code (matches assets/{lang}/)
-  "nb_car": 5,           // word length
-  "lst_car": ["e","l","i","s","a"],   // available letters (optional)
-  "lst_hint": [          // positional constraints (optional)
-    {"pos": 1, "car": "s", "inverted": false}
-  ],
-  "strict": false        // if true, each letter in lst_car is consumed once
-}
-
-// Response
-{"words": ["ailes", "alise", ...], "count": 8}
-```
-
-### `POST /search/many`
-
-Search words across all lengths up to `len(cars)`.
-
-```json
-// Request
-{"lang": "fr", "cars": "guillaume", "lst_hint": []}
-
-// Response
-{"words": [...], "count": 498}
-```
-
-## Environment variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ASSETS_ROOT` | `../assets` relative to `seek_words.py` | Path to the word list directory |
