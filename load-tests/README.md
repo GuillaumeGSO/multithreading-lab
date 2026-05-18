@@ -13,17 +13,39 @@ Artillery load tests for comparing all language implementations against the same
 | `run-all.sh` | Runs the test against all reachable containers and produces `compare-report.html` |
 | `compare.py` | Aggregates Artillery JSON results into `compare-report.html` |
 
+## Setup
+
+Node.js is required, plus Artillery installed globally:
+
+```bash
+npm install -g artillery
+```
+
+> Artillery is installed globally rather than as a local `node_modules`
+> dependency because this repo lives on an exFAT volume, which cannot host a
+> reliable `node_modules` tree (no symlink/hardlink support). On a normal
+> filesystem `npm install` of a local dependency would also work.
+
 ## Running tests
 
 ```bash
 # Run against a single implementation
-npx artillery run --environment python-indexed artillery.yml
+npm run run:python-indexed
 
-# Run against all implementations and generate the comparison report
-bash run-all.sh
+# Run against all reachable containers and generate compare-report.html
+./run-all.sh
 ```
 
 Available environments: `python-base`, `python-improved`, `python-indexed`, `java`, `go`, `cpp`.
+
+| npm script | Port |
+|---|---|
+| `npm run run:python-base` | 8000 |
+| `npm run run:python-improved` | 8001 |
+| `npm run run:python-indexed` | 8005 |
+| `npm run run:java` | 8002 |
+| `npm run run:go` | 8003 |
+| `npm run run:cpp` | 8004 |
 
 ## How randomized payloads work
 

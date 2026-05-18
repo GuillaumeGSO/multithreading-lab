@@ -5,23 +5,32 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results"
 ARTILLERY_YML="$SCRIPT_DIR/artillery.yml"
 
-declare -A ENVS=(
-  [python-base]=8000
-  [python-improved]=8001
-  [python-indexed]=8005
-  [java]=8002
-  [go]=8003
-  [cpp]=8004
-)
+if ! command -v artillery > /dev/null 2>&1; then
+  echo "artillery not found on PATH — install it with: npm install -g artillery" >&2
+  exit 1
+fi
 
-declare -A CONTAINERS=(
-  [python-base]=multithreading-lab-python-base-1
-  [python-improved]=multithreading-lab-python-improved-1
-  [python-indexed]=multithreading-lab-python-indexed-1
-  [java]=multithreading-lab-java-1
-  [go]=multithreading-lab-go-1
-  [cpp]=multithreading-lab-cpp-1
-)
+get_port() {
+  case "$1" in
+    python-base)     echo 8000 ;;
+    python-improved) echo 8001 ;;
+    python-indexed)  echo 8005 ;;
+    java)            echo 8002 ;;
+    go)              echo 8003 ;;
+    cpp)             echo 8004 ;;
+  esac
+}
+
+get_container() {
+  case "$1" in
+    python-base)     echo multithreading-lab-python-base-1 ;;
+    python-improved) echo multithreading-lab-python-improved-1 ;;
+    python-indexed)  echo multithreading-lab-python-indexed-1 ;;
+    java)            echo multithreading-lab-java-1 ;;
+    go)              echo multithreading-lab-go-1 ;;
+    cpp)             echo multithreading-lab-cpp-1 ;;
+  esac
+}
 
 CPU_THRESHOLD=10
 CPU_POLL_INTERVAL=3
@@ -50,19 +59,19 @@ mkdir -p "$RESULTS_DIR"
 ran=()
 
 for env in python-base python-improved python-indexed java go cpp; do
-  port=${ENVS[$env]}
+  port=$(get_port "$env")
   url="http://localhost:$port"
 
   printf "%-20s" "$env"
 
   if curl -sf "$url/health" > /dev/null 2>&1; then
     echo "→ running..."
-    npx --yes artillery run \
+    artillery run \
       --environment "$env" \
       --output "$RESULTS_DIR/$env.json" \
       "$ARTILLERY_YML"
     ran+=("$env")
-    wait_for_cpu_cool "${CONTAINERS[$env]}"
+    wait_for_cpu_cool "$(get_container "$env")"
   else
     echo "→ skipped (not reachable on :$port)"
   fi

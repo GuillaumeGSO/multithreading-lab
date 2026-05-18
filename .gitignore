@@ -1,4 +1,5 @@
 __pycache__/
 load-tests/results/
 load-tests/artillery-report.*
+load-tests/node_modules/
 java/target/

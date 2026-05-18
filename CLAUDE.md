@@ -47,8 +47,8 @@ Each directory has its own README covering local dev, Docker, and API details:
 # Run all reachable containers and generate compare-report.html
 cd load-tests && bash run-all.sh
 
-# Run a single environment manually
-npx artillery run --environment python-base load-tests/artillery.yml
+# Run a single environment manually (requires npm install in load-tests/ first)
+cd load-tests && npm run run:python-base
 ```
 
 ## Unit tests

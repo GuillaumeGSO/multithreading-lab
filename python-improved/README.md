@@ -10,6 +10,14 @@ The original implementation used `ThreadPoolExecutor` to parallelize searches ac
 
 Two separate OS processes serve HTTP requests. Each process has its own Python interpreter and its own GIL, so they genuinely run in parallel on separate CPU cores. Concurrent requests are handled by different workers simultaneously, with no GIL contention between them.
 
+> **Note:** This is configured with **2 CPUs and 2 workers** — the container is
+> given `cpus: "2.0"` in `docker-compose.yml` to match `--workers 2`. The worker
+> count and the CPU limit must match: extra workers on a 1-CPU container only
+> add context-switching overhead, while extra CPUs with one worker go unused
+> (the GIL keeps a single process on a single core for CPU-bound work).
+> `python-base` stays at 1 CPU / 1 worker, so `python-improved` vs `python-base`
+> is a clean 2-core-vs-1-core comparison.
+
 ## How each implementation isolates one variable
 
 | Implementation | Algorithm | Concurrency model |

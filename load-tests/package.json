@@ -1,0 +1,12 @@
+{
+  "name": "multithreading-lab-load-tests",
+  "private": true,
+  "scripts": {
+    "run:python-base":     "artillery run --environment python-base artillery.yml",
+    "run:python-improved": "artillery run --environment python-improved artillery.yml",
+    "run:python-indexed":  "artillery run --environment python-indexed artillery.yml",
+    "run:java":            "artillery run --environment java artillery.yml",
+    "run:go":              "artillery run --environment go artillery.yml",
+    "run:cpp":             "artillery run --environment cpp artillery.yml"
+  }
+}
