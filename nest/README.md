@@ -140,4 +140,4 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 |--------------------|---------------------|----------------------------------------------|
 | `ASSETS_ROOT`      | `assets` (relative) | Path to the word list directory              |
 | `PORT`             | `8006`              | HTTP port to listen on                       |
-| `WORKER_POOL_SIZE` | CPU core count      | Number of persistent search worker threads   |
+| `WORKER_POOL_SIZE` | `2`                 | Number of persistent search worker threads   |

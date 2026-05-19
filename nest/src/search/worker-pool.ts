@@ -5,7 +5,6 @@
 // `/search/file` submits one task; `/search/many` submits one task per word
 // length and awaits them all. Idle workers take queued tasks as they free up.
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
-import { cpus } from 'os';
 import { join } from 'path';
 import { Worker } from 'worker_threads';
 import type { WorkerResult, WorkerTask } from './search.worker';
@@ -31,9 +30,12 @@ export class WorkerPool implements OnApplicationShutdown {
   private destroyed = false;
 
   constructor() {
+    // Default to 2, matching the container's `cpus: "2.0"` budget. os.cpus()
+    // is a poor default: inside Docker it reports the VM's core count and
+    // ignores the CPU quota. Override with WORKER_POOL_SIZE for experiments.
     this.size = Math.max(
       1,
-      parseInt(process.env.WORKER_POOL_SIZE || '', 10) || cpus().length,
+      parseInt(process.env.WORKER_POOL_SIZE || '', 10) || 2,
     );
     // Compiled output: dist/search/worker-pool.js sits beside search.worker.js.
     this.workerPath = join(__dirname, 'search.worker.js');
