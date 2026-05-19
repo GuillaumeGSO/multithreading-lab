@@ -8,9 +8,9 @@ Implement, then progressively optimize, identical concurrent programs in:
 
 - **Python** ✅ (baseline + improved + indexed)
 - **Java** ✅ (virtual threads)
-- **Go** _(planned)_
+- **Go** ✅ (goroutines)
 - **C++** _(planned)_
-- **Nest** _(planned)_
+- **Nest** ✅ (worker_threads pool)
 
 The intent is to observe and compare how each language expresses concurrency, what primitives it provides, and how performance characteristics differ — not to build something production-ready.
 
@@ -39,7 +39,8 @@ multithreading-lab/
 ├── python-improved/         # Python with threading / concurrent.futures
 ├── python-indexed/          # Python with pre-built positional + frequency indexes
 ├── java/                    # Spring Boot + virtual threads (Java 21)
-├── go/                      # (planned)
+├── go/                      # net/http + goroutines (Go 1.23)
+├── nest/                    # NestJS + Fastify + worker_threads pool (Node 22)
 ├── cpp/                     # (planned)
 └── docker-compose.yml       # One service per implementation
 ```
@@ -89,7 +90,7 @@ cd load-tests && bash run-all.sh
 npx artillery run --environment <service-name> load-tests/artillery.yml
 ```
 
-The test mix covers 8 scenarios (6 × `search/file`, 2 × `search/many`) with weights biased toward lighter queries.
+The scenario mix is weighted `/health` : `search/file` : `search/many` = 1 : 12 : 24, biasing load toward the multi-length `search/many` queries.
 
 ## Unit tests
 
@@ -102,6 +103,6 @@ Each implementation has its own test suite covering the core search logic. See t
 | python-base     | None (reference) |
 | python-improved | `threading`, `concurrent.futures` (GIL-constrained for CPU work) |
 | Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
-| Go              | Goroutines + channels |
+| Go              | Goroutines + `sync.WaitGroup` |
 | C++             | `std::thread`, `std::mutex`, atomics |
-| Nest             | ToBeDefined |
+| Nest            | `worker_threads` pool (per-length fan-out for `/search/many`) |

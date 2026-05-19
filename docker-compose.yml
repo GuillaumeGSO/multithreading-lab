@@ -59,12 +59,17 @@ services:
           cpus: "2.0"
           memory: 1g
 
-  # cpp:
-  #   build:
-  #     context: .
-  #     dockerfile: cpp/Dockerfile
-  #   ports:
-  #     - "8004:8004"
+  cpp:
+    build:
+      context: .
+      dockerfile: cpp/Dockerfile
+    ports:
+      - "8004:8004"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1g
 
   nest:
     build:
