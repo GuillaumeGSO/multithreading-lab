@@ -96,6 +96,7 @@ int main() {
         port = std::stoi(p);
 
     httplib::Server svr;
+    svr.new_task_queue = [] { return new httplib::ThreadPool(16); };
     svr.Get("/health",       handleHealth);
     svr.Post("/search/file", handleSearchFile);
     svr.Post("/search/many", handleSearchMany);

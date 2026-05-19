@@ -1,14 +1,66 @@
 #include "search.h"
 
 #include <algorithm>
+#include <condition_variable>
 #include <cstdint>
+#include <functional>
 #include <fstream>
+#include <future>
 #include <mutex>
+#include <queue>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <vector>
+
+// ---------------------------------------------------------------------------
+// Bounded thread pool — shared across all inManyFiles calls so total OS
+// threads stay fixed regardless of request concurrency.
+// ---------------------------------------------------------------------------
+namespace {
+class SearchPool {
+public:
+    explicit SearchPool(int n) {
+        for (int i = 0; i < n; i++)
+            workers_.emplace_back([this] { run(); });
+    }
+    ~SearchPool() {
+        { std::lock_guard<std::mutex> l(mu_); stop_ = true; }
+        cv_.notify_all();
+        for (auto& w : workers_) w.join();
+    }
+    std::future<void> post(std::function<void()> f) {
+        auto p = std::make_shared<std::packaged_task<void()>>(std::move(f));
+        auto fut = p->get_future();
+        { std::lock_guard<std::mutex> l(mu_); q_.push([p] { (*p)(); }); }
+        cv_.notify_one();
+        return fut;
+    }
+private:
+    void run() {
+        for (;;) {
+            std::function<void()> task;
+            {
+                std::unique_lock<std::mutex> l(mu_);
+                cv_.wait(l, [this] { return stop_ || !q_.empty(); });
+                if (stop_ && q_.empty()) return;
+                task = std::move(q_.front());
+                q_.pop();
+            }
+            task();
+        }
+    }
+    std::vector<std::thread> workers_;
+    std::queue<std::function<void()>> q_;
+    std::mutex mu_;
+    std::condition_variable cv_;
+    bool stop_ = false;
+};
+
+// 4 workers: enough parallelism per request without thread explosion under load.
+static SearchPool search_pool(std::max(4, static_cast<int>(std::thread::hardware_concurrency()) * 2));
+} // namespace
 
 // assetsRoot reads ASSETS_ROOT env var, defaulting to "assets".
 static std::string assetsRoot() {
@@ -267,20 +319,18 @@ std::vector<std::string> inManyFiles(const std::string& lang,
 
     std::vector<std::string> letters(carsChars);
     int count = maxLen - minLen + 1;
-    // Each thread writes to its own slot; no mutex needed for partials.
+    // Each task writes to its own slot; no mutex needed for partials.
     std::vector<std::vector<std::string>> partials(count);
-    std::vector<std::thread> threads;
-    threads.reserve(count);
+    std::vector<std::future<void>> futs;
+    futs.reserve(count);
 
     for (int idx = 0; idx < count; idx++) {
         int length = maxLen - idx;
-        threads.emplace_back([&, idx, length]() {
-            // Exceptions inside threads would terminate; inFile only throws on
-            // bad params which can't happen here (letters non-empty, length>0).
+        futs.push_back(search_pool.post([&, idx, length]() {
             partials[idx] = inFile(lang, length, letters, hints, false);
-        });
+        }));
     }
-    for (auto& t : threads) t.join();
+    for (auto& f : futs) f.get();
 
     std::vector<std::string> result;
     for (auto& p : partials) {

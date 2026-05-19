@@ -9,7 +9,7 @@ services:
       resources:
         limits:
           cpus: "2.0"
-          memory: 1g
+          memory: 512m
 
   python-improved:
     build:
@@ -21,7 +21,7 @@ services:
       resources:
         limits:
           cpus: "2.0"
-          memory: 1g
+          memory: 512m
 
   python-indexed:
     build:
@@ -33,7 +33,7 @@ services:
       resources:
         limits:
           cpus: "2.0"
-          memory: 1g
+          memory: 512m
 
   java:
     build:
@@ -45,7 +45,7 @@ services:
       resources:
         limits:
           cpus: "2.0"
-          memory: 1g
+          memory: 512m
 
   go:
     build:
@@ -57,7 +57,7 @@ services:
       resources:
         limits:
           cpus: "2.0"
-          memory: 1g
+          memory: 512m
 
   cpp:
     build:
@@ -69,7 +69,7 @@ services:
       resources:
         limits:
           cpus: "2.0"
-          memory: 1g
+          memory: 512m
 
   nest:
     build:
@@ -81,5 +81,5 @@ services:
       resources:
         limits:
           cpus: "2.0"
-          memory: 1g
+          memory: 512m
 
