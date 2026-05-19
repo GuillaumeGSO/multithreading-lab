@@ -136,9 +136,15 @@ std::string unidecode(const std::string& s) {
 // ---------------------------------------------------------------------------
 
 static std::mutex cache_mutex;
-static std::unordered_map<std::string, std::vector<std::string>> word_cache;
+// Cache stores shared_ptr so callers get a reference-counted handle (O(1))
+// rather than a full vector copy (O(n)) on every call. Go returns a slice
+// reference; this is the C++ equivalent.
+static std::unordered_map<std::string,
+                           std::shared_ptr<const std::vector<std::string>>>
+    word_cache;
 
-std::vector<std::string> loadWords(const std::string& lang, int length) {
+std::shared_ptr<const std::vector<std::string>> loadWords(
+    const std::string& lang, int length) {
     std::string key = lang + "/" + std::to_string(length);
     {
         std::lock_guard<std::mutex> lock(cache_mutex);
@@ -146,7 +152,7 @@ std::vector<std::string> loadWords(const std::string& lang, int length) {
         if (it != word_cache.end()) return it->second;
     }
 
-    std::vector<std::string> words;
+    auto words = std::make_shared<std::vector<std::string>>();
     std::string path = assetsRoot() + "/" + lang + "/" +
                        std::to_string(length) + ".txt";
     std::ifstream file(path);
@@ -155,12 +161,13 @@ std::vector<std::string> loadWords(const std::string& lang, int length) {
         while (std::getline(file, line)) {
             // Strip trailing \r (Windows line endings in assets)
             if (!line.empty() && line.back() == '\r') line.pop_back();
-            if (!line.empty()) words.push_back(line);
+            if (!line.empty()) words->push_back(line);
         }
     }
 
     std::lock_guard<std::mutex> lock(cache_mutex);
-    auto [it, inserted] = word_cache.emplace(key, std::move(words));
+    // If another thread raced and inserted first, use its entry.
+    auto [it, inserted] = word_cache.emplace(key, words);
     return it->second;
 }
 
@@ -186,9 +193,10 @@ bool matchesContent(const std::string& word,
     if (word.empty() || noLetters(letters)) return false;
     std::string decoded = unidecode(word);
     // decoded is now ASCII; iterate byte-by-byte (all chars are single-byte).
+    // Use a lambda predicate to avoid constructing a std::string per character.
     for (char ch : decoded) {
-        std::string cs(1, ch);
-        auto it = std::find(letters.begin(), letters.end(), cs);
+        auto it = std::find_if(letters.begin(), letters.end(),
+            [ch](const std::string& s) { return s.size() == 1 && s[0] == ch; });
         if (it == letters.end()) return false;
         if (strict) letters.erase(it);
     }
@@ -230,7 +238,7 @@ std::vector<std::string> inFile(const std::string& lang,
         throw std::runtime_error("letters and hints cannot both be empty");
 
     std::vector<std::string> result;
-    for (const auto& word : loadWords(lang, length)) {
+    for (const auto& word : *loadWords(lang, length)) {
         // Pass letters by value so strict mode can mutate per-word copy.
         bool byContent = matchesContent(word, letters, strict);
         bool byHint = matchesHints(word, hints);

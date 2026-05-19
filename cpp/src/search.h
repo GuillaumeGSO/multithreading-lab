@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -33,10 +34,12 @@ bool matchesContent(const std::string& word,
 
 bool matchesHints(const std::string& word, const std::vector<Hint>& hints);
 
-// loadWords returns the cached word list for (lang, length), reading from
-// assets/{lang}/{length}.txt on first call. Thread-safe via an internal mutex.
+// loadWords returns a shared_ptr to the cached word list for (lang, length),
+// reading from assets/{lang}/{length}.txt on first call. Thread-safe via an
+// internal mutex. Returning shared_ptr avoids copying the full word list on
+// every call — the Go equivalent returns a slice reference (O(1)).
 // A missing file yields an empty vector.
-std::vector<std::string> loadWords(const std::string& lang, int length);
+std::shared_ptr<const std::vector<std::string>> loadWords(const std::string& lang, int length);
 
 // inFile returns all words of exactly `length` codepoints that match the
 // letter pool and/or positional hints. Throws std::runtime_error when length
