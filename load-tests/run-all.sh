@@ -18,6 +18,7 @@ get_port() {
     java)            echo 8002 ;;
     go)              echo 8003 ;;
     cpp)             echo 8004 ;;
+    nest)            echo 8006 ;;
   esac
 }
 
@@ -29,6 +30,7 @@ get_container() {
     java)            echo multithreading-lab-java-1 ;;
     go)              echo multithreading-lab-go-1 ;;
     cpp)             echo multithreading-lab-cpp-1 ;;
+    nest)            echo multithreading-lab-nest-1 ;;
   esac
 }
 
@@ -58,7 +60,7 @@ mkdir -p "$RESULTS_DIR"
 
 ran=()
 
-for env in python-base python-improved python-indexed java go cpp; do
+for env in python-base python-improved python-indexed java go cpp nest; do
   port=$(get_port "$env")
   url="http://localhost:$port"
 

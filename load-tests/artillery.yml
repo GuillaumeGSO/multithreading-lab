@@ -7,6 +7,7 @@ config:
     java:            { target: "http://localhost:8002" }
     go:              { target: "http://localhost:8003" }
     cpp:             { target: "http://localhost:8004" }
+    nest:            { target: "http://localhost:8006" }
   phases:
     - name: Warm up
       duration: 10

@@ -66,10 +66,15 @@ services:
   #   ports:
   #     - "8004:8004"
 
-  # nest:
-  #   build:
-  #     context: .
-  #     dockerfile: nest/Dockerfile
-  #   ports:
-  #     - "8006:8006"
+  nest:
+    build:
+      context: .
+      dockerfile: nest/Dockerfile
+    ports:
+      - "8006:8006"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1g
 

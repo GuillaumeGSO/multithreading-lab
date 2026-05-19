@@ -6,7 +6,7 @@ SCRIPT_DIR = Path(__file__).parent
 RESULTS_DIR = SCRIPT_DIR / "results"
 OUTPUT = SCRIPT_DIR / "compare-report.html"
 
-ENVS = ["python-base", "python-improved", "python-indexed", "java", "go", "cpp"]
+ENVS = ["python-base", "python-improved", "python-indexed", "java", "go", "cpp", "nest"]
 ENDPOINTS = ["/health", "/search/file", "/search/many"]
 
 

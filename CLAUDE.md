@@ -28,7 +28,8 @@ multithreading-lab/
 ├── python-base/        # Reference implementation (no concurrency)
 ├── python-improved/    # Python, same algorithm as base, uvicorn --workers 2
 ├── python-indexed/     # Python with pre-built positional + frequency indexes
-├── docker-compose.yml  # python-base=8000, python-improved=8001, python-indexed=8005, Java=8002, Go=8003, C++=8004
+├── nest/               # Node/NestJS, Fastify, worker_threads pool
+├── docker-compose.yml  # python-base=8000, python-improved=8001, python-indexed=8005, Java=8002, Go=8003, C++=8004, Nest=8006
 └── CLAUDE.md
 ```
 
@@ -38,6 +39,7 @@ Each directory has its own README covering local dev, Docker, and API details:
 - [`python-base/README.md`](python-base/README.md)
 - [`python-improved/README.md`](python-improved/README.md)
 - [`python-indexed/README.md`](python-indexed/README.md)
+- [`nest/README.md`](nest/README.md)
 
 ## Load testing
 
@@ -71,3 +73,4 @@ The test suite must pass before and after any change to `seek_words.py`. The `py
 | Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
 | Go              | Goroutines + `sync.WaitGroup` (per-length fan-out in `/search/many`) |
 | C++             | `std::thread`, `std::mutex`, atomics |
+| Node/NestJS     | `worker_threads` pool — N persistent workers; per-length fan-out in `/search/many` |

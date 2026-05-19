@@ -14,23 +14,23 @@
 </head>
 <body>
   <h1>Comparative Load Test Report</h1>
-  <p><em>2026-05-19</em> — implementations tested: python-base, python-improved, python-indexed, java, go</p>
+  <p><em>2026-05-19</em> — implementations tested: python-base, python-improved, python-indexed, java, go, nest</p>
 
   <h2>Response time by endpoint</h2>
   <table>
     <thead>
-      <tr><th>Endpoint</th><th>Metric</th><th>python-base</th><th>python-improved</th><th>python-indexed</th><th>java</th><th>go</th></tr>
+      <tr><th>Endpoint</th><th>Metric</th><th>python-base</th><th>python-improved</th><th>python-indexed</th><th>java</th><th>go</th><th>nest</th></tr>
     </thead>
     <tbody>
-      <tr><td><code>/health</code></td><td>p50</td><td>3534 ms</td><td>1437 ms</td><td>1 ms</td><td>1 ms</td><td>1 ms</td></tr>
-<tr><td><code>/health</code></td><td>p95</td><td>7261 ms</td><td>2952 ms</td><td>12 ms</td><td>30 ms</td><td>2 ms</td></tr>
-<tr><td><code>/health</code></td><td>p99</td><td>7261 ms</td><td>3262 ms</td><td>15 ms</td><td>37 ms</td><td>3 ms</td></tr>
-<tr><td><code>/search/file</code></td><td>p50</td><td>1108 ms</td><td>1620 ms</td><td>7 ms</td><td>16 ms</td><td>7 ms</td></tr>
-<tr><td><code>/search/file</code></td><td>p95</td><td>6976 ms</td><td>4404 ms</td><td>39 ms</td><td>43 ms</td><td>23 ms</td></tr>
-<tr><td><code>/search/file</code></td><td>p99</td><td>7866 ms</td><td>4965 ms</td><td>95 ms</td><td>61 ms</td><td>29 ms</td></tr>
-<tr><td><code>/search/many</code></td><td>p50</td><td>1130 ms</td><td>2369 ms</td><td>22 ms</td><td>29 ms</td><td>16 ms</td></tr>
-<tr><td><code>/search/many</code></td><td>p95</td><td>7117 ms</td><td>6187 ms</td><td>116 ms</td><td>73 ms</td><td>44 ms</td></tr>
-<tr><td><code>/search/many</code></td><td>p99</td><td>7557 ms</td><td>7261 ms</td><td>187 ms</td><td>93 ms</td><td>59 ms</td></tr>
+      <tr><td><code>/health</code></td><td>p50</td><td>872 ms</td><td>26 ms</td><td>2 ms</td><td>2 ms</td><td>1 ms</td><td>1 ms</td></tr>
+<tr><td><code>/health</code></td><td>p95</td><td>7117 ms</td><td>686 ms</td><td>20 ms</td><td>36 ms</td><td>3 ms</td><td>3 ms</td></tr>
+<tr><td><code>/health</code></td><td>p99</td><td>7117 ms</td><td>773 ms</td><td>39 ms</td><td>43 ms</td><td>10 ms</td><td>3 ms</td></tr>
+<tr><td><code>/search/file</code></td><td>p50</td><td>1380 ms</td><td>156 ms</td><td>8 ms</td><td>17 ms</td><td>9 ms</td><td>10 ms</td></tr>
+<tr><td><code>/search/file</code></td><td>p95</td><td>6703 ms</td><td>1043 ms</td><td>41 ms</td><td>44 ms</td><td>26 ms</td><td>27 ms</td></tr>
+<tr><td><code>/search/file</code></td><td>p99</td><td>6976 ms</td><td>1588 ms</td><td>84 ms</td><td>72 ms</td><td>30 ms</td><td>31 ms</td></tr>
+<tr><td><code>/search/many</code></td><td>p50</td><td>1864 ms</td><td>442 ms</td><td>21 ms</td><td>33 ms</td><td>17 ms</td><td>15 ms</td></tr>
+<tr><td><code>/search/many</code></td><td>p95</td><td>7710 ms</td><td>2019 ms</td><td>123 ms</td><td>82 ms</td><td>44 ms</td><td>30 ms</td></tr>
+<tr><td><code>/search/many</code></td><td>p99</td><td>7866 ms</td><td>2952 ms</td><td>187 ms</td><td>113 ms</td><td>78 ms</td><td>36 ms</td></tr>
 
     </tbody>
   </table>
@@ -38,12 +38,12 @@
   <h2>Overall</h2>
   <table>
     <thead>
-      <tr><th colspan="2">Metric</th><th>python-base</th><th>python-improved</th><th>python-indexed</th><th>java</th><th>go</th></tr>
+      <tr><th colspan="2">Metric</th><th>python-base</th><th>python-improved</th><th>python-indexed</th><th>java</th><th>go</th><th>nest</th></tr>
     </thead>
     <tbody>
-      <tr><td colspan='2'>Total requests</td><td>1877</td><td>1875</td><td>1876</td><td>1879</td><td>1878</td></tr>
-<tr><td colspan='2'>Failures</td><td>1471</td><td>17</td><td>4</td><td>1</td><td>2</td></tr>
-<tr><td colspan='2'>Req/sec</td><td>9</td><td>9</td><td>9</td><td>9</td><td>9</td></tr>
+      <tr><td colspan='2'>Total requests</td><td>1877</td><td>1874</td><td>1877</td><td>1880</td><td>1879</td><td>1876</td></tr>
+<tr><td colspan='2'>Failures</td><td>1508</td><td>6</td><td>3</td><td>0</td><td>1</td><td>4</td></tr>
+<tr><td colspan='2'>Req/sec</td><td>9</td><td>9</td><td>9</td><td>6</td><td>9</td><td>9</td></tr>
 
     </tbody>
   </table>
