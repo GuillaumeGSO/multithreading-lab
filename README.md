@@ -10,6 +10,7 @@ Implement, then progressively optimize, identical concurrent programs in:
 - **Java** ✅ (virtual threads)
 - **Go** _(planned)_
 - **C++** _(planned)_
+- **Nest** _(planned)_
 
 The intent is to observe and compare how each language expresses concurrency, what primitives it provides, and how performance characteristics differ — not to build something production-ready.
 
@@ -73,6 +74,7 @@ docker compose up <service-name>
 | Go              | 8003 |
 | C++             | 8004 |
 | python-indexed  | 8005 |
+| Nest            | 8006 |
 
 ## Load testing
 
@@ -102,3 +104,4 @@ Each implementation has its own test suite covering the core search logic. See t
 | Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
 | Go              | Goroutines + channels |
 | C++             | `std::thread`, `std::mutex`, atomics |
+| Nest             | ToBeDefined |

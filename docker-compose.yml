@@ -8,7 +8,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
+          cpus: "2.0"
           memory: 1g
 
   python-improved:
@@ -32,7 +32,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
+          cpus: "2.0"
           memory: 1g
 
   java:
@@ -44,15 +44,20 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
+          cpus: "2.0"
           memory: 1g
 
-  # go:
-  #   build:
-  #     context: .
-  #     dockerfile: go/Dockerfile
-  #   ports:
-  #     - "8003:8003"
+  go:
+    build:
+      context: .
+      dockerfile: go/Dockerfile
+    ports:
+      - "8003:8003"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1g
 
   # cpp:
   #   build:
@@ -60,3 +65,11 @@ services:
   #     dockerfile: cpp/Dockerfile
   #   ports:
   #     - "8004:8004"
+
+  # nest:
+  #   build:
+  #     context: .
+  #     dockerfile: nest/Dockerfile
+  #   ports:
+  #     - "8006:8006"
+

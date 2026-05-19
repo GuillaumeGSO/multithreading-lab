@@ -46,7 +46,7 @@ scenarios:
             - statusCode: 200
 
   - name: "search/file — randomized"
-    weight: 24
+    weight: 12
     flow:
       - post:
           url: "/search/file"
@@ -55,7 +55,7 @@ scenarios:
             - statusCode: 200
 
   - name: "search/many — randomized"
-    weight: 2
+    weight: 24
     flow:
       - post:
           url: "/search/many"

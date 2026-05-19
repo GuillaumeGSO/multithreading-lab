@@ -26,7 +26,7 @@ multithreading-lab/
 ├── load-tests/
 │   └── artillery.yml   # Single test file, environments select the target
 ├── python-base/        # Reference implementation (no concurrency)
-├── python-improved/    # Python with threading/concurrent.futures
+├── python-improved/    # Python, same algorithm as base, uvicorn --workers 2
 ├── python-indexed/     # Python with pre-built positional + frequency indexes
 ├── docker-compose.yml  # python-base=8000, python-improved=8001, python-indexed=8005, Java=8002, Go=8003, C++=8004
 └── CLAUDE.md
@@ -66,8 +66,8 @@ The test suite must pass before and after any change to `seek_words.py`. The `py
 | Implementation   | Model |
 |-----------------|-------|
 | python-base     | None (single-threaded reference) |
-| python-improved | `threading`, `concurrent.futures` (GIL-constrained for CPU work) |
+| python-improved | Process-level scaling — `uvicorn --workers 2`; same brute-force algorithm as python-base |
 | python-indexed  | Pre-built positional + frequency indexes; O(result) search instead of O(vocabulary) |
 | Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
-| Go              | Goroutines + channels |
+| Go              | Goroutines + `sync.WaitGroup` (per-length fan-out in `/search/many`) |
 | C++             | `std::thread`, `std::mutex`, atomics |
