@@ -279,18 +279,17 @@ bool matchesHints(const std::string& word, const std::vector<Hint>& hints) {
 // Search entry points
 // ---------------------------------------------------------------------------
 
-std::vector<std::string> inFile(const std::string& lang,
-                                int length,
-                                const std::vector<std::string>& letters,
-                                const std::vector<Hint>& hints,
-                                bool strict) {
-    bool emptyLetters = noLetters(letters);
-    bool emptyHints = noHints(hints);
-    if (length == 0 || (emptyLetters && emptyHints))
-        throw std::runtime_error("letters and hints cannot both be empty");
-
+// scanWords filters words[start, end) by the letter pool and/or hints, in
+// order. It is the single per-word predicate shared by the sequential and
+// parallel paths, so they always agree on matches and ordering.
+static std::vector<std::string> scanWords(const std::vector<std::string>& words,
+                                          size_t start, size_t end,
+                                          const std::vector<std::string>& letters,
+                                          const std::vector<Hint>& hints,
+                                          bool strict, bool emptyLetters, bool emptyHints) {
     std::vector<std::string> result;
-    for (const auto& word : *loadWords(lang, length)) {
+    for (size_t i = start; i < end; i++) {
+        const auto& word = words[i];
         // Pass letters by value so strict mode can mutate per-word copy.
         bool byContent = matchesContent(word, letters, strict);
         bool byHint = matchesHints(word, hints);
@@ -303,31 +302,40 @@ std::vector<std::string> inFile(const std::string& lang,
     return result;
 }
 
-std::vector<std::string> inManyFiles(const std::string& lang,
-                                     const std::string& cars,
-                                     const std::vector<Hint>& hints) {
+// planLengths returns the lengths to scan (longest-first) and the letter pool
+// for the inManyFiles* family. Returns an empty length list when no length can
+// satisfy the hints.
+static std::pair<std::vector<int>, std::vector<std::string>> planLengths(
+    const std::string& cars, const std::vector<Hint>& hints) {
     auto carsChars = utf8Split(cars);
     int maxLen = static_cast<int>(carsChars.size());
-
-    // A normal hint at position N forces words of length >= N.
     int minLen = 1;
     for (const auto& h : hints) {
         if (h.car && !h.car->empty() && !h.inverted && h.pos > minLen)
             minLen = h.pos;
     }
-    if (maxLen < minLen) return {};
+    std::vector<int> lengths;
+    if (maxLen >= minLen) {
+        for (int l = maxLen; l >= minLen; l--) lengths.push_back(l);
+    }
+    return {lengths, carsChars};
+}
 
-    std::vector<std::string> letters(carsChars);
-    int count = maxLen - minLen + 1;
-    // Each task writes to its own slot; no mutex needed for partials.
-    std::vector<std::vector<std::string>> partials(count);
+// manyFanOut runs `scan` for each planned length on the shared pool and
+// reassembles results longest-first.
+static std::vector<std::string> manyFanOut(
+    const std::string& cars, const std::vector<Hint>& hints,
+    const std::function<std::vector<std::string>(int length, const std::vector<std::string>& letters)>& scan) {
+    auto [lengths, letters] = planLengths(cars, hints);
+    if (lengths.empty()) return {};
+
+    std::vector<std::vector<std::string>> partials(lengths.size());
     std::vector<std::future<void>> futs;
-    futs.reserve(count);
-
-    for (int idx = 0; idx < count; idx++) {
-        int length = maxLen - idx;
+    futs.reserve(lengths.size());
+    for (size_t idx = 0; idx < lengths.size(); idx++) {
+        int length = lengths[idx];
         futs.push_back(search_pool.post([&, idx, length]() {
-            partials[idx] = inFile(lang, length, letters, hints, false);
+            partials[idx] = scan(length, letters);
         }));
     }
     for (auto& f : futs) f.get();
@@ -339,4 +347,101 @@ std::vector<std::string> inManyFiles(const std::string& lang,
                       std::make_move_iterator(p.end()));
     }
     return result;
+}
+
+int splitDegree() {
+    const char* v = std::getenv("SPLIT_DEGREE");
+    if (v && v[0]) {
+        try {
+            int n = std::stoi(v);
+            if (n > 0) return n;
+        } catch (...) {
+        }
+    }
+    return 2;
+}
+
+std::vector<std::string> inFile(const std::string& lang,
+                                int length,
+                                const std::vector<std::string>& letters,
+                                const std::vector<Hint>& hints,
+                                bool strict) {
+    bool emptyLetters = noLetters(letters);
+    bool emptyHints = noHints(hints);
+    if (length == 0 || (emptyLetters && emptyHints))
+        throw std::runtime_error("letters and hints cannot both be empty");
+
+    auto words = loadWords(lang, length);
+    return scanWords(*words, 0, words->size(), letters, hints, strict, emptyLetters, emptyHints);
+}
+
+std::vector<std::string> inFileSplit(const std::string& lang,
+                                     int length,
+                                     const std::vector<std::string>& letters,
+                                     const std::vector<Hint>& hints,
+                                     bool strict,
+                                     int threads) {
+    bool emptyLetters = noLetters(letters);
+    bool emptyHints = noHints(hints);
+    if (length == 0 || (emptyLetters && emptyHints))
+        throw std::runtime_error("letters and hints cannot both be empty");
+
+    auto words = loadWords(lang, length);
+    size_t total = words->size();
+    int n = threads < 1 ? 1 : threads;
+    if (static_cast<size_t>(n) > total) n = static_cast<int>(total);
+    if (n <= 1)
+        return scanWords(*words, 0, total, letters, hints, strict, emptyLetters, emptyHints);
+
+    size_t chunk = (total + n - 1) / n; // ceil keeps chunks contiguous
+    std::vector<std::vector<std::string>> partials(n);
+    std::vector<std::thread> ths;
+    ths.reserve(n);
+    for (int idx = 0; idx < n; idx++) {
+        size_t start = std::min(static_cast<size_t>(idx) * chunk, total);
+        size_t end = std::min(start + chunk, total);
+        ths.emplace_back([&, idx, start, end]() {
+            partials[idx] = scanWords(*words, start, end, letters, hints, strict, emptyLetters, emptyHints);
+        });
+    }
+    for (auto& t : ths) t.join();
+
+    std::vector<std::string> result;
+    for (auto& p : partials) {
+        result.insert(result.end(),
+                      std::make_move_iterator(p.begin()),
+                      std::make_move_iterator(p.end()));
+    }
+    return result;
+}
+
+std::vector<std::string> inManyFilesSeq(const std::string& lang,
+                                        const std::string& cars,
+                                        const std::vector<Hint>& hints) {
+    auto [lengths, letters] = planLengths(cars, hints);
+    std::vector<std::string> result;
+    for (int length : lengths) {
+        auto w = inFile(lang, length, letters, hints, false);
+        result.insert(result.end(),
+                      std::make_move_iterator(w.begin()),
+                      std::make_move_iterator(w.end()));
+    }
+    return result;
+}
+
+std::vector<std::string> inManyFiles(const std::string& lang,
+                                     const std::string& cars,
+                                     const std::vector<Hint>& hints) {
+    return manyFanOut(cars, hints, [&](int length, const std::vector<std::string>& letters) {
+        return inFile(lang, length, letters, hints, false);
+    });
+}
+
+std::vector<std::string> inManyFilesNested(const std::string& lang,
+                                           const std::string& cars,
+                                           const std::vector<Hint>& hints,
+                                           int threads) {
+    return manyFanOut(cars, hints, [&](int length, const std::vector<std::string>& letters) {
+        return inFileSplit(lang, length, letters, hints, false, threads);
+    });
 }

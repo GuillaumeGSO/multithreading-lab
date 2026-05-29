@@ -53,6 +53,27 @@ uv run --project python python python/main.py
 # → prints results and writes python/report.html
 ```
 
+## Parallel modes & in-process benchmark
+
+`parallel.py` adds threaded variants of the search used by the cross-language
+in-process benchmark in [`../benchmarks/`](../benchmarks/) and, when
+`SEARCH_MODE=parallel` (the default), by the live API:
+
+- **split** — `/search/file` scans the word list in `SPLIT_DEGREE` contiguous
+  chunks across `threading` threads.
+- **nested** — `/search/many` fans out per length, each length also split.
+
+Because of the GIL these rarely beat the single-threaded baseline — that is the
+intended lesson (Python scales at the process layer, see `python-improved`).
+Output is byte-identical to baseline (`test_parallel.py` asserts this).
+
+```bash
+# Cross-language chart (from repo root)
+cd benchmarks && bash run-all.sh
+# This implementation's runner, inside its container:
+docker compose run --rm --entrypoint .venv/bin/python python-base bench.py
+```
+
 ## API
 
 ### `GET /health`
@@ -98,3 +119,5 @@ Search words across all lengths up to `len(cars)`.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ASSETS_ROOT` | `../assets` relative to `seek_words.py` | Path to the word list directory |
+| `SEARCH_MODE` | `parallel` | `parallel` routes the API through the threaded variants; `baseline` uses the single-threaded path |
+| `SPLIT_DEGREE` | `2` | Intra-file chunk count for the `split`/`nested` modes |

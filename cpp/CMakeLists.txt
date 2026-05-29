@@ -36,6 +36,13 @@ if(UNIX)
   target_link_libraries(search PRIVATE pthread)
 endif()
 
+# Benchmark executable (no httplib — runs the algorithm in-process, emits JSON)
+add_executable(bench src/bench.cpp src/search.cpp)
+target_link_libraries(bench PRIVATE nlohmann_json::nlohmann_json)
+if(UNIX)
+  target_link_libraries(bench PRIVATE pthread)
+endif()
+
 # Test executable (no httplib dependency — pure algorithm tests)
 add_executable(test_search test/test_search.cpp src/search.cpp)
 target_include_directories(test_search PRIVATE ${doctest_SOURCE_DIR})

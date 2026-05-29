@@ -11,6 +11,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /build/target/search-*.jar app.jar
 COPY assets/ /app/assets/
+COPY benchmarks/cases.json /app/cases.json
 ENV ASSETS_ROOT=/app/assets
 EXPOSE 8002
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

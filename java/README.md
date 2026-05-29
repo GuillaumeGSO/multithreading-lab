@@ -11,6 +11,25 @@ Virtual threads are used at two independent levels:
 1. **HTTP layer** — `spring.threads.virtual.enabled=true` makes Tomcat dispatch each incoming request on its own virtual thread, so all endpoints handle concurrent requests without a fixed thread pool
 2. **Search layer** — `WordSearchService.searchInManyFiles` spawns one virtual thread per word length via `Executors.newVirtualThreadPerTaskExecutor()`, so all file scans for a single `/search/many` request run in parallel and results are collected in longest-first order
 
+### Parallel modes & in-process benchmark
+
+`WordSearchService` also adds an **intra-file split** (`fileSplit` — virtual
+threads over contiguous chunks) and a **nested** mode (`manyNested` — per-length
+fan-out where each length is also split). `SEARCH_MODE=parallel` (default) routes
+`/search/file` → split and `/search/many` → nested; `SEARCH_MODE=baseline`
+restores the original fan-out. Virtual threads are cheap, so `nested` is absorbed
+by the carrier pool rather than exploding. Output is identical to baseline
+(`WordSearchServiceTest` asserts it).
+
+```bash
+# Cross-language chart (from repo root)
+cd benchmarks && bash run-all.sh
+# This implementation's runner (plain main via the Boot jar's PropertiesLauncher):
+docker compose run --rm --entrypoint java java \
+  -Dloader.main=com.lab.search.BenchmarkRunner -cp /app/app.jar \
+  org.springframework.boot.loader.launch.PropertiesLauncher
+```
+
 ## Structure
 
 ```
@@ -105,6 +124,8 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ASSETS_ROOT` | `assets` (relative) | Path to the word list directory |
+| `SEARCH_MODE` | `parallel` | `parallel` routes the API through split/nested; `baseline` restores the original fan-out |
+| `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |
 
 ## Load test results (2026-05-15)
 

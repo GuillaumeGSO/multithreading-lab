@@ -126,4 +126,38 @@ class WordSearchServiceTest {
                 List.of(new Hint(4, "z", true)));
         assertTrue(r.words().stream().anyMatch(w -> w.length() < 4));
     }
+
+    // --- parallel variants must match the baseline byte-for-byte (same order) ---
+
+    @Test void fileSplitMatchesBaselineForAllDegrees() {
+        record Case(int len, List<String> cars, List<Hint> hints, boolean strict) {}
+        List<Case> cases = List.of(
+                new Case(5, List.of("e","l","i","s","a"), List.of(), true),
+                new Case(5, List.of("e","l","i","s","a"), List.of(), false),
+                new Case(5, List.of(), List.of(new Hint(1,"s",false), new Hint(3,"a",false), new Hint(5,"e",false)), false),
+                new Case(5, List.of("e","l","i","s","a"), List.of(new Hint(1,"l",false), new Hint(5,"s",false)), false)
+        );
+        for (Case c : cases) {
+            List<String> want = service.fileBaseline("fr", c.len(), c.cars(), c.hints(), c.strict());
+            for (int threads : new int[]{1, 2, 3, 5}) {
+                assertEquals(want, service.fileSplit("fr", c.len(), c.cars(), c.hints(), c.strict(), threads),
+                        "fileSplit(threads=" + threads + ") must equal fileBaseline");
+            }
+        }
+    }
+
+    @Test void manyParallelMatchesBaselineForAllDegrees() {
+        List<List<Hint>> hintSets = List.of(
+                List.of(),
+                List.of(new Hint(4, "a", false), new Hint(1, "a", true))
+        );
+        for (List<Hint> hints : hintSets) {
+            List<String> want = service.manyBaseline("fr", "guillaume", hints);
+            assertEquals(want, service.manyFanout("fr", "guillaume", hints));
+            for (int threads : new int[]{1, 2, 3}) {
+                assertEquals(want, service.manyNested("fr", "guillaume", hints, threads),
+                        "manyNested(threads=" + threads + ") must equal manyBaseline");
+            }
+        }
+    }
 }

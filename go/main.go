@@ -5,9 +5,15 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 
 	"multithreading-lab/go/search"
 )
+
+// parallelMode routes /search through the threaded variants (intra-file split
+// for /file, nested per-length fan-out for /many) unless SEARCH_MODE=baseline,
+// which restores the original per-endpoint behavior.
+var parallelMode = os.Getenv("SEARCH_MODE") != "baseline"
 
 // hint is the JSON shape of a positional hint in a request body.
 type hint struct {
@@ -80,7 +86,13 @@ func handleSearchFile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	words, err := search.InFile(defaultLang(req.Lang), req.NbCar, req.LstCar, toSearchHints(req.LstHint), req.Strict)
+	var words []string
+	var err error
+	if parallelMode {
+		words, err = search.InFileSplit(defaultLang(req.Lang), req.NbCar, req.LstCar, toSearchHints(req.LstHint), req.Strict, search.SplitDegree())
+	} else {
+		words, err = search.InFile(defaultLang(req.Lang), req.NbCar, req.LstCar, toSearchHints(req.LstHint), req.Strict)
+	}
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -94,7 +106,13 @@ func handleSearchMany(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	words, err := search.InManyFiles(defaultLang(req.Lang), req.Cars, toSearchHints(req.LstHint))
+	var words []string
+	var err error
+	if parallelMode {
+		words, err = search.InManyFilesNested(defaultLang(req.Lang), req.Cars, toSearchHints(req.LstHint), search.SplitDegree())
+	} else {
+		words, err = search.InManyFiles(defaultLang(req.Lang), req.Cars, toSearchHints(req.LstHint))
+	}
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
