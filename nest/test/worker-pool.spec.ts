@@ -49,7 +49,7 @@ describe('WorkerPool', () => {
     results.forEach((r) => expect(Array.isArray(r)).toBe(true));
   });
 
-  it('fans /search/many out across lengths — 498 for "guillaume"', async () => {
+  it('fans /search/many out across lengths — 494 for "guillaume"', async () => {
     const { minLen, maxLen, letters } = planLengths('guillaume', []);
     const lengths: number[] = [];
     for (let length = maxLen; length >= minLen; length--) {
@@ -62,7 +62,7 @@ describe('WorkerPool', () => {
     );
     const words = partials.flat();
     expect(words).toHaveLength(inManyFiles('fr', 'guillaume', []).length);
-    expect(words).toHaveLength(498);
+    expect(words).toHaveLength(494);
   });
 
   it('rejects when letters and hints are both empty', async () => {

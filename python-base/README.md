@@ -111,7 +111,7 @@ Search words across all lengths up to `len(cars)`.
 {"lang": "fr", "cars": "guillaume", "lst_hint": []}
 
 // Response
-{"words": [...], "count": 498}
+{"words": [...], "count": 494}
 ```
 
 ## Environment variables

@@ -93,7 +93,7 @@ docker run -p 8004:8004 seek-words-cpp
 - `matchesContent`: basic match, missing letter, strict mode, accent (`île`)
 - `matchesHints`: match, inverted, out-of-range, null car, multiple hints
 - `inFile` integration: 8 / 8 / 11 results against real `assets/fr/5.txt`
-- `inManyFiles` integration: 498 results for "guillaume", longest-first order
+- `inManyFiles` integration: 494 results for "guillaume", longest-first order
 - Error cases: empty params throw, missing file returns `[]`
 
 ```bash

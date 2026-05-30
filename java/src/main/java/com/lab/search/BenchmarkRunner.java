@@ -1,7 +1,5 @@
 package com.lab.search;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lab.search.model.Hint;
 import com.lab.search.service.WordSearchService;
 
@@ -18,19 +16,22 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-/**
- * In-process benchmark for the Java implementation. Runs the algorithm directly
- * (no HTTP), timing each canonical case per concurrency mode with warmup +
- * median-of-N, and prints a single JSON report to stdout (logs go to stderr).
- *
- * Launched as a plain main (no Spring context) via the Boot jar's
- * PropertiesLauncher, so stdout carries only the JSON report:
- *   java -Dloader.main=com.lab.search.BenchmarkRunner -cp app.jar \
- *        org.springframework.boot.loader.launch.PropertiesLauncher
- */
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+/// In-process benchmark for the Java implementation. Runs the algorithm directly
+/// (no HTTP), timing each canonical case per concurrency mode with warmup +
+/// median-of-N, and prints a single JSON report to stdout (logs go to stderr).
+///
+/// Launched as a plain main (no Spring context) via the Boot jar's
+/// PropertiesLauncher, so stdout carries only the JSON report:
+/// ```
+/// java -Dloader.main=com.lab.search.BenchmarkRunner -cp app.jar \
+///      org.springframework.boot.loader.launch.PropertiesLauncher
+/// ```
 public final class BenchmarkRunner {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
     private static int envInt(String key, int def) {
         String v = System.getenv(key);

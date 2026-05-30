@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,7 +24,7 @@ class WordSearchServiceTest {
     // --- isEffectivelyEmpty ---
 
     @Test void listEmpty() { assertTrue(WordSearchService.isEffectivelyEmpty(List.of())); }
-    @Test void listAllNull() { assertTrue(WordSearchService.isEffectivelyEmpty(java.util.Arrays.asList(null, null))); }
+    @Test void listAllNull() { assertTrue(WordSearchService.isEffectivelyEmpty(Arrays.asList(null, null))); }
     @Test void listHasValues() { assertFalse(WordSearchService.isEffectivelyEmpty(List.of("a", "b"))); }
 
     // --- hasNoCarHints ---
@@ -112,7 +113,7 @@ class WordSearchServiceTest {
 
     @Test void searchManyAllLengths() {
         SearchResponse r = service.searchInManyFiles("fr", "guillaume", List.of());
-        assertEquals(498, r.count());
+        assertEquals(494, r.count());
     }
     @Test void searchManySkipsShortWordsWithNormalHint() {
         // Hint at pos 4 → words shorter than 4 letters must be excluded

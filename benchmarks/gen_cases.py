@@ -17,6 +17,12 @@ Design choices:
   * /search/many hints are inverted-heavy: a normal hint at position N forces
     words of length >= N (shrinking the fan-out), while inverted hints leave all
     lengths in play, so every length file is still scanned with the full hint cost.
+  * Each case is **seeded from a real word** picked from the dictionary, then its
+    pool and hints are derived from that word — so every case is guaranteed to
+    return >= 1 result while keeping the scan cost (file length, hint count,
+    inverted ratio) identical. Seeds are accent-free (^[a-z]+$) words because the
+    content check unidecodes the word but the hint check compares raw characters;
+    ASCII-only seeds keep the two in agreement.
 
 Deterministic (fixed seed), written once to cases.json, so every language reads
 identical inputs — keeping the cross-language correctness check intact.
@@ -26,38 +32,67 @@ Re-run after tuning SEED / sizes:  python3 gen_cases.py
 import json
 import os
 import random
+import re
 
-SEED = 1234
+SEED = 42
 ALPHABET = "abcdefghijklmnopqrstuvwxyz"
-VOWELS = "aeiou"
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "cases.json")
+ASSETS_ROOT = os.path.join(HERE, "..", "assets")
+ASCII_WORD = re.compile(r"^[a-z]+$")
 
 rng = random.Random(SEED)
 
 
-def pool(size: int) -> list[str]:
-    """A letter pool of `size` distinct letters, vowel-biased so many words match."""
+def pick_word(lang: str, length: int) -> str:
+    """A random accent-free (^[a-z]+$) word of `length`. ASCII-only so the
+    content check (which unidecodes the word) and the hint check (which compares
+    raw characters) agree — letting us seed both the pool and the hints from it."""
+    path = os.path.join(ASSETS_ROOT, lang, f"{length}.txt")
+    with open(path, encoding="utf-8") as f:
+        words = [w for w in (line.strip() for line in f) if ASCII_WORD.match(w)]
+    if not words:
+        raise SystemExit(f"no accent-free word of length {length} in {lang}")
+    return rng.choice(words)
+
+
+def seeded_pool(word: str, size: int, strict: bool) -> list[str]:
+    """A letter pool of `size` letters that `word` satisfies under the content
+    check. Always contains all of `word`'s letters — its exact *multiset* when
+    `strict` (the check consumes each matched letter), or just its distinct
+    letters otherwise — padded with extra random letters up to `size`.
+    `size == 0` means a hint-only case (no content check)."""
     if size == 0:
         return []
-    letters = set(rng.sample(VOWELS, k=min(4, size)))
+    if strict:
+        letters = list(word)
+        pad = [c for c in ALPHABET if c not in word]
+        rng.shuffle(pad)
+        letters += pad[:max(0, size - len(letters))]
+        rng.shuffle(letters)
+        return letters
+    letters = set(word)
     while len(letters) < size:
         letters.add(rng.choice(ALPHABET))
     return sorted(letters)
 
 
-def hints(count: int, max_pos: int, inverted_ratio: float) -> list[dict]:
-    """`count` positional hints over positions [1, max_pos]. Inverted hints
-    (word[pos] != car) keep most words matching; normal hints pin an exact
-    letter. `inverted_ratio` is the share that are inverted."""
+def seeded_hints(word: str, count: int, inverted_ratio: float) -> list[dict]:
+    """`count` hints on **distinct** positions, derived from `word` so `word`
+    satisfies every one: a non-inverted hint pins `word[pos]`; an inverted hint
+    forbids a letter `word` does *not* have at that position. `inverted_ratio` is
+    the share that are inverted. Distinct positions keep hints non-contradictory."""
     out = []
-    for _ in range(count):
-        inverted = rng.random() < inverted_ratio
-        out.append({
-            "pos": rng.randint(1, max_pos),
-            "car": rng.choice(ALPHABET),
-            "inverted": inverted,
-        })
+    positions = rng.sample(range(1, len(word) + 1), k=min(count, len(word)))
+    for pos in positions:
+        actual = word[pos - 1]
+        if rng.random() < inverted_ratio:
+            car = rng.choice([c for c in ALPHABET if c != actual])
+            inverted = True
+        else:
+            car = actual
+            inverted = False
+        out.append({"pos": pos, "car": car, "inverted": inverted})
     return out
 
 
@@ -75,8 +110,9 @@ def main():
         (13, 26, False, 4, 0.5),
     ]
     for nb_car, psize, strict, nh, inv_ratio in file_specs:
-        lst_car = pool(psize)
-        lst_hint = hints(nh, nb_car, inv_ratio)
+        seed = pick_word("fr", nb_car)
+        lst_car = seeded_pool(seed, psize, strict)
+        lst_hint = seeded_hints(seed, nh, inv_ratio)
         kind = "hint-only" if psize == 0 else f"pool={psize}"
         name = f"file len={nb_car} {kind} {nh}hints" + (" strict" if strict else "")
         cases.append({
@@ -96,12 +132,17 @@ def main():
         (22, 12),
     ]
     for clen, nh in many_specs:
-        letters = pool(min(clen, 26))
+        seed = pick_word("fr", clen)
+        # cars is both the letter pool and the max length scanned (len(cars)), so
+        # build it to length clen and include every letter of the seed word.
+        letters = list(dict.fromkeys(seed))          # seed's distinct letters
+        pad = [c for c in ALPHABET if c not in seed]
+        rng.shuffle(pad)
         while len(letters) < clen:
-            letters.append(rng.choice(ALPHABET))
+            letters.append(pad.pop())
         rng.shuffle(letters)
-        cars = "".join(letters[:clen])
-        lst_hint = hints(nh, clen, inverted_ratio=1.0)
+        cars = "".join(letters)
+        lst_hint = seeded_hints(seed, nh, inverted_ratio=1.0)
         name = f"many cars={clen} {nh}hints(inv)"
         cases.append({
             "name": name, "kind": "many", "lang": "fr",

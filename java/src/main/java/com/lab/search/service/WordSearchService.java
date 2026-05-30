@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
@@ -40,11 +39,11 @@ public class WordSearchService {
     }
 
     private static String envOr(String key, String def) {
-        String v = System.getenv(key);
+        var v = System.getenv(key);
         return v != null && !v.isEmpty() ? v : def;
     }
 
-    /** Chunks per file (axis B). SPLIT_DEGREE env, default 2 ("halves"). */
+    /// Chunks per file (axis B). `SPLIT_DEGREE` env, default 2 ("halves").
     private static int parseSplitDegree() {
         try {
             int n = Integer.parseInt(envOr("SPLIT_DEGREE", "2"));
@@ -61,14 +60,14 @@ public class WordSearchService {
     // --- API entry points (controller) ---
 
     public SearchResponse searchInFile(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict) {
-        List<String> words = parallel
+        var words = parallel
                 ? fileSplit(lang, nbCar, lstCar, lstHint, strict, splitDegree)
                 : fileBaseline(lang, nbCar, lstCar, lstHint, strict);
         return SearchResponse.of(words);
     }
 
     public SearchResponse searchInManyFiles(String lang, String cars, List<Hint> lstHint) {
-        List<String> words = parallel
+        var words = parallel
                 ? manyNested(lang, cars, lstHint, splitDegree)
                 : manyFanout(lang, cars, lstHint);
         return SearchResponse.of(words);
@@ -76,10 +75,10 @@ public class WordSearchService {
 
     // --- search modes (also called directly by the benchmark) ---
 
-    /** scan filters words[from, to) by the letter pool and/or hints, in order.
-     *  Single per-word predicate shared by sequential and parallel paths, so
-     *  they always agree on matches and ordering. Thread-safe over a shared
-     *  lstCar (matchesContent copies internally for strict mode). */
+    /// scan filters words[from, to) by the letter pool and/or hints, in order.
+    /// Single per-word predicate shared by sequential and parallel paths, so
+    /// they always agree on matches and ordering. Thread-safe over a shared
+    /// lstCar (matchesContent copies internally for strict mode).
     private List<String> scan(List<String> words, int from, int to, List<String> lstCar,
                               List<Hint> lstHint, boolean strict, boolean emptyCars, boolean emptyHints) {
         List<String> results = new ArrayList<>();
@@ -94,23 +93,23 @@ public class WordSearchService {
         return results;
     }
 
-    /** Baseline single-threaded file scan. */
+    /// Baseline single-threaded file scan.
     public List<String> fileBaseline(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict) {
         if (isEffectivelyEmpty(lstCar) && hasNoCarHints(lstHint)) {
             throw new IllegalArgumentException("Either lst_car or lst_hint must be provided");
         }
-        List<String> words = loadWords(lang, nbCar);
+        var words = loadWords(lang, nbCar);
         return scan(words, 0, words.size(), lstCar, lstHint, strict,
                 isEffectivelyEmpty(lstCar), hasNoCarHints(lstHint));
     }
 
-    /** Intra-file split (axis B): word list scanned in `threads` contiguous
-     *  chunks on virtual threads, merged in index order (== fileBaseline). */
+    /// Intra-file split (axis B): word list scanned in `threads` contiguous
+    /// chunks on virtual threads, merged in index order (== fileBaseline).
     public List<String> fileSplit(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict, int threads) {
         if (isEffectivelyEmpty(lstCar) && hasNoCarHints(lstHint)) {
             throw new IllegalArgumentException("Either lst_car or lst_hint must be provided");
         }
-        List<String> words = loadWords(lang, nbCar);
+        var words = loadWords(lang, nbCar);
         boolean emptyCars = isEffectivelyEmpty(lstCar);
         boolean emptyHints = hasNoCarHints(lstHint);
         int n = Math.max(1, Math.min(threads, Math.max(1, words.size())));
@@ -118,8 +117,8 @@ public class WordSearchService {
             return scan(words, 0, words.size(), lstCar, lstHint, strict, emptyCars, emptyHints);
         }
         int chunk = (words.size() + n - 1) / n; // ceil keeps chunks contiguous
-        List<Future<List<String>>> futures = new ArrayList<>();
-        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        var futures = new ArrayList<Future<List<String>>>();
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             for (int idx = 0; idx < n; idx++) {
                 final int start = Math.min(idx * chunk, words.size());
                 final int end = Math.min(start + chunk, words.size());
@@ -127,21 +126,10 @@ public class WordSearchService {
                         scan(words, start, end, lstCar, lstHint, strict, emptyCars, emptyHints)));
             }
         }
-        List<String> result = new ArrayList<>();
-        for (Future<List<String>> f : futures) {
-            try {
-                result.addAll(f.get());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e.getCause());
-            }
-        }
-        return result;
+        return drain(futures, false);
     }
 
-    /** Baseline sequential scan across every length (no concurrency). */
+    /// Baseline sequential scan across every length (no concurrency).
     public List<String> manyBaseline(String lang, String cars, List<Hint> lstHint) {
         validateCars(cars);
         int minLen = minLength(lstHint);
@@ -158,14 +146,14 @@ public class WordSearchService {
         return results;
     }
 
-    /** Per-length fan-out (axis A) over virtual threads. (Original Java model.) */
+    /// Per-length fan-out (axis A) over virtual threads. (Original Java model.)
     public List<String> manyFanout(String lang, String cars, List<Hint> lstHint) {
         return manyParallel(cars, lstHint, (len, lstCar) -> fileBaseline(lang, len, lstCar, lstHint, false));
     }
 
-    /** Nested: per-length fan-out (axis A) AND each length split into `threads`
-     *  chunks (axis B) — virtual threads spawning virtual threads. Output is
-     *  identical to manyFanout. */
+    /// Nested: per-length fan-out (axis A) AND each length split into `threads`
+    /// chunks (axis B) — virtual threads spawning virtual threads. Output is
+    /// identical to manyFanout.
     public List<String> manyNested(String lang, String cars, List<Hint> lstHint, int threads) {
         return manyParallel(cars, lstHint, (len, lstCar) -> fileSplit(lang, len, lstCar, lstHint, false, threads));
     }
@@ -175,8 +163,8 @@ public class WordSearchService {
         validateCars(cars);
         int minLen = minLength(lstHint);
         int maxLen = cars.length();
-        List<Future<List<String>>> futures = new ArrayList<>();
-        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        var futures = new ArrayList<Future<List<String>>>();
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             for (int len = maxLen; len >= minLen; len--) {
                 final int nbCar = len;
                 futures.add(executor.submit(() -> {
@@ -185,15 +173,27 @@ public class WordSearchService {
                 }));
             }
         }
+        // skipFailures=true: a length with no word file surfaces as an
+        // ExecutionException and is skipped (matches manyBaseline's catch).
+        return drain(futures, true);
+    }
+
+    /// Merges chunk/length futures in submit order (preserving the baseline
+    /// ordering). `skipFailures` mirrors manyParallel's tolerance of missing
+    /// word files: when true an ExecutionException is swallowed, otherwise its
+    /// cause is rethrown.
+    private static List<String> drain(List<Future<List<String>>> futures, boolean skipFailures) {
         List<String> results = new ArrayList<>();
-        for (Future<List<String>> f : futures) {
+        for (var f : futures) {
             try {
                 results.addAll(f.get());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             } catch (ExecutionException e) {
-                // skip lengths with no word file
+                if (!skipFailures) {
+                    throw new RuntimeException(e.getCause());
+                }
             }
         }
         return results;
@@ -205,7 +205,7 @@ public class WordSearchService {
         }
     }
 
-    /** A normal (non-inverted) hint at position N forces words of length >= N. */
+    /// A normal (non-inverted) hint at position N forces words of length >= N.
     private static int minLength(List<Hint> lstHint) {
         return lstHint.stream()
                 .filter(h -> h.car() != null && !h.inverted())
@@ -217,9 +217,9 @@ public class WordSearchService {
     // --- helpers ---
 
     private List<String> loadWords(String lang, int nbCar) {
-        String key = lang + "/" + nbCar;
+        var key = lang + "/" + nbCar;
         return wordCache.computeIfAbsent(key, k -> {
-            Path file = assetsRoot.resolve(lang).resolve(nbCar + ".txt");
+            var file = assetsRoot.resolve(lang).resolve(nbCar + ".txt");
             try {
                 return Files.readAllLines(file);
             } catch (IOException e) {
@@ -228,7 +228,7 @@ public class WordSearchService {
         });
     }
 
-    /** Normalize accents: "éàü" → "eau" (NFD + strip combining marks). */
+    /// Normalize accents: "éàü" → "eau" (NFD + strip combining marks).
     private static String normalize(String s) {
         return Normalizer.normalize(s, Normalizer.Form.NFD)
                 .replaceAll("\\p{InCombiningDiacriticalMarks}", "");

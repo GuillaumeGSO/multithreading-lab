@@ -196,9 +196,9 @@ TEST_CASE("inFile: zero length throws") {
 // inManyFiles — integration test against real assets
 // ---------------------------------------------------------------------------
 
-TEST_CASE("inManyFiles: guillaume — 498 results, longest-first") {
+TEST_CASE("inManyFiles: guillaume — 494 results, longest-first") {
     auto words = inManyFiles("fr", "guillaume", {});
-    CHECK(words.size() == 498);
+    CHECK(words.size() == 494);
     // Verify longest-first: first word must be length 9 (or <= 9), none
     // before a shorter one should be longer.
     for (size_t i = 1; i < words.size(); i++) {

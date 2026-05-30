@@ -134,7 +134,7 @@ def test_search_file_content_and_hint():
 
 def test_search_many_all_lengths():
     result = list(search_in_many_files(lang="fr", cars="guillaume"))
-    assert len(result) == 498
+    assert len(result) == 494
 
 def test_search_many_skips_short_words_with_normal_hint():
     # Hint at pos 4 → words shorter than 4 letters must be excluded

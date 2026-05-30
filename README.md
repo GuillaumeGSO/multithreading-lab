@@ -133,3 +133,51 @@ Each implementation has its own test suite covering the core search logic. See t
 
 Each implementation exposes the same `baseline` / `split` / `fanout` / `nested` modes via
 `SEARCH_MODE` + `SPLIT_DEGREE`; the in-process benchmark charts them (see above).
+
+## Dataset
+
+The word lists live in `assets/{lang}/{length}.txt` — one word per line, grouped by
+length. Every implementation reads these same files, so the columns below are the
+**dictionary languages**, not the implementation languages. Counts are words (lines)
+per file; this is why the brute-force scan cost peaks around lengths 8–13 (each holds
+50k–65k words) and the in-process benchmark leans on those lengths.
+
+| Word length | en | fr |
+|--:|--:|--:|
+| 1 | 1 | 7 |
+| 2 | 569 | 111 |
+| 3 | 4,364 | 582 |
+| 4 | 10,408 | 2,473 |
+| 5 | 21,952 | 8,146 |
+| 6 | 38,214 | 19,054 |
+| 7 | 50,475 | 34,728 |
+| 8 | 58,188 | 51,493 |
+| 9 | 57,289 | 63,074 |
+| 10 | 48,590 | 65,834 |
+| 11 | 39,362 | 59,723 |
+| 12 | 30,259 | 46,869 |
+| 13 | 21,640 | 32,573 |
+| 14 | 14,584 | 19,920 |
+| 15 | 9,075 | 11,271 |
+| 16 | 5,321 | 5,743 |
+| 17 | 3,042 | 2,762 |
+| 18 | 1,504 | 1,268 |
+| 19 | 772 | 577 |
+| 20 | 363 | 276 |
+| 21 | 169 | 117 |
+| 22 | 73 | 62 |
+| 23 | 30 | 18 |
+| 24 | 11 | 8 |
+| 25 | 7 | 4 |
+| 26 | — | 1 |
+| 27 | 3 | — |
+| 28 | 2 | — |
+| 29 | 2 | — |
+| 31 | 1 | — |
+| **Total** | **416,270** | **426,694** |
+
+Regenerate after changing the word lists:
+
+```bash
+for l in assets/*/; do for f in "$l"*.txt; do printf '%s\t%s\n' "$f" "$(wc -l < "$f")"; done; done
+```

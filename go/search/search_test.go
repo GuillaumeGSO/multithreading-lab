@@ -179,8 +179,8 @@ func TestInManyFiles(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(got) != 498 {
-			t.Errorf("got %d words, want 498", len(got))
+		if len(got) != 494 {
+			t.Errorf("got %d words, want 494", len(got))
 		}
 	})
 

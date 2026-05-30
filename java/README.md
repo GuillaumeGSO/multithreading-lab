@@ -2,7 +2,7 @@
 
 Java implementation of the multithreading lab word-search API.
 
-**Stack**: Spring Boot 3.4 · Java 21 · Maven · virtual threads (Project Loom)
+**Stack**: Spring Boot 4.0 · Java 25 (LTS) · Maven · virtual threads (Project Loom) · Jackson 3
 
 ## Concurrency model
 
@@ -49,7 +49,7 @@ java/
 
 ## Local development
 
-Requires Java 21+ and Maven 3.9+.
+Requires Java 25+ and Maven 3.9+.
 
 ```bash
 # From repo root — run the API locally
@@ -69,14 +69,18 @@ docker build -f java/Dockerfile -t seek-words-java .
 docker run -p 8002:8002 seek-words-java
 ```
 
+The runtime image launches with `-XX:+UseCompactObjectHeaders` (a JDK 25 product
+flag, JEP 519) to shrink object headers and lower the heap footprint of the
+in-memory word lists.
+
 ## Unit tests
 
-32 tests mirroring the python-base pytest suite — unit tests for content/hint matching plus integration tests against the real asset files.
+34 tests mirroring the python-base pytest suite — unit tests for content/hint matching, integration tests against the real asset files, and equivalence tests asserting the parallel modes (`fileSplit`, `manyNested`) return byte-identical results to the baseline.
 
 ```bash
 # Run from the java/ directory (Maven sets the working directory there)
 docker run --rm -v $(pwd):/workspace -w /workspace/java \
-  maven:3.9-eclipse-temurin-21 mvn test
+  maven:3.9-eclipse-temurin-25 mvn test
 ```
 
 ## API
@@ -116,7 +120,17 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 {"lang": "fr", "cars": "guillaume", "lst_hint": []}
 
 // Response
-{"words": [...], "count": 498}
+{"words": [...], "count": 494}
+```
+
+### Errors
+
+A request with neither `lst_car` nor `lst_hint` returns `400` as an
+RFC 9457 `application/problem+json` body:
+
+```json
+{"type": "about:blank", "title": "Bad Request", "status": 400,
+ "detail": "Either lst_car or lst_hint must be provided"}
 ```
 
 ## Environment variables

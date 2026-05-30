@@ -12,6 +12,18 @@ cd "$(dirname "$0")"
 COMPOSE="docker compose -f ../docker-compose.yml"
 mkdir -p results
 
+# Benchmarks run one container at a time. `docker compose run --rm` only removes
+# its container on a clean exit; a Ctrl-C can detach it, leaving a zombie that
+# keeps eating the 2-CPU budget and overlaps the next service. Force-remove any
+# leftover one-shot bench containers on exit/interrupt so the run stays serial.
+cleanup() {
+  local ids
+  ids=$(docker ps -aq --filter "name=-run-" 2>/dev/null)
+  [ -n "$ids" ] && docker rm -f $ids >/dev/null 2>&1
+  return 0
+}
+trap cleanup EXIT INT TERM
+
 # Forward pacing knobs into the containers when set on the host.
 ENVPASS=()
 for v in BENCH_WARMUP BENCH_ITERS SPLIT_DEGREE; do
@@ -23,7 +35,7 @@ done
 bench() {
   local svc="$1" out="$2"; shift 2
   echo ">>> $svc" >&2
-  if $COMPOSE run --rm -T "${ENVPASS[@]}" "$@" >"results/${out}.json" 2>>"results/${out}.log"; then
+  if $COMPOSE run --rm -T ${ENVPASS[@]+"${ENVPASS[@]}"} "$@" >"results/${out}.json" 2>>"results/${out}.log"; then
     echo "    wrote results/${out}.json" >&2
   else
     echo "    FAILED ($svc) — see results/${out}.log" >&2
@@ -54,6 +66,7 @@ run_service() {
       bench cpp cpp --entrypoint /app/bench cpp ;;
     java)
       bench java java --entrypoint java java \
+        -XX:+UseCompactObjectHeaders \
         -Dloader.main=com.lab.search.BenchmarkRunner -cp /app/app.jar \
         org.springframework.boot.loader.launch.PropertiesLauncher ;;
     nest)

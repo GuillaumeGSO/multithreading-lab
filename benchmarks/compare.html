@@ -1,92 +1,4 @@
-#!/usr/bin/env python3
-"""Aggregate per-language bench JSON (results/*.json) into a single
-self-contained compare.html with a Chart.js grouped bar chart.
-
-Stdlib only. The chart focuses on language implementation (algorithm +
-in-process concurrency), not API/HTTP handling: a mode selector switches
-between the concurrency modes, a checkbox toggles a log scale, and file vs
-multi-length cases are charted separately so the fan-out story stands apart
-from single-file scans.
-"""
-
-import glob
-import json
-import os
-from datetime import date
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-RESULTS_DIR = os.path.join(HERE, "results")
-CASES_PATH = os.path.join(HERE, "cases.json")
-OUT_PATH = os.path.join(HERE, "compare.html")
-
-# Preferred display order; anything else is appended alphabetically.
-ORDER = ["python-base", "python-improved", "python-indexed", "java", "go", "cpp", "nest"]
-COLORS = {
-    "python-base": "#3776ab",
-    "python-improved": "#5a9bd4",
-    "python-indexed": "#86c5f0",
-    "java": "#e76f00",
-    "go": "#00add8",
-    "cpp": "#9b4f96",
-    "nest": "#e0234e",
-}
-
-
-def load_results():
-    results = {}
-    for path in sorted(glob.glob(os.path.join(RESULTS_DIR, "*.json"))):
-        try:
-            with open(path, encoding="utf-8") as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, OSError):
-            continue
-        lang = data.get("language") or os.path.splitext(os.path.basename(path))[0]
-        results[lang] = data
-    return results
-
-
-def main():
-    with open(CASES_PATH, encoding="utf-8") as f:
-        cases = json.load(f)
-    case_order = [{"name": c["name"], "kind": c["kind"]} for c in cases]
-
-    results = load_results()
-    if not results:
-        raise SystemExit(f"no result files in {RESULTS_DIR} — run run-all.sh first")
-
-    langs = sorted(
-        results.keys(),
-        key=lambda l: (ORDER.index(l) if l in ORDER else len(ORDER), l),
-    )
-    languages = [{"id": l, "label": results[l].get("label", l), "color": COLORS.get(l, "#888")} for l in langs]
-
-    # results[lang][case_name] = {count, modes:{mode:{median_ms,min_ms}}}
-    by_lang = {}
-    for l in langs:
-        by_case = {}
-        for c in results[l].get("cases", []):
-            by_case[c["name"]] = {"count": c.get("count"), "modes": c.get("modes", {})}
-        by_lang[l] = by_case
-
-    meta = {l: results[l].get("meta", {}) for l in langs}
-    throughput = {l: results[l].get("throughput") for l in langs if results[l].get("throughput")}
-
-    payload = {
-        "generated": str(date.today()),
-        "languages": languages,
-        "cases": case_order,
-        "byLang": by_lang,
-        "meta": meta,
-        "throughput": throughput,
-    }
-
-    html = HTML_TEMPLATE.replace("/*DATA*/", json.dumps(payload))
-    with open(OUT_PATH, "w", encoding="utf-8") as f:
-        f.write(html)
-    print(f"wrote {OUT_PATH} ({len(langs)} languages)")
-
-
-HTML_TEMPLATE = r"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -152,7 +64,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <div id="tables"></div>
 
 <script>
-const DATA = /*DATA*/;
+const DATA = {"generated": "2026-05-30", "languages": [{"id": "nest", "label": "Node/NestJS", "color": "#e0234e"}], "cases": [{"name": "file len=8 pool=20 4hints", "kind": "file"}, {"name": "file len=9 pool=18 6hints", "kind": "file"}, {"name": "file len=10 hint-only 8hints", "kind": "file"}, {"name": "file len=11 pool=16 5hints strict", "kind": "file"}, {"name": "file len=12 hint-only 10hints", "kind": "file"}, {"name": "file len=13 pool=26 4hints", "kind": "file"}, {"name": "many cars=14 5hints(inv)", "kind": "many"}, {"name": "many cars=16 7hints(inv)", "kind": "many"}, {"name": "many cars=18 6hints(inv)", "kind": "many"}, {"name": "many cars=18 9hints(inv)", "kind": "many"}, {"name": "many cars=20 8hints(inv)", "kind": "many"}, {"name": "many cars=22 12hints(inv)", "kind": "many"}], "byLang": {"nest": {"file len=8 pool=20 4hints": {"count": 0, "modes": {"baseline": {"median_ms": 10.20045799999997, "min_ms": 9.973165999999992}, "split": {"median_ms": 5.332020999999941, "min_ms": 5.284041000000116}}}, "file len=9 pool=18 6hints": {"count": 0, "modes": {"baseline": {"median_ms": 12.40760400000022, "min_ms": 12.316291000000092}, "split": {"median_ms": 6.707728999999972, "min_ms": 6.642874999999549}}}, "file len=10 hint-only 8hints": {"count": 14, "modes": {"baseline": {"median_ms": 3.317291999999725, "min_ms": 3.2778750000006767}, "split": {"median_ms": 1.7065204999998969, "min_ms": 1.6572500000002037}}}, "file len=11 pool=16 5hints strict": {"count": 0, "modes": {"baseline": {"median_ms": 13.21441649999997, "min_ms": 12.753832999999759}, "split": {"median_ms": 7.847124999999778, "min_ms": 7.604000000000269}}}, "file len=12 hint-only 10hints": {"count": 59, "modes": {"baseline": {"median_ms": 2.208895499999926, "min_ms": 2.165874999999687}, "split": {"median_ms": 1.2128754999998819, "min_ms": 1.1703749999996944}}}, "file len=13 pool=26 4hints": {"count": 0, "modes": {"baseline": {"median_ms": 11.832499999999527, "min_ms": 11.672542000000249}, "split": {"median_ms": 6.255687499999112, "min_ms": 6.177958000000217}}}, "many cars=14 5hints(inv)": {"count": 2993, "modes": {"baseline": {"median_ms": 86.74423000000115, "min_ms": 84.59662500000013}, "fanout": {"median_ms": 44.767979500000365, "min_ms": 44.0323329999992}, "nested": {"median_ms": 45.33972950000134, "min_ms": 44.325667000000976}}}, "many cars=16 7hints(inv)": {"count": 18222, "modes": {"baseline": {"median_ms": 102.73097950000374, "min_ms": 100.13937499999884}, "fanout": {"median_ms": 53.64097899999979, "min_ms": 52.466707999999926}, "nested": {"median_ms": 53.926542000001064, "min_ms": 52.90574999999808}}}, "many cars=18 6hints(inv)": {"count": 25002, "modes": {"baseline": {"median_ms": 105.5113960000017, "min_ms": 103.71662500000093}, "fanout": {"median_ms": 55.0356455000001, "min_ms": 53.684666000001016}, "nested": {"median_ms": 55.66260450000118, "min_ms": 54.044624999994994}}}, "many cars=18 9hints(inv)": {"count": 59776, "modes": {"baseline": {"median_ms": 121.14187449999736, "min_ms": 116.5982079999958}, "fanout": {"median_ms": 73.20127099999809, "min_ms": 64.22599999999511}, "nested": {"median_ms": 72.39533349999692, "min_ms": 64.2762909999874}}}, "many cars=20 8hints(inv)": {"count": 36130, "modes": {"baseline": {"median_ms": 101.99512500000128, "min_ms": 99.77237500000047}, "fanout": {"median_ms": 57.881082999985665, "min_ms": 55.29399999999441}, "nested": {"median_ms": 57.879624999986845, "min_ms": 55.53120800000033}}}, "many cars=22 12hints(inv)": {"count": 205903, "modes": {"baseline": {"median_ms": 155.81589549999626, "min_ms": 151.83133300000918}, "fanout": {"median_ms": 112.47504249999474, "min_ms": 95.80670799998916}, "nested": {"median_ms": 112.93360399999074, "min_ms": 90.90891699999338}}}}}, "meta": {"nest": {"warmup": 20, "iterations": 100, "split_degree": 2}}, "throughput": {"nest": {"workload": "file nb_car=11 pool=26 hint=1:x (baseline scan per op)", "concurrency": 16, "ops": 200, "elapsed_ms": 2071.200500999985, "ops_per_sec": 96.56235593967803, "median_latency_ms": 164.03945799998473, "count": 14}}};
 document.getElementById('gen').textContent = DATA.generated;
 
 // Show the actual pacing used. meta is per-language; collapse to a single value
@@ -296,8 +208,3 @@ for (const c of DATA.cases) {
 </script>
 </body>
 </html>
-"""
-
-
-if __name__ == "__main__":
-    main()

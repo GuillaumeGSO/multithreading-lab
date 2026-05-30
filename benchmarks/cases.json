@@ -10,12 +10,11 @@
       "c",
       "d",
       "e",
-      "f",
+      "g",
       "h",
       "i",
-      "l",
+      "n",
       "o",
-      "p",
       "q",
       "r",
       "s",
@@ -23,28 +22,29 @@
       "u",
       "v",
       "w",
+      "x",
       "y",
       "z"
     ],
     "lst_hint": [
       {
-        "pos": 2,
-        "car": "t",
-        "inverted": false
-      },
-      {
-        "pos": 1,
-        "car": "i",
-        "inverted": false
-      },
-      {
-        "pos": 2,
-        "car": "u",
-        "inverted": false
+        "pos": 3,
+        "car": "h",
+        "inverted": true
       },
       {
         "pos": 6,
-        "car": "i",
+        "car": "o",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "c",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "l",
         "inverted": true
       }
     ],
@@ -56,54 +56,54 @@
     "lang": "fr",
     "nb_car": 9,
     "lst_car": [
-      "a",
       "b",
       "c",
+      "d",
       "e",
       "f",
       "g",
-      "k",
+      "i",
+      "j",
       "l",
       "m",
+      "n",
       "o",
-      "p",
-      "q",
       "r",
       "s",
+      "t",
       "u",
-      "v",
-      "w",
-      "y"
+      "x",
+      "z"
     ],
     "lst_hint": [
       {
-        "pos": 9,
-        "car": "e",
-        "inverted": true
-      },
-      {
-        "pos": 8,
-        "car": "b",
-        "inverted": true
+        "pos": 2,
+        "car": "o",
+        "inverted": false
       },
       {
         "pos": 1,
         "car": "f",
-        "inverted": true
-      },
-      {
-        "pos": 5,
-        "car": "e",
-        "inverted": true
-      },
-      {
-        "pos": 8,
-        "car": "b",
         "inverted": false
       },
       {
         "pos": 6,
-        "car": "p",
+        "car": "o",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "l",
+        "inverted": true
+      },
+      {
+        "pos": 3,
+        "car": "l",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "j",
         "inverted": true
       }
     ],
@@ -117,43 +117,43 @@
     "lst_car": [],
     "lst_hint": [
       {
-        "pos": 8,
-        "car": "p",
-        "inverted": true
-      },
-      {
-        "pos": 8,
-        "car": "t",
-        "inverted": true
-      },
-      {
-        "pos": 8,
-        "car": "x",
-        "inverted": false
-      },
-      {
-        "pos": 8,
-        "car": "j",
+        "pos": 2,
+        "car": "h",
         "inverted": true
       },
       {
         "pos": 3,
-        "car": "n",
+        "car": "z",
         "inverted": true
       },
       {
-        "pos": 2,
-        "car": "q",
+        "pos": 4,
+        "car": "h",
+        "inverted": true
+      },
+      {
+        "pos": 10,
+        "car": "k",
         "inverted": true
       },
       {
         "pos": 8,
-        "car": "m",
+        "car": "c",
         "inverted": true
       },
       {
+        "pos": 6,
+        "car": "t",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "e",
+        "inverted": false
+      },
+      {
         "pos": 5,
-        "car": "u",
+        "car": "v",
         "inverted": true
       }
     ],
@@ -165,48 +165,48 @@
     "lang": "fr",
     "nb_car": 11,
     "lst_car": [
-      "a",
       "b",
-      "c",
-      "e",
-      "g",
-      "h",
-      "i",
-      "j",
-      "k",
-      "m",
-      "o",
-      "q",
+      "n",
+      "a",
+      "r",
+      "t",
+      "n",
       "s",
-      "w",
-      "x",
-      "z"
+      "c",
+      "o",
+      "i",
+      "s",
+      "v",
+      "l",
+      "p",
+      "g",
+      "a"
     ],
     "lst_hint": [
       {
+        "pos": 9,
+        "car": "n",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "n",
+        "inverted": true
+      },
+      {
+        "pos": 2,
+        "car": "a",
+        "inverted": true
+      },
+      {
         "pos": 5,
+        "car": "t",
+        "inverted": false
+      },
+      {
+        "pos": 7,
         "car": "o",
         "inverted": false
-      },
-      {
-        "pos": 5,
-        "car": "c",
-        "inverted": true
-      },
-      {
-        "pos": 4,
-        "car": "d",
-        "inverted": false
-      },
-      {
-        "pos": 8,
-        "car": "q",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "g",
-        "inverted": true
       }
     ],
     "strict": true
@@ -219,53 +219,53 @@
     "lst_car": [],
     "lst_hint": [
       {
-        "pos": 12,
-        "car": "n",
-        "inverted": true
-      },
-      {
-        "pos": 10,
-        "car": "g",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "r",
-        "inverted": true
-      },
-      {
         "pos": 9,
-        "car": "p",
-        "inverted": true
-      },
-      {
-        "pos": 3,
-        "car": "b",
-        "inverted": true
-      },
-      {
-        "pos": 3,
-        "car": "r",
-        "inverted": true
-      },
-      {
-        "pos": 6,
         "car": "f",
         "inverted": true
       },
       {
-        "pos": 11,
-        "car": "b",
+        "pos": 3,
+        "car": "z",
         "inverted": true
       },
       {
-        "pos": 3,
-        "car": "g",
+        "pos": 12,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 2,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "q",
         "inverted": true
       },
       {
         "pos": 7,
-        "car": "x",
+        "car": "l",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "k",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "i",
+        "inverted": true
+      },
+      {
+        "pos": 10,
+        "car": "c",
+        "inverted": true
+      },
+      {
+        "pos": 1,
+        "car": "q",
         "inverted": true
       }
     ],
@@ -306,23 +306,23 @@
     ],
     "lst_hint": [
       {
-        "pos": 13,
-        "car": "d",
+        "pos": 8,
+        "car": "n",
         "inverted": true
       },
       {
-        "pos": 13,
-        "car": "p",
+        "pos": 7,
+        "car": "o",
         "inverted": true
       },
       {
-        "pos": 3,
-        "car": "s",
-        "inverted": true
-      },
-      {
-        "pos": 6,
+        "pos": 4,
         "car": "y",
+        "inverted": true
+      },
+      {
+        "pos": 2,
+        "car": "v",
         "inverted": true
       }
     ],
@@ -332,31 +332,31 @@
     "name": "many cars=14 5hints(inv)",
     "kind": "many",
     "lang": "fr",
-    "cars": "uicsgtoxejqwkr",
+    "cars": "tsuclfjbpqerih",
     "lst_hint": [
       {
-        "pos": 11,
-        "car": "b",
+        "pos": 4,
+        "car": "n",
         "inverted": true
       },
       {
-        "pos": 11,
-        "car": "e",
+        "pos": 7,
+        "car": "o",
         "inverted": true
       },
       {
-        "pos": 9,
-        "car": "l",
+        "pos": 1,
+        "car": "x",
         "inverted": true
       },
       {
-        "pos": 9,
-        "car": "c",
+        "pos": 3,
+        "car": "r",
         "inverted": true
       },
       {
-        "pos": 5,
-        "car": "i",
+        "pos": 13,
+        "car": "q",
         "inverted": true
       }
     ]
@@ -365,41 +365,41 @@
     "name": "many cars=16 7hints(inv)",
     "kind": "many",
     "lang": "fr",
-    "cars": "hcfzotapsrqekwvu",
+    "cars": "rbhuzpdoagiysnve",
     "lst_hint": [
       {
-        "pos": 3,
-        "car": "k",
-        "inverted": true
-      },
-      {
-        "pos": 7,
-        "car": "l",
-        "inverted": true
-      },
-      {
-        "pos": 13,
-        "car": "s",
-        "inverted": true
-      },
-      {
-        "pos": 2,
-        "car": "a",
-        "inverted": true
-      },
-      {
-        "pos": 3,
-        "car": "j",
+        "pos": 14,
+        "car": "x",
         "inverted": true
       },
       {
         "pos": 11,
-        "car": "e",
+        "car": "j",
         "inverted": true
       },
       {
-        "pos": 8,
+        "pos": 10,
         "car": "w",
+        "inverted": true
+      },
+      {
+        "pos": 16,
+        "car": "o",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "a",
+        "inverted": true
+      },
+      {
+        "pos": 5,
+        "car": "t",
         "inverted": true
       }
     ]
@@ -408,36 +408,36 @@
     "name": "many cars=18 6hints(inv)",
     "kind": "many",
     "lang": "fr",
-    "cars": "vjucoliybxngafeqtr",
+    "cars": "dsctlihjzapoenkgfu",
     "lst_hint": [
       {
-        "pos": 12,
-        "car": "i",
-        "inverted": true
-      },
-      {
-        "pos": 6,
+        "pos": 17,
         "car": "o",
         "inverted": true
       },
       {
-        "pos": 6,
-        "car": "a",
+        "pos": 16,
+        "car": "b",
         "inverted": true
       },
       {
-        "pos": 18,
-        "car": "w",
+        "pos": 9,
+        "car": "z",
         "inverted": true
       },
       {
-        "pos": 7,
+        "pos": 15,
+        "car": "j",
+        "inverted": true
+      },
+      {
+        "pos": 14,
         "car": "o",
         "inverted": true
       },
       {
-        "pos": 6,
-        "car": "l",
+        "pos": 1,
+        "car": "o",
         "inverted": true
       }
     ]
@@ -446,51 +446,51 @@
     "name": "many cars=18 9hints(inv)",
     "kind": "many",
     "lang": "fr",
-    "cars": "wdezryvpixomqtlush",
+    "cars": "trplzsaiyfdnmbweco",
     "lst_hint": [
       {
-        "pos": 15,
-        "car": "c",
+        "pos": 14,
+        "car": "x",
+        "inverted": true
+      },
+      {
+        "pos": 1,
+        "car": "b",
         "inverted": true
       },
       {
         "pos": 6,
-        "car": "t",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "m",
-        "inverted": true
-      },
-      {
-        "pos": 7,
         "car": "i",
         "inverted": true
       },
       {
-        "pos": 11,
-        "car": "t",
+        "pos": 12,
+        "car": "p",
         "inverted": true
       },
       {
-        "pos": 2,
-        "car": "z",
+        "pos": 16,
+        "car": "h",
         "inverted": true
       },
       {
-        "pos": 14,
-        "car": "k",
-        "inverted": true
-      },
-      {
-        "pos": 14,
+        "pos": 13,
         "car": "w",
         "inverted": true
       },
       {
-        "pos": 6,
-        "car": "m",
+        "pos": 7,
+        "car": "l",
+        "inverted": true
+      },
+      {
+        "pos": 11,
+        "car": "c",
+        "inverted": true
+      },
+      {
+        "pos": 4,
+        "car": "i",
         "inverted": true
       }
     ]
@@ -499,46 +499,46 @@
     "name": "many cars=20 8hints(inv)",
     "kind": "many",
     "lang": "fr",
-    "cars": "sgemjthpfnzbwkarqivo",
+    "cars": "mlruspxfotdziwbnyavc",
     "lst_hint": [
       {
-        "pos": 11,
-        "car": "q",
+        "pos": 10,
+        "car": "g",
         "inverted": true
       },
       {
-        "pos": 3,
-        "car": "j",
+        "pos": 17,
+        "car": "n",
         "inverted": true
       },
       {
-        "pos": 1,
-        "car": "z",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "e",
-        "inverted": true
-      },
-      {
-        "pos": 14,
+        "pos": 20,
         "car": "f",
         "inverted": true
       },
       {
-        "pos": 10,
-        "car": "d",
+        "pos": 14,
+        "car": "j",
         "inverted": true
       },
       {
         "pos": 11,
+        "car": "a",
+        "inverted": true
+      },
+      {
+        "pos": 7,
+        "car": "g",
+        "inverted": true
+      },
+      {
+        "pos": 12,
         "car": "t",
         "inverted": true
       },
       {
-        "pos": 14,
-        "car": "x",
+        "pos": 5,
+        "car": "l",
         "inverted": true
       }
     ]
@@ -547,11 +547,16 @@
     "name": "many cars=22 12hints(inv)",
     "kind": "many",
     "lang": "fr",
-    "cars": "cehikzlyonjtpqurgmxavs",
+    "cars": "rysfltizgcumhxaedpovnj",
     "lst_hint": [
       {
-        "pos": 12,
-        "car": "z",
+        "pos": 4,
+        "car": "w",
+        "inverted": true
+      },
+      {
+        "pos": 14,
+        "car": "s",
         "inverted": true
       },
       {
@@ -560,53 +565,48 @@
         "inverted": true
       },
       {
-        "pos": 13,
-        "car": "b",
+        "pos": 6,
+        "car": "u",
         "inverted": true
       },
       {
-        "pos": 22,
+        "pos": 17,
         "car": "q",
         "inverted": true
       },
       {
-        "pos": 17,
-        "car": "b",
+        "pos": 15,
+        "car": "s",
         "inverted": true
       },
       {
-        "pos": 17,
-        "car": "a",
+        "pos": 2,
+        "car": "g",
         "inverted": true
       },
       {
-        "pos": 14,
+        "pos": 9,
         "car": "p",
         "inverted": true
       },
       {
-        "pos": 10,
-        "car": "f",
+        "pos": 22,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 16,
+        "car": "v",
         "inverted": true
       },
       {
         "pos": 20,
-        "car": "p",
+        "car": "z",
         "inverted": true
       },
       {
-        "pos": 10,
-        "car": "h",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "i",
-        "inverted": true
-      },
-      {
-        "pos": 21,
-        "car": "x",
+        "pos": 3,
+        "car": "v",
         "inverted": true
       }
     ]
