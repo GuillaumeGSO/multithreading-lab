@@ -2,22 +2,31 @@ import os
 from pathlib import Path
 import unidecode
 from typing import List
+from collections import Counter
 
 _ASSETS_ROOT = Path(os.environ.get("ASSETS_ROOT") or str(Path(__file__).parent.parent / "assets"))
 
-# Word lists loaded once per (lang, length) key; subsequent requests skip disk I/O entirely.
-_word_cache: dict[str, list[str]] = {}
+# Word indexes loaded once per (lang, length) key; subsequent requests skip disk I/O entirely.
+# Each entry contains: (original_word, normalized_word, char_counter)
+_word_cache: dict[str, list[tuple[str, str, Counter]]] = {}
 
-def _load_words(lang: str, nb_car: int) -> list[str]:
+def _load_word_indexes(lang: str, nb_car: int) -> list[tuple[str, str, Counter]]:
+    """Load words and build indexes in a single loop: word, normalized_word, char_counter"""
     key = f"{lang}/{nb_car}"
     if key not in _word_cache:
         file_name = _ASSETS_ROOT / lang / f"{nb_car}.txt"
         try:
             with open(file_name, "r", encoding="utf-8") as f:
-                words = [line.strip() for line in f]
+                word_indexes = []
+                for line in f:
+                    word = line.strip()
+                    if word:
+                        normalized = unidecode.unidecode(word)
+                        char_counter = Counter(normalized)
+                        word_indexes.append((word, normalized, char_counter))
         except FileNotFoundError:
-            words = []
-        _word_cache[key] = words
+            word_indexes = []
+        _word_cache[key] = word_indexes
     return _word_cache[key]
 
 
@@ -46,26 +55,25 @@ def is_hint_list_empty_or_full_of_none(lst: List[Hint]):
         return True
     return False
 
-def is_search_by_content(word: str, lst_car: List[str]=[], strict = False):
+def is_search_by_content(normalized_word: str, word_counter: Counter, lst_car: List[str]=[], strict = False):
     """
-    Returns False if word is not set
+    Returns False if normalized_word is not set
     Returns False if lstCar is empty
     Returns False if less caracters in lstCar than in word
     Returns True if each and every caracters are in lstCar
     """
-    if not word:
+    if not normalized_word:
         return False
     if is_list_empty_or_full_of_none(lst_car):
         return False
 
-    word_no_accent = unidecode.unidecode(word)
-
-    for car in word_no_accent:
-        if car not in lst_car:
-            return False
-        else:
-            if strict:
-                lst_car.remove(car)
+    if strict:
+        lst_car_counter = Counter(lst_car)
+        return all(word_counter[char] <= lst_car_counter[char] for char in word_counter)
+    else:
+        lst_car_set = set(lst_car)
+        return all(char in lst_car_set for char in word_counter)
+        
     return True
 
 
@@ -102,8 +110,8 @@ def search_in_file(lang="fr", nb_car=0, lst_car: List[str]=[], lst_hint: List[Hi
         raise Exception(
             "Parameters lstCar et lstHint cannot be empty at the same time")
 
-    for word in _load_words(lang, nb_car):
-        searchByContent = is_search_by_content(word, list(lst_car), strict)
+    for word, normalized_word, word_counter in _load_word_indexes(lang, nb_car):
+        searchByContent = is_search_by_content(normalized_word, word_counter, list(lst_car), strict)
         searchByHint = is_search_by_hint(word, lst_hint)
         if searchByContent and is_empty_hint:
             yield word

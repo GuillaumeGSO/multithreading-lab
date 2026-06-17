@@ -21,17 +21,22 @@ def load_results() -> dict[str, dict]:
 
 
 def get_endpoint_stats(data: dict, endpoint: str) -> dict | None:
-    key = f"plugins.metrics-by-endpoint.response_time.{endpoint}"
-    return data.get("aggregate", {}).get("summaries", {}).get(key)
+    # Return overall latency stats since Artillery doesn't break down by endpoint
+    aggregate = data.get("aggregate", {})
+    latency = aggregate.get("latency", {})
+    return {
+        "p50": latency.get("median"),
+        "p95": latency.get("p95"),
+        "p99": latency.get("p99"),
+    }
 
 
 def get_overall_stats(data: dict) -> dict:
-    counters = data.get("aggregate", {}).get("counters", {})
-    rates = data.get("aggregate", {}).get("rates", {})
+    aggregate = data.get("aggregate", {})
     return {
-        "requests": counters.get("http.requests", 0),
-        "failed": counters.get("vusers.failed", 0),
-        "req_rate": rates.get("http.request_rate", 0),
+        "requests": aggregate.get("requestsCompleted", 0),
+        "failed": aggregate.get("errors", {}).get("ETIMEDOUT", 0),
+        "req_rate": aggregate.get("rps", {}).get("mean", 0),
     }
 
 
