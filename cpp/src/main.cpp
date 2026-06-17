@@ -10,6 +10,13 @@
 
 using json = nlohmann::json;
 
+// parallelMode routes /search through the threaded variants (intra-file split
+// for /file, nested per-length fan-out for /many) unless SEARCH_MODE=baseline.
+static bool parallelMode() {
+    const char* m = std::getenv("SEARCH_MODE");
+    return !(m && std::string(m) == "baseline");
+}
+
 // defaultLang mirrors the "fr" default every other implementation uses.
 static std::string defaultLang(const std::string& lang) {
     return lang.empty() ? "fr" : lang;
@@ -61,7 +68,9 @@ static void handleSearchFile(const httplib::Request& req,
             toHints(body.value("lst_hint", json::array()));
         bool strict = body.value("strict", false);
 
-        auto words = inFile(lang, nbCar, lstCar, hints, strict);
+        auto words = parallelMode()
+                         ? inFileSplit(lang, nbCar, lstCar, hints, strict, splitDegree())
+                         : inFile(lang, nbCar, lstCar, hints, strict);
         writeJSON(res, 200, {{"words", words}, {"count", words.size()}});
     } catch (const std::exception& e) {
         writeError(res, e.what());
@@ -83,7 +92,9 @@ static void handleSearchMany(const httplib::Request& req,
         std::vector<Hint> hints =
             toHints(body.value("lst_hint", json::array()));
 
-        auto words = inManyFiles(lang, cars, hints);
+        auto words = parallelMode()
+                         ? inManyFilesNested(lang, cars, hints, splitDegree())
+                         : inManyFiles(lang, cars, hints);
         writeJSON(res, 200, {{"words", words}, {"count", words.size()}});
     } catch (const std::exception& e) {
         writeError(res, e.what());

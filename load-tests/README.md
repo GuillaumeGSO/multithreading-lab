@@ -2,6 +2,9 @@
 
 Artillery load tests for comparing all language implementations against the same HTTP API.
 
+> This measures **API/HTTP handling**. For the in-process counterpart — the search
+> algorithm and its concurrency with no HTTP — see [`../benchmarks/`](../benchmarks/).
+
 ## Files
 
 | File | Purpose |

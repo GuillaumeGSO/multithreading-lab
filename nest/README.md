@@ -25,6 +25,23 @@ own cache over its lifetime; no cache is shared across threads and no
 The search algorithm itself is the same brute-force scan as `python-base` and
 `go` — no indexing. This isolates the concurrency model as the only variable.
 
+### Parallel modes & in-process benchmark
+
+A worker task can scan a contiguous **chunk** of a file (`inFileRange` +
+`chunkIndex`/`chunkCount` on the task), enabling an **intra-file split** and a
+**nested** mode (per-length × per-chunk tasks). `SEARCH_MODE=parallel` (default)
+routes `/search/file` → split (`SPLIT_DEGREE` chunks) and `/search/many` →
+nested; `SEARCH_MODE=baseline` keeps one task per length. Unlike Go/C++'s raw
+threads, the extra `nested` tasks just **queue on the fixed pool** rather than
+oversubscribing. Output is identical to baseline (`worker-pool.spec.ts` asserts it).
+
+```bash
+# Cross-language chart (from repo root)
+cd benchmarks && bash run-all.sh
+# This implementation's runner, inside its container:
+docker compose run --rm --entrypoint node nest dist/bench.js
+```
+
 ## Structure
 
 ```
@@ -131,7 +148,7 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 {"lang": "fr", "cars": "guillaume", "lst_hint": []}
 
 // Response
-{"words": [...], "count": 498}
+{"words": [...], "count": 494}
 ```
 
 ## Environment variables
@@ -141,3 +158,5 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 | `ASSETS_ROOT`      | `assets` (relative) | Path to the word list directory              |
 | `PORT`             | `8006`              | HTTP port to listen on                       |
 | `WORKER_POOL_SIZE` | `2`                 | Number of persistent search worker threads   |
+| `SEARCH_MODE`      | `parallel`          | `parallel` routes the API through split/nested; `baseline` is one task per length |
+| `SPLIT_DEGREE`     | `2`                 | Intra-file chunk count for `split`/`nested`  |

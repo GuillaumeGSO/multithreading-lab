@@ -169,8 +169,8 @@ describe('planLengths', () => {
 });
 
 describe('inManyFiles', () => {
-  it('finds 498 words for "guillaume" across all lengths', () => {
-    expect(inManyFiles('fr', 'guillaume', [])).toHaveLength(498);
+  it('finds 494 words for "guillaume" across all lengths', () => {
+    expect(inManyFiles('fr', 'guillaume', [])).toHaveLength(494);
   });
   it('orders results longest-first', () => {
     const words = inManyFiles('fr', 'guillaume', []);

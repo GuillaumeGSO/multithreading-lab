@@ -8,11 +8,23 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 
 	unidecode "github.com/mozillazg/go-unidecode"
 )
+
+// SplitDegree is the number of contiguous chunks a single file is scanned in
+// (axis B — intra-file split). SPLIT_DEGREE env, default 2 ("halves").
+func SplitDegree() int {
+	if v := os.Getenv("SPLIT_DEGREE"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			return n
+		}
+	}
+	return 2
+}
 
 // Hint is a positional constraint on a word. Pos is 1-indexed. Car is the
 // expected character; a nil or empty Car imposes no constraint. When Inverted
@@ -128,18 +140,12 @@ func matchesHints(word string, hints []Hint) bool {
 	return true
 }
 
-// InFile returns words of exactly length runes matching the letter pool and/or
-// the positional hints. It errors when length is zero or when neither a letter
-// pool nor a hint is provided.
-func InFile(lang string, length int, letters []string, hints []Hint, strict bool) ([]string, error) {
-	emptyLetters := noLetters(letters)
-	emptyHints := noHints(hints)
-	if length == 0 || (emptyLetters && emptyHints) {
-		return nil, errors.New("letters and hints cannot both be empty")
-	}
-
+// scanWords filters a slice of words by the letter pool and/or hints, in order.
+// It is the single per-word predicate shared by the sequential and parallel
+// search paths, so they always agree on which words match and in what order.
+func scanWords(words, letters []string, hints []Hint, strict, emptyLetters, emptyHints bool) []string {
 	result := []string{}
-	for _, word := range loadWords(lang, length) {
+	for _, word := range words {
 		// matchesContent mutates its slice in strict mode, so clone per word.
 		byContent := matchesContent(word, slices.Clone(letters), strict)
 		byHint := matchesHints(word, hints)
@@ -152,17 +158,16 @@ func InFile(lang string, length int, letters []string, hints []Hint, strict bool
 			result = append(result, word)
 		}
 	}
-	return result, nil
+	return result
 }
 
-// InManyFiles returns words of every length from len(cars) down to the minimum
-// length implied by the hints, ordered longest-first. Each length is scanned in
-// its own goroutine; results are reassembled in length order.
-func InManyFiles(lang string, cars string, hints []Hint) ([]string, error) {
+// lengthPlan returns the word lengths to scan (longest-first) and the letter
+// pool for InManyFiles* given the available cars and the hints. A normal
+// (non-inverted) hint at position N forces words of length >= N. Returns empty
+// slices when no length can satisfy the hints.
+func lengthPlan(cars string, hints []Hint) (lengths []int, letters []string) {
 	carsRunes := []rune(cars)
 	maxLen := len(carsRunes)
-
-	// A normal (non-inverted) hint at position N forces words of length >= N.
 	minLen := 1
 	for _, h := range hints {
 		if h.Car != nil && *h.Car != "" && !h.Inverted && h.Pos > minLen {
@@ -170,29 +175,132 @@ func InManyFiles(lang string, cars string, hints []Hint) ([]string, error) {
 		}
 	}
 	if maxLen < minLen {
-		return []string{}, nil
+		return nil, nil
 	}
-
-	letters := make([]string, maxLen)
+	letters = make([]string, maxLen)
 	for i, r := range carsRunes {
 		letters[i] = string(r)
 	}
+	for l := maxLen; l >= minLen; l-- {
+		lengths = append(lengths, l)
+	}
+	return lengths, letters
+}
 
-	// partials[idx] holds the result for one length; idx 0 is the longest.
-	// Each goroutine owns its own index, so no locking is needed and the
-	// final concatenation stays longest-first.
-	count := maxLen - minLen + 1
-	partials := make([][]string, count)
+// validateFilters errors when length is zero or neither letters nor hints are set.
+func validateFilters(length int, emptyLetters, emptyHints bool) error {
+	if length == 0 || (emptyLetters && emptyHints) {
+		return errors.New("letters and hints cannot both be empty")
+	}
+	return nil
+}
+
+// InFile returns words of exactly length runes matching the letter pool and/or
+// the positional hints. It errors when length is zero or when neither a letter
+// pool nor a hint is provided. (Baseline — single-threaded.)
+func InFile(lang string, length int, letters []string, hints []Hint, strict bool) ([]string, error) {
+	emptyLetters := noLetters(letters)
+	emptyHints := noHints(hints)
+	if err := validateFilters(length, emptyLetters, emptyHints); err != nil {
+		return nil, err
+	}
+	return scanWords(loadWords(lang, length), letters, hints, strict, emptyLetters, emptyHints), nil
+}
+
+// InFileSplit is InFile with intra-file parallelism (axis B): the word list is
+// split into `threads` contiguous chunks scanned by separate goroutines and
+// merged in index order, so the output equals InFile's. threads<=1 runs inline.
+func InFileSplit(lang string, length int, letters []string, hints []Hint, strict bool, threads int) ([]string, error) {
+	emptyLetters := noLetters(letters)
+	emptyHints := noHints(hints)
+	if err := validateFilters(length, emptyLetters, emptyHints); err != nil {
+		return nil, err
+	}
+	words := loadWords(lang, length)
+	n := threads
+	if n < 1 {
+		n = 1
+	}
+	if n > len(words) {
+		n = len(words)
+	}
+	if n <= 1 {
+		return scanWords(words, letters, hints, strict, emptyLetters, emptyHints), nil
+	}
+
+	chunk := (len(words) + n - 1) / n // ceil keeps chunks contiguous
+	partials := make([][]string, n)
 	var wg sync.WaitGroup
-	for idx := 0; idx < count; idx++ {
+	for idx := 0; idx < n; idx++ {
+		start := idx * chunk
+		end := start + chunk
+		if start > len(words) {
+			start = len(words)
+		}
+		if end > len(words) {
+			end = len(words)
+		}
+		wg.Add(1)
+		go func(idx, start, end int) {
+			defer wg.Done()
+			partials[idx] = scanWords(words[start:end], letters, hints, strict, emptyLetters, emptyHints)
+		}(idx, start, end)
+	}
+	wg.Wait()
+
+	result := []string{}
+	for _, p := range partials {
+		result = append(result, p...)
+	}
+	return result, nil
+}
+
+// InManyFilesSeq scans every length sequentially (baseline — no concurrency).
+func InManyFilesSeq(lang string, cars string, hints []Hint) ([]string, error) {
+	lengths, letters := lengthPlan(cars, hints)
+	result := []string{}
+	for _, length := range lengths {
+		if words, err := InFile(lang, length, letters, hints, false); err == nil {
+			result = append(result, words...)
+		}
+	}
+	return result, nil
+}
+
+// InManyFiles returns words of every length from len(cars) down to the minimum
+// length implied by the hints, ordered longest-first. Each length is scanned in
+// its own goroutine (axis A — per-length fan-out); results are reassembled in
+// length order.
+func InManyFiles(lang string, cars string, hints []Hint) ([]string, error) {
+	return manyFanOut(lang, cars, hints, func(length int, letters []string) ([]string, error) {
+		return InFile(lang, length, letters, hints, false)
+	})
+}
+
+// InManyFilesNested fans out per length (axis A) AND splits each length's file
+// into `threads` chunks (axis B) — i.e. goroutines spawning goroutines. On a
+// CPU-bounded box this deliberately oversubscribes; that is the effect under
+// study. Output is identical to InManyFiles.
+func InManyFilesNested(lang string, cars string, hints []Hint, threads int) ([]string, error) {
+	return manyFanOut(lang, cars, hints, func(length int, letters []string) ([]string, error) {
+		return InFileSplit(lang, length, letters, hints, false, threads)
+	})
+}
+
+// manyFanOut runs `scan` for each planned length in its own goroutine and
+// reassembles results longest-first.
+func manyFanOut(lang, cars string, hints []Hint, scan func(length int, letters []string) ([]string, error)) ([]string, error) {
+	lengths, letters := lengthPlan(cars, hints)
+	partials := make([][]string, len(lengths))
+	var wg sync.WaitGroup
+	for idx, length := range lengths {
 		wg.Add(1)
 		go func(idx, length int) {
 			defer wg.Done()
-			// letters is shared read-only — InFile clones it per word internally.
-			if words, err := InFile(lang, length, letters, hints, false); err == nil {
+			if words, err := scan(length, letters); err == nil {
 				partials[idx] = words
 			}
-		}(idx, maxLen-idx)
+		}(idx, length)
 	}
 	wg.Wait()
 

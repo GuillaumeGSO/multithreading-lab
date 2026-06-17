@@ -1,0 +1,614 @@
+[
+  {
+    "name": "file len=8 pool=20 4hints",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "g",
+      "h",
+      "i",
+      "n",
+      "o",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z"
+    ],
+    "lst_hint": [
+      {
+        "pos": 3,
+        "car": "h",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "o",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "c",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "l",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=9 pool=18 6hints",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "i",
+      "j",
+      "l",
+      "m",
+      "n",
+      "o",
+      "r",
+      "s",
+      "t",
+      "u",
+      "x",
+      "z"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "o",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "f",
+        "inverted": false
+      },
+      {
+        "pos": 6,
+        "car": "o",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "l",
+        "inverted": true
+      },
+      {
+        "pos": 3,
+        "car": "l",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "j",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=10 hint-only 8hints",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "h",
+        "inverted": true
+      },
+      {
+        "pos": 3,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 4,
+        "car": "h",
+        "inverted": true
+      },
+      {
+        "pos": 10,
+        "car": "k",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "c",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "t",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "v",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=11 pool=16 5hints strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "b",
+      "n",
+      "a",
+      "r",
+      "t",
+      "n",
+      "s",
+      "c",
+      "o",
+      "i",
+      "s",
+      "v",
+      "l",
+      "p",
+      "g",
+      "a"
+    ],
+    "lst_hint": [
+      {
+        "pos": 9,
+        "car": "n",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "n",
+        "inverted": true
+      },
+      {
+        "pos": 2,
+        "car": "a",
+        "inverted": true
+      },
+      {
+        "pos": 5,
+        "car": "t",
+        "inverted": false
+      },
+      {
+        "pos": 7,
+        "car": "o",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=12 hint-only 10hints",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 9,
+        "car": "f",
+        "inverted": true
+      },
+      {
+        "pos": 3,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 12,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 2,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "q",
+        "inverted": true
+      },
+      {
+        "pos": 7,
+        "car": "l",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "k",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "i",
+        "inverted": true
+      },
+      {
+        "pos": 10,
+        "car": "c",
+        "inverted": true
+      },
+      {
+        "pos": 1,
+        "car": "q",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=13 pool=26 4hints",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z"
+    ],
+    "lst_hint": [
+      {
+        "pos": 8,
+        "car": "n",
+        "inverted": true
+      },
+      {
+        "pos": 7,
+        "car": "o",
+        "inverted": true
+      },
+      {
+        "pos": 4,
+        "car": "y",
+        "inverted": true
+      },
+      {
+        "pos": 2,
+        "car": "v",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "many cars=14 5hints(inv)",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "tsuclfjbpqerih",
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "n",
+        "inverted": true
+      },
+      {
+        "pos": 7,
+        "car": "o",
+        "inverted": true
+      },
+      {
+        "pos": 1,
+        "car": "x",
+        "inverted": true
+      },
+      {
+        "pos": 3,
+        "car": "r",
+        "inverted": true
+      },
+      {
+        "pos": 13,
+        "car": "q",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many cars=16 7hints(inv)",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "rbhuzpdoagiysnve",
+    "lst_hint": [
+      {
+        "pos": 14,
+        "car": "x",
+        "inverted": true
+      },
+      {
+        "pos": 11,
+        "car": "j",
+        "inverted": true
+      },
+      {
+        "pos": 10,
+        "car": "w",
+        "inverted": true
+      },
+      {
+        "pos": 16,
+        "car": "o",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "a",
+        "inverted": true
+      },
+      {
+        "pos": 5,
+        "car": "t",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many cars=18 6hints(inv)",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "dsctlihjzapoenkgfu",
+    "lst_hint": [
+      {
+        "pos": 17,
+        "car": "o",
+        "inverted": true
+      },
+      {
+        "pos": 16,
+        "car": "b",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 15,
+        "car": "j",
+        "inverted": true
+      },
+      {
+        "pos": 14,
+        "car": "o",
+        "inverted": true
+      },
+      {
+        "pos": 1,
+        "car": "o",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many cars=18 9hints(inv)",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "trplzsaiyfdnmbweco",
+    "lst_hint": [
+      {
+        "pos": 14,
+        "car": "x",
+        "inverted": true
+      },
+      {
+        "pos": 1,
+        "car": "b",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "i",
+        "inverted": true
+      },
+      {
+        "pos": 12,
+        "car": "p",
+        "inverted": true
+      },
+      {
+        "pos": 16,
+        "car": "h",
+        "inverted": true
+      },
+      {
+        "pos": 13,
+        "car": "w",
+        "inverted": true
+      },
+      {
+        "pos": 7,
+        "car": "l",
+        "inverted": true
+      },
+      {
+        "pos": 11,
+        "car": "c",
+        "inverted": true
+      },
+      {
+        "pos": 4,
+        "car": "i",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many cars=20 8hints(inv)",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "mlruspxfotdziwbnyavc",
+    "lst_hint": [
+      {
+        "pos": 10,
+        "car": "g",
+        "inverted": true
+      },
+      {
+        "pos": 17,
+        "car": "n",
+        "inverted": true
+      },
+      {
+        "pos": 20,
+        "car": "f",
+        "inverted": true
+      },
+      {
+        "pos": 14,
+        "car": "j",
+        "inverted": true
+      },
+      {
+        "pos": 11,
+        "car": "a",
+        "inverted": true
+      },
+      {
+        "pos": 7,
+        "car": "g",
+        "inverted": true
+      },
+      {
+        "pos": 12,
+        "car": "t",
+        "inverted": true
+      },
+      {
+        "pos": 5,
+        "car": "l",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many cars=22 12hints(inv)",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "rysfltizgcumhxaedpovnj",
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "w",
+        "inverted": true
+      },
+      {
+        "pos": 14,
+        "car": "s",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "u",
+        "inverted": true
+      },
+      {
+        "pos": 17,
+        "car": "q",
+        "inverted": true
+      },
+      {
+        "pos": 15,
+        "car": "s",
+        "inverted": true
+      },
+      {
+        "pos": 2,
+        "car": "g",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "p",
+        "inverted": true
+      },
+      {
+        "pos": 22,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 16,
+        "car": "v",
+        "inverted": true
+      },
+      {
+        "pos": 20,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 3,
+        "car": "v",
+        "inverted": true
+      }
+    ]
+  }
+]

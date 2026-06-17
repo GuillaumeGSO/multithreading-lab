@@ -4,8 +4,13 @@ import com.lab.search.model.SearchFileRequest;
 import com.lab.search.model.SearchManyRequest;
 import com.lab.search.model.SearchResponse;
 import com.lab.search.service.WordSearchService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
@@ -34,7 +39,8 @@ public class SearchController {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+    public ProblemDetail handleBadRequest(IllegalArgumentException e) {
+        // RFC 9457 problem+json (replaces the ad-hoc {"error": ...} body)
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 }

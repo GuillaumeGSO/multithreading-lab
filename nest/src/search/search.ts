@@ -120,15 +120,20 @@ export function matchesHints(word: string, hints: Hint[]): boolean {
   return true;
 }
 
-// inFile returns words of exactly `length` code points matching the letter
-// pool and/or the positional hints. It throws when `length` is zero or when
-// neither a letter pool nor a hint is provided.
-export function inFile(
+// inFileRange scans a contiguous chunk of one length's word list (axis B —
+// intra-file split). The file is divided into `chunkCount` equal contiguous
+// chunks and only chunk `chunkIndex` is scanned. The worker computes its own
+// chunk so the main thread never has to load the word list. Concatenating the
+// chunks in index order yields exactly inFile's output. chunkCount<=1 scans the
+// whole file.
+export function inFileRange(
   lang: string,
   length: number,
   letters: string[],
   hints: Hint[],
   strict: boolean,
+  chunkIndex = 0,
+  chunkCount = 1,
 ): string[] {
   const emptyLetters = noLetters(letters);
   const emptyHints = noHints(hints);
@@ -136,8 +141,18 @@ export function inFile(
     throw new Error('letters and hints cannot both be empty');
   }
 
+  const words = loadWords(lang, length);
+  let start = 0;
+  let end = words.length;
+  if (chunkCount > 1) {
+    const chunk = Math.ceil(words.length / chunkCount); // ceil keeps chunks contiguous
+    start = Math.min(chunkIndex * chunk, words.length);
+    end = Math.min(start + chunk, words.length);
+  }
+
   const result: string[] = [];
-  for (const word of loadWords(lang, length)) {
+  for (let i = start; i < end; i++) {
+    const word = words[i];
     // matchesContent mutates its array in strict mode, so clone per word.
     const byContent = matchesContent(word, [...letters], strict);
     const byHint = matchesHints(word, hints);
@@ -150,6 +165,19 @@ export function inFile(
     }
   }
   return result;
+}
+
+// inFile returns words of exactly `length` code points matching the letter
+// pool and/or the positional hints. It throws when `length` is zero or when
+// neither a letter pool nor a hint is provided.
+export function inFile(
+  lang: string,
+  length: number,
+  letters: string[],
+  hints: Hint[],
+  strict: boolean,
+): string[] {
+  return inFileRange(lang, length, letters, hints, strict, 0, 1);
 }
 
 // planLengths derives the word-length range a /search/many request must scan.

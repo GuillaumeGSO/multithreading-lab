@@ -52,7 +52,35 @@ std::vector<std::string> inFile(const std::string& lang,
 
 // inManyFiles returns words across all lengths from len(cars) down to the
 // minimum length implied by hints, ordered longest-first. Each length is
-// scanned in its own std::thread (the concurrency model under test).
+// scanned via a shared bounded thread pool (axis A — per-length fan-out, the
+// concurrency model under test).
 std::vector<std::string> inManyFiles(const std::string& lang,
                                      const std::string& cars,
                                      const std::vector<Hint>& hints);
+
+// splitDegree is the number of contiguous chunks a single file is scanned in
+// (axis B — intra-file split). Reads SPLIT_DEGREE, default 2 ("halves").
+int splitDegree();
+
+// inFileSplit is inFile with intra-file parallelism: the word list is split
+// into `threads` contiguous chunks scanned by raw std::threads and merged in
+// index order, so output equals inFile's. threads<=1 runs inline.
+std::vector<std::string> inFileSplit(const std::string& lang,
+                                     int length,
+                                     const std::vector<std::string>& letters,
+                                     const std::vector<Hint>& hints,
+                                     bool strict,
+                                     int threads);
+
+// inManyFilesSeq scans every length sequentially (baseline — no concurrency).
+std::vector<std::string> inManyFilesSeq(const std::string& lang,
+                                        const std::string& cars,
+                                        const std::vector<Hint>& hints);
+
+// inManyFilesNested fans out per length (axis A, via the pool) AND splits each
+// length's file into `threads` raw std::threads (axis B) — pool tasks spawning
+// threads. Output is identical to inManyFiles.
+std::vector<std::string> inManyFilesNested(const std::string& lang,
+                                           const std::string& cars,
+                                           const std::vector<Hint>& hints,
+                                           int threads);

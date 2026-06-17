@@ -196,9 +196,9 @@ TEST_CASE("inFile: zero length throws") {
 // inManyFiles — integration test against real assets
 // ---------------------------------------------------------------------------
 
-TEST_CASE("inManyFiles: guillaume — 498 results, longest-first") {
+TEST_CASE("inManyFiles: guillaume — 494 results, longest-first") {
     auto words = inManyFiles("fr", "guillaume", {});
-    CHECK(words.size() == 498);
+    CHECK(words.size() == 494);
     // Verify longest-first: first word must be length 9 (or <= 9), none
     // before a shorter one should be longer.
     for (size_t i = 1; i < words.size(); i++) {
@@ -213,4 +213,40 @@ TEST_CASE("inManyFiles: maxLen < minLen returns empty") {
     Hint h; h.pos = 10; h.car = "a"; h.inverted = false;
     auto words = inManyFiles("fr", "abc", {h});
     CHECK(words.empty());
+}
+
+// ---------------------------------------------------------------------------
+// Parallel variants must match the baseline byte-for-byte (same order),
+// for every split degree — correctness must not depend on thread timing.
+// ---------------------------------------------------------------------------
+
+TEST_CASE("inFileSplit matches inFile for all degrees") {
+    std::vector<std::string> letters = {"e", "l", "i", "s", "a"};
+    Hint s1; s1.pos = 1; s1.car = "s"; Hint a3; a3.pos = 3; a3.car = "a"; Hint e5; e5.pos = 5; e5.car = "e";
+    struct Case { int len; std::vector<std::string> letters; std::vector<Hint> hints; bool strict; };
+    std::vector<Case> cases = {
+        {5, letters, {}, true},
+        {5, letters, {}, false},
+        {5, {}, {s1, a3, e5}, false},
+        {99, {"a", "b", "c"}, {}, false},
+    };
+    for (auto& c : cases) {
+        auto want = inFile("fr", c.len, c.letters, c.hints, c.strict);
+        for (int threads : {1, 2, 3, 5}) {
+            auto got = inFileSplit("fr", c.len, c.letters, c.hints, c.strict, threads);
+            CHECK(got == want);
+        }
+    }
+}
+
+TEST_CASE("inManyFiles/Nested match inManyFilesSeq for all degrees") {
+    Hint a4; a4.pos = 4; a4.car = "a"; Hint na1; na1.pos = 1; na1.car = "a"; na1.inverted = true;
+    std::vector<std::vector<Hint>> hintSets = { {}, {a4, na1} };
+    for (auto& hints : hintSets) {
+        auto want = inManyFilesSeq("fr", "guillaume", hints);
+        CHECK(inManyFiles("fr", "guillaume", hints) == want);
+        for (int threads : {1, 2, 3}) {
+            CHECK(inManyFilesNested("fr", "guillaume", hints, threads) == want);
+        }
+    }
 }

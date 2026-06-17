@@ -28,6 +28,24 @@ Two separate OS processes serve HTTP requests. Each process has its own Python i
 
 This makes the load test results directly comparable: python-improved vs python-base measures the concurrency gain; python-indexed vs python-base measures the algorithm gain.
 
+## In-process benchmark — why this dir matches python-base
+
+The cross-language in-process benchmark ([`../benchmarks/`](../benchmarks/)) calls the
+search functions directly, with no HTTP. python-improved's only difference from
+python-base is `--workers 2`, a **process-level** scaling that exists only under
+concurrent HTTP load — so **in-process the two are identical** (and labelled
+"Python (improved = base)" in the chart).
+
+`parallel.py` is shared with python-base: its threaded `split`/`nested` modes (selected
+by `SEARCH_MODE=parallel` / `SPLIT_DEGREE`) demonstrate the GIL wall this README is
+about — they add thread overhead without CPU parallelism. Run via
+`docker compose run --rm --entrypoint .venv/bin/python python-improved bench.py`.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SEARCH_MODE` | `parallel` | `parallel` uses the threaded variants; `baseline` the single-threaded path |
+| `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |
+
 ## Port
 
 Runs on **8001**.

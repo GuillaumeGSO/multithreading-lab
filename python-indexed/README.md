@@ -56,6 +56,27 @@ With the index, the result set comes directly from set intersection — O(result
 
 The first request for a given word length pays the index build cost (~same as loading the file). All subsequent requests are faster.
 
+## Parallel modes bypass the index (a deliberate contrast)
+
+The index powers the **single-threaded** `search_in_file`. The threaded
+`split`/`nested` modes in the shared `parallel.py` (used by the in-process
+benchmark and by the API under `SEARCH_MODE=parallel`) do a **brute-force chunked
+scan** — they do *not* consult the positional/frequency index. So python-indexed:
+
+- is the **fastest** baseline (index = O(result)), and on the throughput test
+  (which uses the baseline path per request);
+- is the **slowest** in `fanout`/`nested`, because those abandon the index for
+  the O(vocabulary) brute force *and* add GIL-bound thread overhead.
+
+The lesson: bolting generic parallelism onto a specialized algorithm discards the
+specialization. If you want the index under load, keep `SEARCH_MODE=baseline`.
+Run: `docker compose run --rm --entrypoint .venv/bin/python python-indexed bench.py`.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SEARCH_MODE` | `parallel` | `parallel` uses the brute-force threaded variants; `baseline` keeps the index |
+| `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |
+
 ## Port
 
 Runs on **8005**.

@@ -14,6 +14,7 @@ COPY nest/package.json nest/package-lock.json* ./
 RUN npm install --omit=dev && npm cache clean --force
 COPY --from=build /build/dist ./dist
 COPY assets/ /app/assets/
+COPY benchmarks/cases.json /app/cases.json
 ENV ASSETS_ROOT=/app/assets
 ENV PORT=8006
 EXPOSE 8006

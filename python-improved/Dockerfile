@@ -7,7 +7,9 @@ WORKDIR /app
 COPY python-improved/pyproject.toml python-improved/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY python-improved/seek_words.py python-improved/api.py ./
+COPY python-improved/seek_words.py python-improved/api.py python-improved/parallel.py ./
+COPY benchmarks/python_bench.py ./bench.py
+COPY benchmarks/cases.json ./cases.json
 COPY assets/ ./assets/
 
 ENV ASSETS_ROOT=/app/assets

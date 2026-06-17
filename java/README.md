@@ -2,7 +2,7 @@
 
 Java implementation of the multithreading lab word-search API.
 
-**Stack**: Spring Boot 3.4 · Java 21 · Maven · virtual threads (Project Loom)
+**Stack**: Spring Boot 4.0 · Java 25 (LTS) · Maven · virtual threads (Project Loom) · Jackson 3
 
 ## Concurrency model
 
@@ -10,6 +10,25 @@ Virtual threads are used at two independent levels:
 
 1. **HTTP layer** — `spring.threads.virtual.enabled=true` makes Tomcat dispatch each incoming request on its own virtual thread, so all endpoints handle concurrent requests without a fixed thread pool
 2. **Search layer** — `WordSearchService.searchInManyFiles` spawns one virtual thread per word length via `Executors.newVirtualThreadPerTaskExecutor()`, so all file scans for a single `/search/many` request run in parallel and results are collected in longest-first order
+
+### Parallel modes & in-process benchmark
+
+`WordSearchService` also adds an **intra-file split** (`fileSplit` — virtual
+threads over contiguous chunks) and a **nested** mode (`manyNested` — per-length
+fan-out where each length is also split). `SEARCH_MODE=parallel` (default) routes
+`/search/file` → split and `/search/many` → nested; `SEARCH_MODE=baseline`
+restores the original fan-out. Virtual threads are cheap, so `nested` is absorbed
+by the carrier pool rather than exploding. Output is identical to baseline
+(`WordSearchServiceTest` asserts it).
+
+```bash
+# Cross-language chart (from repo root)
+cd benchmarks && bash run-all.sh
+# This implementation's runner (plain main via the Boot jar's PropertiesLauncher):
+docker compose run --rm --entrypoint java java \
+  -Dloader.main=com.lab.search.BenchmarkRunner -cp /app/app.jar \
+  org.springframework.boot.loader.launch.PropertiesLauncher
+```
 
 ## Structure
 
@@ -30,7 +49,7 @@ java/
 
 ## Local development
 
-Requires Java 21+ and Maven 3.9+.
+Requires Java 25+ and Maven 3.9+.
 
 ```bash
 # From repo root — run the API locally
@@ -50,14 +69,18 @@ docker build -f java/Dockerfile -t seek-words-java .
 docker run -p 8002:8002 seek-words-java
 ```
 
+The runtime image launches with `-XX:+UseCompactObjectHeaders` (a JDK 25 product
+flag, JEP 519) to shrink object headers and lower the heap footprint of the
+in-memory word lists.
+
 ## Unit tests
 
-32 tests mirroring the python-base pytest suite — unit tests for content/hint matching plus integration tests against the real asset files.
+34 tests mirroring the python-base pytest suite — unit tests for content/hint matching, integration tests against the real asset files, and equivalence tests asserting the parallel modes (`fileSplit`, `manyNested`) return byte-identical results to the baseline.
 
 ```bash
 # Run from the java/ directory (Maven sets the working directory there)
 docker run --rm -v $(pwd):/workspace -w /workspace/java \
-  maven:3.9-eclipse-temurin-21 mvn test
+  maven:3.9-eclipse-temurin-25 mvn test
 ```
 
 ## API
@@ -97,7 +120,17 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 {"lang": "fr", "cars": "guillaume", "lst_hint": []}
 
 // Response
-{"words": [...], "count": 498}
+{"words": [...], "count": 494}
+```
+
+### Errors
+
+A request with neither `lst_car` nor `lst_hint` returns `400` as an
+RFC 9457 `application/problem+json` body:
+
+```json
+{"type": "about:blank", "title": "Bad Request", "status": 400,
+ "detail": "Either lst_car or lst_hint must be provided"}
 ```
 
 ## Environment variables
@@ -105,6 +138,8 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ASSETS_ROOT` | `assets` (relative) | Path to the word list directory |
+| `SEARCH_MODE` | `parallel` | `parallel` routes the API through split/nested; `baseline` restores the original fan-out |
+| `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |
 
 ## Load test results (2026-05-15)
 

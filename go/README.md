@@ -21,6 +21,24 @@ The word-list cache is a `sync.Map`, safe for the concurrent requests above.
 The search algorithm itself is the same brute-force scan as `python-base` — no
 indexing. This isolates the concurrency model as the only variable.
 
+### Parallel modes & in-process benchmark
+
+Beyond per-length fan-out, `search` adds an **intra-file split** (`InFileSplit` —
+goroutines over contiguous word-list chunks) and a **nested** mode
+(`InManyFilesNested` — fan-out where each length is also split, i.e. goroutines
+spawning goroutines). Selected by `SEARCH_MODE` (`parallel` default routes
+`/search/file` → split and `/search/many` → nested; `baseline` restores the
+original). Because goroutines are real OS-thread-backed work, `nested` can
+oversubscribe the 2-CPU container (`GOMAXPROCS` defaults to the host's core
+count). Output is identical to baseline (`search_test.go` asserts it).
+
+```bash
+# Cross-language chart (from repo root)
+cd benchmarks && bash run-all.sh
+# This implementation's runner, inside its container:
+docker compose run --rm --entrypoint /app/bench go
+```
+
 ## Structure
 
 ```
@@ -117,7 +135,7 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 {"lang": "fr", "cars": "guillaume", "lst_hint": []}
 
 // Response
-{"words": [...], "count": 498}
+{"words": [...], "count": 494}
 ```
 
 ## Environment variables
@@ -125,3 +143,5 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ASSETS_ROOT` | `assets` (relative) | Path to the word list directory |
+| `SEARCH_MODE` | `parallel` | `parallel` routes the API through split/nested; `baseline` restores the original fan-out |
+| `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |

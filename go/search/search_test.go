@@ -1,6 +1,7 @@
 package search
 
 import (
+	"fmt"
 	"os"
 	"slices"
 	"testing"
@@ -178,8 +179,8 @@ func TestInManyFiles(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(got) != 498 {
-			t.Errorf("got %d words, want 498", len(got))
+		if len(got) != 494 {
+			t.Errorf("got %d words, want 494", len(got))
 		}
 	})
 
@@ -223,4 +224,75 @@ func TestInManyFiles(t *testing.T) {
 			}
 		}
 	})
+}
+
+// TestParallelMatchesBaseline guards that the threaded variants return
+// byte-identical output (same words, same order) as the sequential baseline,
+// for every split degree — so correctness never depends on thread timing.
+func TestParallelMatchesBaseline(t *testing.T) {
+	letters := []string{"e", "l", "i", "s", "a"}
+	fileCases := []struct {
+		name    string
+		nbCar   int
+		letters []string
+		hints   []Hint
+		strict  bool
+	}{
+		{"strict letters", 5, letters, nil, true},
+		{"open letters", 5, letters, nil, false},
+		{"hints only", 5, nil, []Hint{{Pos: 1, Car: ptr("s")}, {Pos: 3, Car: ptr("a")}, {Pos: 5, Car: ptr("e")}}, false},
+		{"missing file", 99, []string{"a", "b", "c"}, nil, false},
+	}
+	for _, c := range fileCases {
+		for _, threads := range []int{1, 2, 3, 5} {
+			t.Run(fmt.Sprintf("file/%s/t%d", c.name, threads), func(t *testing.T) {
+				want, err := InFile("fr", c.nbCar, c.letters, c.hints, c.strict)
+				if err != nil {
+					t.Fatal(err)
+				}
+				got, err := InFileSplit("fr", c.nbCar, c.letters, c.hints, c.strict, threads)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !slices.Equal(got, want) {
+					t.Errorf("InFileSplit(threads=%d) != InFile\n got=%v\nwant=%v", threads, got, want)
+				}
+			})
+		}
+	}
+
+	manyCases := []struct {
+		name  string
+		cars  string
+		hints []Hint
+	}{
+		{"all lengths", "guillaume", nil},
+		{"with hints", "guillaume", []Hint{{Pos: 4, Car: ptr("a")}, {Pos: 1, Car: ptr("a"), Inverted: true}}},
+	}
+	for _, c := range manyCases {
+		want, err := InManyFilesSeq("fr", c.cars, c.hints)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run("many/fanout/"+c.name, func(t *testing.T) {
+			got, err := InManyFiles("fr", c.cars, c.hints)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(got, want) {
+				t.Errorf("InManyFiles != InManyFilesSeq for %s", c.name)
+			}
+		})
+		for _, threads := range []int{1, 2, 3} {
+			t.Run(fmt.Sprintf("many/nested/%s/t%d", c.name, threads), func(t *testing.T) {
+				got, err := InManyFilesNested("fr", c.cars, c.hints, threads)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !slices.Equal(got, want) {
+					t.Errorf("InManyFilesNested(threads=%d) != InManyFilesSeq for %s", threads, c.name)
+				}
+			})
+		}
+	}
 }

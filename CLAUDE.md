@@ -43,7 +43,7 @@ Each directory has its own README covering local dev, Docker, and API details:
 - [`cpp/README.md`](cpp/README.md)
 - [`nest/README.md`](nest/README.md)
 
-## Load testing
+## Load testing (API/HTTP)
 
 `load-tests/artillery.yml` is the single test file for all implementations. Environments map names to ports — do not create per-language YAML files.
 
@@ -54,6 +54,25 @@ cd load-tests && bash run-all.sh
 # Run a single environment manually (requires npm install in load-tests/ first)
 cd load-tests && npm run run:python-base
 ```
+
+## In-process benchmark (algorithm + concurrency)
+
+Artillery measures HTTP handling; [`benchmarks/`](benchmarks/) measures the language
+implementation itself by calling the search functions directly **inside each container**
+(no HTTP). All languages run the shared [`benchmarks/cases.json`](benchmarks/cases.json)
+with warmup + median-of-N timing, per concurrency mode, and `aggregate.py` builds `compare.html`.
+
+```bash
+cd benchmarks && bash run-all.sh        # build images, bench every service, build compare.html
+```
+
+Two concurrency axes, exposed as named modes: **A** = per-length fan-out (`/search/many`),
+**B** = intra-file split into `SPLIT_DEGREE` contiguous chunks (default 2). Modes: `baseline`
+(neither), `split` (B, `/file`), `fanout` (A), `nested` (A+B). All modes return byte-identical
+output to baseline (chunks/lengths merged in order — guarded by each impl's parallel unit tests).
+
+The same parallel paths are **wired into the live API** via `SEARCH_MODE` (default `parallel`;
+`baseline` restores original behavior) and `SPLIT_DEGREE`. See [`benchmarks/README.md`](benchmarks/README.md).
 
 ## Unit tests
 
@@ -76,3 +95,9 @@ The test suite must pass before and after any change to `seek_words.py`. The `py
 | Go              | Goroutines + `sync.WaitGroup` (per-length fan-out in `/search/many`) |
 | C++             | `std::thread` fan-out per length + `std::mutex` for word cache |
 | Node/NestJS     | `worker_threads` pool — N persistent workers; per-length fan-out in `/search/many` |
+
+Each implementation additionally exposes an **intra-file split** (axis B) and a **nested** mode
+(see the in-process benchmark section). The split uses each language's native primitive
+(Python `threading` — GIL-bound; Go goroutines; C++ `std::thread`; Java virtual threads; Nest
+worker-pool tasks). `nested` deliberately stacks A+B: raw-thread languages (Go/C++) oversubscribe,
+while pool/virtual-thread languages (Nest/Java) queue or absorb the extra work.
