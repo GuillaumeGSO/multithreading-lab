@@ -1,4 +1,7 @@
+from collections import Counter
+
 import pytest
+import unidecode
 from seek_words import (
     Hint,
     is_list_empty_or_full_of_none,
@@ -8,6 +11,14 @@ from seek_words import (
     search_in_file,
     search_in_many_files,
 )
+
+
+def _content(word, lst_car=[], strict=False):
+    """python-improved normalizes + counts each word once at index-load time,
+    so is_search_by_content receives the already-normalized word and its Counter.
+    This helper reproduces that indexing step for predicate-level unit tests."""
+    normalized = unidecode.unidecode(word)
+    return is_search_by_content(normalized, Counter(normalized), lst_car, strict)
 
 
 # --- is_list_empty_or_full_of_none ---
@@ -37,27 +48,27 @@ def test_hint_list_has_car():
 # --- is_search_by_content ---
 
 def test_content_empty_word():
-    assert is_search_by_content("", ["a", "b"]) is False
+    assert _content("", ["a", "b"]) is False
 
 def test_content_empty_letters():
-    assert is_search_by_content("abc", []) is False
+    assert _content("abc", []) is False
 
 def test_content_match():
-    assert is_search_by_content("ale", ["a", "l", "e", "s"]) is True
+    assert _content("ale", ["a", "l", "e", "s"]) is True
 
 def test_content_letter_missing():
-    assert is_search_by_content("zoo", ["a", "l", "e"]) is False
+    assert _content("zoo", ["a", "l", "e"]) is False
 
 def test_content_strict_exact_anagram():
-    assert is_search_by_content("aile", list("aile")) is True
+    assert _content("aile", list("aile")) is True
 
 def test_content_strict_rejects_repeated_letter():
     # "alle" needs two l's; pool has only one
-    assert is_search_by_content("alle", list("ale"), strict=True) is False
+    assert _content("alle", list("ale"), strict=True) is False
 
 def test_content_accent_stripped():
-    # "île" normalises to "ile"; pool covers it
-    assert is_search_by_content("île", ["i", "l", "e"]) is True
+    # "île" normalises to "ile" at index-load time; pool covers it
+    assert _content("île", ["i", "l", "e"]) is True
 
 
 # --- is_search_by_hint ---

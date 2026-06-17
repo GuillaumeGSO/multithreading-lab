@@ -1,0 +1,9 @@
+# macOS / exFAT AppleDouble + Finder metadata — these carry xattrs Docker can't
+# transfer into the build context ("failed to xattr ._*: operation not permitted").
+._*
+**/._*
+.DS_Store
+**/.DS_Store
+.Spotlight-V100
+.Trashes
+.fseventsd

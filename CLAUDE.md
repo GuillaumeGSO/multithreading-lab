@@ -26,7 +26,7 @@ multithreading-lab/
 ├── load-tests/
 │   └── artillery.yml   # Single test file, environments select the target
 ├── python-base/        # Reference implementation (no concurrency)
-├── python-improved/    # Python, same algorithm as base, uvicorn --workers 2
+├── python-improved/    # Python, per-word index built on load (normalized + Counter), uvicorn --workers 2
 ├── python-indexed/     # Python with pre-built positional + frequency indexes
 ├── cpp/                # C++17, cpp-httplib, std::thread fan-out
 ├── nest/               # Node/NestJS, Fastify, worker_threads pool
@@ -89,7 +89,7 @@ The test suite must pass before and after any change to `seek_words.py`. The `py
 | Implementation   | Model |
 |-----------------|-------|
 | python-base     | None (single-threaded reference) |
-| python-improved | Process-level scaling — `uvicorn --workers 2`; same brute-force algorithm as python-base |
+| python-improved | Process-level scaling — `uvicorn --workers 2`; word index built on load (each word stored as `(word, normalized, Counter)`) so per-request scans skip re-normalizing — distinct from python-indexed's positional index |
 | python-indexed  | Pre-built positional + frequency indexes; O(result) search instead of O(vocabulary) |
 | Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
 | Go              | Goroutines + `sync.WaitGroup` (per-length fan-out in `/search/many`) |

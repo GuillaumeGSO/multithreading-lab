@@ -9,12 +9,14 @@ of thread timing.
 
 NOTE (the lesson this module demonstrates): Python threads share one GIL, so
 this intra-file split does not speed up the CPU-bound scan — it usually adds
-overhead. Python scales at the process/API layer (uvicorn --workers) instead,
-which is exactly why python-improved differs from python-base only under HTTP
-load, not here.
+overhead. Python scales at the process/API layer (uvicorn --workers) instead;
+the algorithmic win in python-improved comes from the on-load index below, not
+from threading.
 
-This file is identical across python-base / python-improved / python-indexed
-(all three expose the same predicate helpers and ``_load_words``).
+Unlike python-base / python-indexed, python-improved builds its word index *on
+load* (`_load_word_indexes` → ``(word, normalized, Counter)`` per word), so the
+threaded scan here reuses that precomputed normalization/Counter instead of
+re-deriving it per word — the index is the point of this variant.
 """
 
 import os
@@ -23,7 +25,7 @@ from typing import List
 
 from seek_words import (
     Hint,
-    _load_words,
+    _load_word_indexes,
     is_hint_list_empty_or_full_of_none,
     is_list_empty_or_full_of_none,
     is_search_by_content,
@@ -40,8 +42,9 @@ def split_degree() -> int:
     return max(1, n)
 
 
-def _matches(word: str, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint) -> bool:
-    by_content = is_search_by_content(word, list(lst_car), strict)
+def _matches(entry, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint) -> bool:
+    word, normalized, counter = entry
+    by_content = is_search_by_content(normalized, counter, list(lst_car), strict)
     by_hint = is_search_by_hint(word, lst_hint)
     if by_content and is_empty_hint:
         return True
@@ -50,10 +53,10 @@ def _matches(word: str, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint)
     return by_content and by_hint
 
 
-def _scan(words, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint) -> List[str]:
+def _scan(entries, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint) -> List[str]:
     return [
-        w for w in words
-        if _matches(w, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint)
+        entry[0] for entry in entries
+        if _matches(entry, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint)
     ]
 
 
@@ -69,25 +72,25 @@ def search_in_file_parallel(
     if nb_car == 0 or (is_empty_cars and is_empty_hint):
         raise Exception("Parameters lstCar et lstHint cannot be empty at the same time")
 
-    words = _load_words(lang, nb_car)
+    entries = _load_word_indexes(lang, nb_car)
     n = threads if threads is not None else split_degree()
-    n = max(1, min(n, max(1, len(words))))
+    n = max(1, min(n, max(1, len(entries))))
 
     if n == 1:
-        return _scan(words, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint)
+        return _scan(entries, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint)
 
-    chunk = (len(words) + n - 1) // n  # ceil so chunks stay contiguous
+    chunk = (len(entries) + n - 1) // n  # ceil so chunks stay contiguous
     partials: list[list[str] | None] = [None] * n
     workers = []
 
     def work(idx: int, start: int, end: int) -> None:
         partials[idx] = _scan(
-            words[start:end], lst_car, lst_hint, strict, is_empty_cars, is_empty_hint
+            entries[start:end], lst_car, lst_hint, strict, is_empty_cars, is_empty_hint
         )
 
     for idx in range(n):
         start = idx * chunk
-        end = min(start + chunk, len(words))
+        end = min(start + chunk, len(entries))
         t = threading.Thread(target=work, args=(idx, start, end))
         workers.append(t)
         t.start()

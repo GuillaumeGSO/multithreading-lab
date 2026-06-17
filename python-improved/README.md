@@ -1,6 +1,11 @@
 # python-improved
 
-Same brute-force search algorithm as `python-base`, but with the correct Python concurrency model for CPU-bound web work: **multiple OS worker processes**.
+Two changes over `python-base`, both about *throughput without changing the search semantics*:
+
+1. **The correct Python concurrency model for CPU-bound web work** — multiple OS worker processes (`uvicorn --workers 2`).
+2. **A word index built on load.** Each word file is parsed once into `(word, normalized, Counter)` tuples (see `_load_word_indexes` in [`seek_words.py`](seek_words.py)), so per-request scans reuse the precomputed unidecode-normalized form and character `Counter` instead of recomputing them every time `is_search_by_content` runs.
+
+The scan is still O(vocabulary) — this is *not* python-indexed's positional/frequency index (which is O(result)). It is a lighter "index on load" variant: same candidate set, cheaper per-word work. Results stay byte-identical to `python-base` (guarded by the shared integration tests).
 
 ## Why not threads?
 
@@ -22,23 +27,26 @@ Two separate OS processes serve HTTP requests. Each process has its own Python i
 
 | Implementation | Algorithm | Concurrency model |
 |---|---|---|
-| python-base | brute force O(vocab) | none |
-| python-improved | brute force O(vocab) | 2 uvicorn OS workers |
-| python-indexed | index O(result) | none |
+| python-base | brute force O(vocab), normalize per scan | none |
+| python-improved | brute force O(vocab), per-word `(normalized, Counter)` indexed on load | 2 uvicorn OS workers |
+| python-indexed | positional + frequency index O(result) | none |
 
-This makes the load test results directly comparable: python-improved vs python-base measures the concurrency gain; python-indexed vs python-base measures the algorithm gain.
+python-indexed vs python-base isolates the *algorithmic* (O(result)) gain. python-improved
+mixes two cheaper wins — the on-load per-word index and process-level scaling — so it sits
+between the two: faster than base in-process from the index alone, and faster again under
+concurrent HTTP load from the extra worker.
 
-## In-process benchmark — why this dir matches python-base
+## In-process benchmark
 
 The cross-language in-process benchmark ([`../benchmarks/`](../benchmarks/)) calls the
-search functions directly, with no HTTP. python-improved's only difference from
-python-base is `--workers 2`, a **process-level** scaling that exists only under
-concurrent HTTP load — so **in-process the two are identical** (and labelled
-"Python (improved = base)" in the chart).
+search functions directly, with no HTTP. The `--workers 2` advantage is **process-level**
+and exists only under concurrent HTTP load, so it does not show up here — but the **on-load
+index does**: per-request scans skip re-normalizing each word, so in-process python-improved
+runs faster than python-base while returning identical results.
 
-`parallel.py` is shared with python-base: its threaded `split`/`nested` modes (selected
-by `SEARCH_MODE=parallel` / `SPLIT_DEGREE`) demonstrate the GIL wall this README is
-about — they add thread overhead without CPU parallelism. Run via
+`parallel.py` consumes that same on-load index (`_load_word_indexes`): its threaded
+`split`/`nested` modes (selected by `SEARCH_MODE=parallel` / `SPLIT_DEGREE`) demonstrate the
+GIL wall this README is about — they add thread overhead without CPU parallelism. Run via
 `docker compose run --rm --entrypoint .venv/bin/python python-improved bench.py`.
 
 | Variable | Default | Description |

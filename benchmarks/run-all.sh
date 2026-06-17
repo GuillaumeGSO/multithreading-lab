@@ -54,7 +54,7 @@ run_service() {
         --entrypoint .venv/bin/python python-base bench.py ;;
     python-improved)
       bench python-improved python-improved \
-        -e BENCH_LANGUAGE=python-improved -e "BENCH_LABEL=Python (improved = base)" \
+        -e BENCH_LANGUAGE=python-improved -e "BENCH_LABEL=Python (improved)" \
         --entrypoint .venv/bin/python python-improved bench.py ;;
     python-indexed)
       bench python-indexed python-indexed \
