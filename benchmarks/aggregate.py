@@ -122,8 +122,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <li><code>nested</code> — per-length fan-out where each length is also split (threads spawning work).</li>
   </ul>
   Caveats: <strong>Python</strong> threads share the GIL, so <code>split</code>/<code>nested</code>
-  rarely beat <code>baseline</code> — Python scales at the process/API layer instead, which is
-  why <em>python-improved is identical to python-base here</em>. <strong>Go/C++</strong> use real
+  rarely beat <code>baseline</code> — Python scales at the process/API layer instead, not via
+  threads here. <em>python-improved</em> beats <em>python-base</em> on <code>baseline</code> not
+  through concurrency but because it builds a per-word index on load (precomputed normalized
+  form + letter counts), so each scan does less work. <strong>Go/C++</strong> use real
   threads/goroutines, so <code>nested</code> can oversubscribe the 2-CPU box; <strong>Nest</strong>'s fixed
   worker pool and <strong>Java</strong>'s virtual threads instead queue/absorb the extra work. These
   searches are sub-millisecond, so thread-creation overhead often dominates any speedup.

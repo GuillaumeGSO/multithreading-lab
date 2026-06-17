@@ -34,7 +34,7 @@ done
 # Runs `docker compose run --rm -T <env> <args> <service> <command>` and saves stdout.
 bench() {
   local svc="$1" out="$2"; shift 2
-  echo ">>> $svc" >&2
+  echo "... running $svc" >&2
   if $COMPOSE run --rm -T ${ENVPASS[@]+"${ENVPASS[@]}"} "$@" >"results/${out}.json" 2>>"results/${out}.log"; then
     echo "    wrote results/${out}.json" >&2
   else
