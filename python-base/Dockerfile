@@ -8,7 +8,7 @@ COPY python-base/pyproject.toml python-base/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 COPY python-base/seek_words.py python-base/api.py python-base/parallel.py ./
-COPY benchmarks/python_bench.py ./bench.py
+COPY benchmarks/python_bench_shared.py ./bench.py
 COPY benchmarks/cases.json ./cases.json
 COPY assets/ ./assets/
 

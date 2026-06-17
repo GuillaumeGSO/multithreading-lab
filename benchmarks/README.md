@@ -110,7 +110,7 @@ language's original endpoint behavior. `SPLIT_DEGREE` controls the chunk count.
 ## Files
 
 - `cases.json` — canonical case definitions (single source of truth, baked into every image).
-- `python_bench.py` — shared Python runner (copied into each python image as `bench.py`).
+- `python_bench_shared.py` — shared Python runner (copied into each python image as `bench.py`).
 - Go/C++/Java/Nest runners live in their own trees (`go/bench/`, `cpp/src/bench.cpp`,
   `com.lab.search.BenchmarkRunner`, `nest/src/bench.ts`).
 - `run-all.sh` — orchestrator. `aggregate.py` — chart generator. `results/` — output (gitignored).
