@@ -1,51 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Comparative Load Test Report</title>
-  <style>
-    body { font-family: sans-serif; max-width: 960px; margin: 2rem auto; color: #222; }
-    h1 { border-bottom: 2px solid #ddd; padding-bottom: 0.4rem; }
-    table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
-    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
-    th { background: #f4f4f4; }
-    td:first-child { white-space: nowrap; }
-  </style>
+<meta charset="utf-8">
+<title>Comparative load test report — API/HTTP</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 1100px; margin: 2rem auto; color: #1c1c1c; padding: 0 1rem; }
+  h1 { border-bottom: 2px solid #ddd; padding-bottom: .4rem; }
+  .controls { margin: 1rem 0; display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+  .controls label { font-weight: 600; }
+  .note { background: #f6f8fa; border-left: 4px solid #c0c7d0; padding: .8rem 1rem; font-size: .9rem; line-height: 1.5; }
+  .chart-box { margin: 1.5rem 0 2.5rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .82rem; margin-bottom: 2rem; }
+  th, td { border: 1px solid #ddd; padding: 5px 8px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  th { background: #f4f4f4; position: sticky; top: 0; }
+  caption { text-align: left; font-weight: 600; margin-bottom: .4rem; }
+  code { background: #eef; padding: 0 .25rem; border-radius: 3px; }
+  .fail { color: #c0392b; font-weight: 600; }
+</style>
 </head>
 <body>
-  <h1>Comparative Load Test Report</h1>
-  <p><em>2026-05-19</em> — implementations tested: python-base, python-improved, python-indexed, java, go, cpp, nest</p>
+<h1>Comparative load test report</h1>
+<p><em>API/HTTP (Artillery) · generated <span id="gen"></span> · lower latency / higher throughput is better</em></p>
 
-  <h2>Response time by endpoint</h2>
-  <table>
-    <thead>
-      <tr><th>Endpoint</th><th>Metric</th><th>python-base</th><th>python-improved</th><th>python-indexed</th><th>java</th><th>go</th><th>cpp</th><th>nest</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>/health</code></td><td>p50</td><td>1300 ms</td><td>743 ms</td><td>2 ms</td><td>2 ms</td><td>1 ms</td><td>369 ms</td><td>1 ms</td></tr>
-<tr><td><code>/health</code></td><td>p95</td><td>3198 ms</td><td>6570 ms</td><td>74 ms</td><td>53 ms</td><td>4 ms</td><td>1023 ms</td><td>2 ms</td></tr>
-<tr><td><code>/health</code></td><td>p99</td><td>3198 ms</td><td>6570 ms</td><td>86 ms</td><td>61 ms</td><td>6 ms</td><td>1023 ms</td><td>3 ms</td></tr>
-<tr><td><code>/search/file</code></td><td>p50</td><td>1437 ms</td><td>1588 ms</td><td>13 ms</td><td>20 ms</td><td>6 ms</td><td>408 ms</td><td>8 ms</td></tr>
-<tr><td><code>/search/file</code></td><td>p95</td><td>7408 ms</td><td>7557 ms</td><td>113 ms</td><td>62 ms</td><td>21 ms</td><td>6312 ms</td><td>22 ms</td></tr>
-<tr><td><code>/search/file</code></td><td>p99</td><td>7710 ms</td><td>7710 ms</td><td>206 ms</td><td>86 ms</td><td>30 ms</td><td>6312 ms</td><td>32 ms</td></tr>
-<tr><td><code>/search/many</code></td><td>p50</td><td>1864 ms</td><td>2417 ms</td><td>33 ms</td><td>39 ms</td><td>15 ms</td><td>3198 ms</td><td>16 ms</td></tr>
-<tr><td><code>/search/many</code></td><td>p95</td><td>7557 ms</td><td>7408 ms</td><td>187 ms</td><td>113 ms</td><td>41 ms</td><td>7261 ms</td><td>39 ms</td></tr>
-<tr><td><code>/search/many</code></td><td>p99</td><td>8024 ms</td><td>7866 ms</td><td>302 ms</td><td>176 ms</td><td>82 ms</td><td>8024 ms</td><td>52 ms</td></tr>
+<div class="note">
+  This measures <strong>API/HTTP handling</strong> under concurrent load — request
+  routing, serialization and the server's concurrency model end-to-end — not the
+  raw search algorithm (that is what <code>benchmarks/compare.html</code> covers
+  in-process). Latencies are wall-clock per request; throughput is the sustained
+  request rate. All implementations run the same <code>artillery.yml</code> against
+  the three endpoints; only the target port changes per language.
+</div>
 
-    </tbody>
-  </table>
+<div class="controls">
+  <span><label for="metric">Latency metric:</label> <select id="metric"></select></span>
+  <span><label><input type="checkbox" id="log"> log scale</label></span>
+</div>
 
-  <h2>Overall</h2>
-  <table>
-    <thead>
-      <tr><th colspan="2">Metric</th><th>python-base</th><th>python-improved</th><th>python-indexed</th><th>java</th><th>go</th><th>cpp</th><th>nest</th></tr>
-    </thead>
-    <tbody>
-      <tr><td colspan='2'>Total requests</td><td>3675</td><td>3673</td><td>3671</td><td>3673</td><td>3675</td><td>3677</td><td>3668</td></tr>
-<tr><td colspan='2'>Failures</td><td>3428</td><td>3053</td><td>9</td><td>7</td><td>5</td><td>3616</td><td>12</td></tr>
-<tr><td colspan='2'>Req/sec</td><td>15</td><td>30</td><td>31</td><td>31</td><td>16</td><td>29</td><td>15</td></tr>
+<div class="chart-box"><h3>Latency by endpoint</h3><canvas id="latencyChart" height="120"></canvas></div>
 
-    </tbody>
-  </table>
+<h2>Throughput</h2>
+<div class="note">
+  Sustained request rate (req/sec) achieved during the run, bounded by the
+  container's CPUs. Higher is better.
+</div>
+<div class="chart-box"><canvas id="tputChart" height="90"></canvas></div>
+
+<div id="tables"></div>
+
+<script>
+const DATA = {"generated": "2026-06-18", "languages": [{"id": "python-base", "color": "#3776ab"}, {"id": "python-improved", "color": "#5a9bd4"}, {"id": "python-indexed", "color": "#86c5f0"}, {"id": "java", "color": "#e76f00"}, {"id": "go", "color": "#00add8"}, {"id": "cpp", "color": "#9b4f96"}, {"id": "nest", "color": "#e0234e"}], "endpoints": ["/health", "/search/file", "/search/many"], "byLang": {"python-base": {"overall": {"requests": 630, "responses": 630, "success_2xx": 630, "failed": 0, "errors": {}, "rps": 5}, "endpoints": {"/health": {"count": 29, "p50": 5, "p90": 48.9, "p95": 206.5, "p99": 278.7, "max": 325, "mean": 37.1}, "/search/file": {"count": 198, "p50": 80.6, "p90": 361.5, "p95": 424.2, "p99": 561.2, "max": 690, "mean": 141.9}, "/search/many": {"count": 403, "p50": 308, "p90": 632.8, "p95": 713.5, "p99": 889.1, "max": 989, "mean": 329.7}}}, "python-improved": {"overall": {"requests": 630, "responses": 630, "success_2xx": 630, "failed": 0, "errors": {}, "rps": 5}, "endpoints": {"/health": {"count": 22, "p50": 3, "p90": 25.8, "p95": 64.7, "p99": 190.6, "max": 227, "mean": 25.9}, "/search/file": {"count": 206, "p50": 22, "p90": 186.8, "p95": 257.3, "p99": 441.5, "max": 759, "mean": 61.5}, "/search/many": {"count": 402, "p50": 48.9, "p90": 584.2, "p95": 804.5, "p99": 1326.4, "max": 2427, "mean": 189.8}}}, "python-indexed": {"overall": {"requests": 630, "responses": 630, "success_2xx": 630, "failed": 0, "errors": {}, "rps": 5}, "endpoints": {"/health": {"count": 16, "p50": 4, "p90": 115.6, "p95": 153, "p99": 153, "max": 357, "mean": 53.8}, "/search/file": {"count": 214, "p50": 111.1, "p90": 391.6, "p95": 450.4, "p99": 561.2, "max": 687, "mean": 165.6}, "/search/many": {"count": 400, "p50": 333.7, "p90": 620.3, "p95": 727.9, "p99": 889.1, "max": 1015, "mean": 345.9}}}, "java": {"overall": {"requests": 630, "responses": 630, "success_2xx": 630, "failed": 0, "errors": {}, "rps": 5}, "endpoints": {"/health": {"count": 14, "p50": 2, "p90": 5, "p95": 16, "p99": 16, "max": 17, "mean": 4.6}, "/search/file": {"count": 215, "p50": 13.9, "p90": 30.3, "p95": 32.8, "p99": 47.9, "max": 71, "mean": 15.4}, "/search/many": {"count": 401, "p50": 37, "p90": 71.5, "p95": 82.3, "p99": 115.6, "max": 238, "mean": 39.7}}}, "go": {"overall": {"requests": 630, "responses": 630, "success_2xx": 630, "failed": 0, "errors": {}, "rps": 5}, "endpoints": {"/health": {"count": 17, "p50": 2, "p90": 2, "p95": 3, "p99": 3, "max": 3, "mean": 1.6}, "/search/file": {"count": 200, "p50": 7, "p90": 16.9, "p95": 18, "p99": 19.1, "max": 26, "mean": 8.3}, "/search/many": {"count": 413, "p50": 15, "p90": 37, "p95": 44.3, "p99": 48.9, "max": 53, "mean": 18.1}}}, "cpp": {"overall": {"requests": 630, "responses": 163, "success_2xx": 163, "failed": 467, "errors": {"ERR_SOCKET_TIMEOUT": 467}, "rps": 5}, "endpoints": {"/health": {"count": 10, "p50": 5826.9, "p90": 7260.8, "p95": 7260.8, "p99": 7260.8, "max": 7727, "mean": 4709.7}, "/search/file": {"count": 77, "p50": 6838, "p90": 7709.8, "p95": 7865.6, "p99": 7865.6, "max": 7982, "mean": 5416.4}, "/search/many": {"count": 76, "p50": 3262.4, "p90": 7557.1, "p95": 7709.8, "p99": 7865.6, "max": 7928, "mean": 3296}}}, "nest": {"overall": {"requests": 630, "responses": 630, "success_2xx": 630, "failed": 0, "errors": {}, "rps": 5}, "endpoints": {"/health": {"count": 21, "p50": 2, "p90": 3, "p95": 3, "p99": 3, "max": 4, "mean": 1.5}, "/search/file": {"count": 197, "p50": 7, "p90": 16, "p95": 19.1, "p99": 22, "max": 29, "mean": 8.4}, "/search/many": {"count": 412, "p50": 19.9, "p90": 43.4, "p95": 47, "p99": 57.4, "max": 136, "mean": 22.2}}}}};
+document.getElementById('gen').textContent = DATA.generated;
+
+const METRICS = [
+  { id: 'p50', label: 'p50 (median)' },
+  { id: 'p90', label: 'p90' },
+  { id: 'p95', label: 'p95' },
+  { id: 'p99', label: 'p99' },
+  { id: 'mean', label: 'mean' },
+  { id: 'max', label: 'max' },
+];
+const metricSel = document.getElementById('metric');
+for (const m of METRICS) {
+  const o = document.createElement('option');
+  o.value = m.id; o.textContent = m.label; metricSel.appendChild(o);
+}
+metricSel.value = 'p95';
+
+function latency(langId, endpoint, metric) {
+  const ep = (DATA.byLang[langId] || {}).endpoints[endpoint];
+  return ep ? ep[metric] : null;
+}
+
+function datasets(metric) {
+  return DATA.languages.map(l => ({
+    label: l.id,
+    data: DATA.endpoints.map(ep => latency(l.id, ep, metric)),
+    backgroundColor: l.color,
+  }));
+}
+
+let latencyChart;
+function render() {
+  const metric = metricSel.value;
+  const log = document.getElementById('log').checked;
+  if (latencyChart) latencyChart.destroy();
+  latencyChart = new Chart(document.getElementById('latencyChart'), {
+    type: 'bar',
+    data: { labels: DATA.endpoints, datasets: datasets(metric) },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y == null ? 'n/a' : ctx.parsed.y.toFixed(1)} ms` } },
+      },
+      scales: { y: { type: log ? 'logarithmic' : 'linear', title: { display: true, text: 'ms (' + metric + ')' } } },
+    },
+  });
+}
+metricSel.addEventListener('change', render);
+document.getElementById('log').addEventListener('change', render);
+render();
+
+// --- throughput chart ---
+new Chart(document.getElementById('tputChart'), {
+  type: 'bar',
+  data: {
+    labels: DATA.languages.map(l => l.id),
+    datasets: [{
+      label: 'req/sec',
+      data: DATA.languages.map(l => DATA.byLang[l.id].overall.rps),
+      backgroundColor: DATA.languages.map(l => l.color),
+    }],
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ctx.parsed.x.toFixed(1) + ' req/sec' } },
+    },
+    scales: { x: { title: { display: true, text: 'req/sec (higher is better)' } } },
+  },
+});
+
+// --- tables ---
+const tables = document.getElementById('tables');
+function fmt(v, d) { return v == null ? '' : v.toFixed(d); }
+
+// Overall table: metric rows x language columns.
+{
+  const t = document.createElement('table');
+  let head = '<caption>Overall</caption><tr><th>Metric</th>';
+  for (const l of DATA.languages) head += '<th>' + l.id + '</th>';
+  head += '</tr>';
+  const rows = [
+    ['Total requests', l => l.overall.requests],
+    ['2xx responses', l => l.overall.success_2xx],
+    ['Failures', l => l.overall.failed],
+    ['Req/sec', l => l.overall.rps.toFixed(1)],
+  ];
+  let body = '';
+  for (const [label, fn] of rows) {
+    body += '<tr><td>' + label + '</td>';
+    for (const l of DATA.languages) {
+      const v = fn(DATA.byLang[l.id]);
+      const cls = (label === 'Failures' && v > 0) ? ' class="fail"' : '';
+      body += '<td' + cls + '>' + v + '</td>';
+    }
+    body += '</tr>';
+  }
+  t.innerHTML = head + body;
+  tables.appendChild(t);
+}
+
+// One latency table per endpoint: language rows x percentile columns.
+for (const ep of DATA.endpoints) {
+  const t = document.createElement('table');
+  let head = '<caption><code>' + ep + '</code> latency (ms)</caption>' +
+    '<tr><th>Language</th><th>count</th><th>p50</th><th>p90</th><th>p95</th><th>p99</th><th>mean</th><th>max</th></tr>';
+  let body = '';
+  for (const l of DATA.languages) {
+    const e = DATA.byLang[l.id].endpoints[ep];
+    if (!e) continue;
+    body += '<tr><td>' + l.id + '</td><td>' + (e.count == null ? '' : e.count) + '</td><td>' +
+      fmt(e.p50, 1) + '</td><td>' + fmt(e.p90, 1) + '</td><td>' + fmt(e.p95, 1) + '</td><td>' +
+      fmt(e.p99, 1) + '</td><td>' + fmt(e.mean, 1) + '</td><td>' + fmt(e.max, 1) + '</td></tr>';
+  }
+  t.innerHTML = head + body;
+  tables.appendChild(t);
+}
+</script>
 </body>
 </html>

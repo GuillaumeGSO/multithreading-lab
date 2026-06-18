@@ -79,6 +79,11 @@ ALL=(python-base python-improved python-indexed go cpp java nest)
 TARGETS=("$@")
 [ "${#TARGETS[@]}" -eq 0 ] && TARGETS=("${ALL[@]}")
 
+# exFAT drive: macOS scatters AppleDouble `._*` files whose xattrs Docker's
+# build-context sender can't read ("failed to xattr ._*: operation not permitted"),
+# and .dockerignore doesn't spare them from the xattr walk. Scrub before building.
+find .. -name '._*' -delete 2>/dev/null || true
+
 echo "Building images..." >&2
 $COMPOSE build "${TARGETS[@]}"
 

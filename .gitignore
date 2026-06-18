@@ -6,3 +6,5 @@ java/target/
 cpp/build/
 benchmarks/results/
 .DS_Store
+load-tests/._compare-report.html
+benchmarks/._compare.html
