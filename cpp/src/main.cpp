@@ -107,7 +107,17 @@ int main() {
         port = std::stoi(p);
 
     httplib::Server svr;
-    svr.new_task_queue = [] { return new httplib::ThreadPool(16); };
+    // httplib serves one connection per worker thread and holds that thread for
+    // the connection's whole keep-alive lifetime, not just per request. So the
+    // pool must be sized for concurrent *connections*, not CPU: under load
+    // generators that keep connections alive (Artillery), too few threads means
+    // idle-but-open connections occupy every worker and starve new ones — even
+    // /health — into socket timeouts. (That is what felled the old fixed pool.)
+    // A thread blocked on an idle socket costs almost nothing, so we provision
+    // generously and let the search thread budget bound the actual CPU work.
+    // A shorter keep-alive timeout frees idle connections promptly as a backstop.
+    svr.new_task_queue = [] { return new httplib::ThreadPool(64); };
+    svr.set_keep_alive_timeout(2);
     svr.Get("/health",       handleHealth);
     svr.Post("/search/file", handleSearchFile);
     svr.Post("/search/many", handleSearchMany);

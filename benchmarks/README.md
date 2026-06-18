@@ -36,10 +36,12 @@ bash run-all.sh go
 bash run-all.sh go cpp java
 ```
 
-**More iterations** for a stabler median (default warmup 20 / iters 100):
+**More iterations** for a stabler median. `run-all.sh` uses light defaults
+(warmup 10 / iters 50 / throughput ops 100); each language's own default is the
+heavier 20 / 100 / 200. Bump them back up for a stabler median:
 
 ```bash
-BENCH_WARMUP=50 BENCH_ITERS=500 bash run-all.sh
+BENCH_WARMUP=50 BENCH_ITERS=500 THROUGHPUT_OPS=200 bash run-all.sh
 ```
 
 **Higher split degree** — push axis B harder (default 2 = "halves"; 4 = quarters):

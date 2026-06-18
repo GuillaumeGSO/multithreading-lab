@@ -24,9 +24,16 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+# Lighter defaults for the full sweep (≈half the work of each language's own
+# 20/100/200 defaults). Override on the host to restore a heavy run, e.g.
+#   BENCH_ITERS=100 THROUGHPUT_OPS=200 bash run-all.sh
+: "${BENCH_WARMUP:=10}"
+: "${BENCH_ITERS:=50}"
+: "${THROUGHPUT_OPS:=100}"
+
 # Forward pacing knobs into the containers when set on the host.
 ENVPASS=()
-for v in BENCH_WARMUP BENCH_ITERS SPLIT_DEGREE; do
+for v in BENCH_WARMUP BENCH_ITERS THROUGHPUT_OPS SPLIT_DEGREE; do
   [ -n "${!v:-}" ] && ENVPASS+=(-e "$v=${!v}")
 done
 

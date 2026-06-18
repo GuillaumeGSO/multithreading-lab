@@ -22,14 +22,20 @@ std::vector<std::string> utf8Split(const std::string& s);
 // the French word lists.
 std::string unidecode(const std::string& s);
 
+// cpuBudget returns the cores this process may actually use: the cgroup v2 CPU
+// quota if present (so it respects Docker's `cpus:` limit rather than the host
+// core count), else hardware_concurrency(), overridable via CPU_BUDGET. Sizes
+// both the search fan-out and the HTTP server's thread pool.
+int cpuBudget();
+
 bool noLetters(const std::vector<std::string>& letters);
 bool noHints(const std::vector<Hint>& hints);
 
 // matchesContent checks whether word can be built from the letter pool. In
-// strict mode each letter is consumed at most once. letters is taken by value
-// because strict mode mutates it (mirrors Go's slices.Clone per word).
+// strict mode each letter is consumed at most once (tracked with a local bitmap,
+// so the hot per-word path copies neither the letter pool nor a decoded string).
 bool matchesContent(const std::string& word,
-                    std::vector<std::string> letters,
+                    const std::vector<std::string>& letters,
                     bool strict);
 
 bool matchesHints(const std::string& word, const std::vector<Hint>& hints);
@@ -51,9 +57,9 @@ std::vector<std::string> inFile(const std::string& lang,
                                 bool strict);
 
 // inManyFiles returns words across all lengths from len(cars) down to the
-// minimum length implied by hints, ordered longest-first. Each length is
-// scanned via a shared bounded thread pool (axis A — per-length fan-out, the
-// concurrency model under test).
+// minimum length implied by hints, ordered longest-first. Lengths are scanned
+// in parallel up to the global CPU budget (axis A — per-length fan-out, the
+// concurrency model under test); excess lengths fold onto the caller.
 std::vector<std::string> inManyFiles(const std::string& lang,
                                      const std::string& cars,
                                      const std::vector<Hint>& hints);
@@ -63,8 +69,9 @@ std::vector<std::string> inManyFiles(const std::string& lang,
 int splitDegree();
 
 // inFileSplit is inFile with intra-file parallelism: the word list is split
-// into `threads` contiguous chunks scanned by raw std::threads and merged in
-// index order, so output equals inFile's. threads<=1 runs inline.
+// into `threads` contiguous chunks scanned in parallel (bounded by the global
+// CPU budget) and merged in index order, so output equals inFile's. threads<=1
+// runs inline.
 std::vector<std::string> inFileSplit(const std::string& lang,
                                      int length,
                                      const std::vector<std::string>& letters,
@@ -77,9 +84,10 @@ std::vector<std::string> inManyFilesSeq(const std::string& lang,
                                         const std::string& cars,
                                         const std::vector<Hint>& hints);
 
-// inManyFilesNested fans out per length (axis A, via the pool) AND splits each
-// length's file into `threads` raw std::threads (axis B) — pool tasks spawning
-// threads. Output is identical to inManyFiles.
+// inManyFilesNested fans out per length (axis A) AND splits each length's file
+// into `threads` chunks (axis B). Both axes draw from the same global CPU
+// budget, so nesting can't oversubscribe: once permits run out the inner split
+// folds onto its caller. Output is identical to inManyFiles.
 std::vector<std::string> inManyFilesNested(const std::string& lang,
                                            const std::string& cars,
                                            const std::vector<Hint>& hints,

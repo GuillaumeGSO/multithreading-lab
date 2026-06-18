@@ -1,13 +1,11 @@
 #include "search.h"
 
 #include <algorithm>
-#include <condition_variable>
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <fstream>
-#include <future>
 #include <mutex>
-#include <queue>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -15,51 +13,99 @@
 #include <vector>
 
 // ---------------------------------------------------------------------------
-// Bounded thread pool — shared across all inManyFiles calls so total OS
-// threads stay fixed regardless of request concurrency.
+// Concurrency budget
+//
+// hardware_concurrency() reports the *host* core count, which ignores the
+// container's cgroup CPU quota. Under Docker (`cpus: "2.0"`) it over-counted
+// ~5x, so the old host-sized thread pool plus the per-request split threads
+// oversubscribed the 2 available cores badly enough to starve the HTTP accept
+// loop — even /health timed out under load. We instead size parallelism to the
+// real CPU budget and cap the *total* number of concurrent search threads with
+// a global permit pool.
 // ---------------------------------------------------------------------------
-namespace {
-class SearchPool {
-public:
-    explicit SearchPool(int n) {
-        for (int i = 0; i < n; i++)
-            workers_.emplace_back([this] { run(); });
+
+// cpuBudget returns the number of cores this process may actually use: the
+// cgroup v2 quota when present, else hardware_concurrency(), overridable via
+// the CPU_BUDGET env var (handy for the in-process benchmark). Used both to
+// size the search fan-out and to cap the HTTP server's concurrency (main.cpp),
+// so concurrent CPU-bound request handling never oversubscribes the cores.
+int cpuBudget() {
+    if (const char* env = std::getenv("CPU_BUDGET")) {
+        try { int n = std::stoi(env); if (n > 0) return n; } catch (...) {}
     }
-    ~SearchPool() {
-        { std::lock_guard<std::mutex> l(mu_); stop_ = true; }
-        cv_.notify_all();
-        for (auto& w : workers_) w.join();
-    }
-    std::future<void> post(std::function<void()> f) {
-        auto p = std::make_shared<std::packaged_task<void()>>(std::move(f));
-        auto fut = p->get_future();
-        { std::lock_guard<std::mutex> l(mu_); q_.push([p] { (*p)(); }); }
-        cv_.notify_one();
-        return fut;
-    }
-private:
-    void run() {
-        for (;;) {
-            std::function<void()> task;
-            {
-                std::unique_lock<std::mutex> l(mu_);
-                cv_.wait(l, [this] { return stop_ || !q_.empty(); });
-                if (stop_ && q_.empty()) return;
-                task = std::move(q_.front());
-                q_.pop();
-            }
-            task();
+    // cgroup v2: "<quota> <period>" microseconds, or "max <period>" if unlimited.
+    std::ifstream f("/sys/fs/cgroup/cpu.max");
+    if (f.is_open()) {
+        std::string quota, period;
+        if (f >> quota >> period && quota != "max") {
+            try {
+                long q = std::stol(quota), p = std::stol(period);
+                if (q > 0 && p > 0)
+                    return std::max(1, static_cast<int>((q + p - 1) / p)); // ceil
+            } catch (...) {}
         }
     }
-    std::vector<std::thread> workers_;
-    std::queue<std::function<void()>> q_;
-    std::mutex mu_;
-    std::condition_variable cv_;
-    bool stop_ = false;
+    unsigned hc = std::thread::hardware_concurrency();
+    return hc > 0 ? static_cast<int>(hc) : 1;
+}
+
+namespace {
+// ThreadBudget caps how many search worker threads may run concurrently across
+// all requests. A worker grabs a permit before spawning a thread; if none is
+// free it folds the work onto the calling thread instead. This bounds total OS
+// threads to ~cpuBudget regardless of HTTP concurrency, while a lone request
+// (e.g. the benchmark) still gets full fan-out. Acquisition is non-blocking, so
+// nested fan-out + split can never deadlock waiting on the budget — the caller
+// always makes progress.
+class ThreadBudget {
+public:
+    explicit ThreadBudget(int n) : permits_(n) {}
+    bool tryAcquire() {
+        int cur = permits_.load(std::memory_order_relaxed);
+        while (cur > 0) {
+            if (permits_.compare_exchange_weak(cur, cur - 1,
+                    std::memory_order_acquire, std::memory_order_relaxed))
+                return true;
+        }
+        return false;
+    }
+    void release() { permits_.fetch_add(1, std::memory_order_release); }
+private:
+    std::atomic<int> permits_;
 };
 
-// 4 workers: enough parallelism per request without thread explosion under load.
-static SearchPool search_pool(std::max(4, static_cast<int>(std::thread::hardware_concurrency()) * 2));
+// The calling thread is always one worker, so the budget grants permits for the
+// *extra* threads: cpuBudget-1 permits → at most cpuBudget concurrent threads.
+static ThreadBudget thread_budget(std::max(1, cpuBudget() - 1));
+
+// runParallel splits the index range [0, n) across the caller plus as many
+// budget-permitted helper threads as are free, in contiguous slices, and runs
+// task(i) for every i. task(i) writes its own result slot, so callers gather in
+// index order regardless of how the work was scheduled. All helpers are joined
+// before returning.
+template <class Task>
+void runParallel(size_t n, Task&& task) {
+    if (n == 0) return;
+    if (n == 1) { task(0); return; }
+
+    size_t extra = 0;
+    while (extra + 1 < n && thread_budget.tryAcquire()) extra++;
+    size_t workers = extra + 1;            // + the calling thread
+    size_t chunk = (n + workers - 1) / workers;
+
+    auto runSlice = [&task, n, chunk](size_t w) {
+        size_t start = w * chunk;
+        size_t end = std::min(start + chunk, n);
+        for (size_t i = start; i < end; i++) task(i);
+    };
+
+    std::vector<std::thread> threads;
+    threads.reserve(extra);
+    for (size_t w = 1; w < workers; w++)
+        threads.emplace_back([runSlice, w] { runSlice(w); thread_budget.release(); });
+    runSlice(0);
+    for (auto& t : threads) t.join();
+}
 } // namespace
 
 // assetsRoot reads ASSETS_ROOT env var, defaulting to "assets".
@@ -240,17 +286,42 @@ bool noHints(const std::vector<Hint>& hints) {
 }
 
 bool matchesContent(const std::string& word,
-                    std::vector<std::string> letters,
+                    const std::vector<std::string>& letters,
                     bool strict) {
     if (word.empty() || noLetters(letters)) return false;
-    std::string decoded = unidecode(word);
-    // decoded is now ASCII; iterate byte-by-byte (all chars are single-byte).
-    // Use a lambda predicate to avoid constructing a std::string per character.
-    for (char ch : decoded) {
-        auto it = std::find_if(letters.begin(), letters.end(),
-            [ch](const std::string& s) { return s.size() == 1 && s[0] == ch; });
-        if (it == letters.end()) return false;
-        if (strict) letters.erase(it);
+    // Hot path: runs on every scanned word. The old version allocated twice per
+    // word — a by-value copy of the letter pool plus a unidecoded std::string —
+    // which serialised on musl's malloc lock under concurrency and starved the
+    // server. Here strict-mode consumption is tracked with a stack-friendly
+    // bitmap, and codepoints are decoded and ASCII-folded in place (no string).
+    std::vector<char> consumed;
+    if (strict) consumed.assign(letters.size(), 0);
+    auto take = [&](char ch) -> bool {
+        for (size_t k = 0; k < letters.size(); k++) {
+            if (strict && consumed[k]) continue;
+            const std::string& s = letters[k];
+            if (s.size() == 1 && s[0] == ch) {
+                if (strict) consumed[k] = 1;
+                return true;
+            }
+        }
+        return false;
+    };
+    const auto& table = unidecodeTable();
+    size_t i = 0;
+    while (i < word.size()) {
+        uint32_t cp = decodeCodepoint(word, i);
+        if (cp < 0x80) {
+            if (!take(static_cast<char>(cp))) return false;
+        } else {
+            auto it = table.find(cp);
+            if (it != table.end()) {
+                for (char ch : it->second)
+                    if (!take(ch)) return false;
+            }
+            // Non-ASCII codepoints absent from the table are dropped, exactly as
+            // unidecode() would (shouldn't happen for French word lists).
+        }
     }
     return true;
 }
@@ -258,14 +329,29 @@ bool matchesContent(const std::string& word,
 bool matchesHints(const std::string& word, const std::vector<Hint>& hints) {
     if (word.empty()) return false;
     if (noHints(hints)) return true;
-    auto runes = utf8Split(word);
     for (const auto& h : hints) {
         if (!h.car || h.car->empty()) continue;
-        if (h.pos > static_cast<int>(runes.size())) {
+        // Locate the h.pos-th codepoint (1-indexed) by decoding in place, with no
+        // allocation. matchesHints runs on every scanned word, so the old
+        // utf8Split — a heap vector plus a string per codepoint — dominated the
+        // hinted-query cost and starved the server under load. We only need the
+        // bytes at one position, so walk to it and compare directly.
+        size_t i = 0;
+        int idx = 0;
+        bool inRange = false, match = false;
+        while (i < word.size()) {
+            size_t start = i;
+            decodeCodepoint(word, i);   // advances i past the codepoint
+            if (++idx == h.pos) {
+                inRange = true;
+                match = (word.compare(start, i - start, *h.car) == 0);
+                break;
+            }
+        }
+        if (!inRange) {                 // pos beyond the word's length
             if (!h.inverted) return false;
             continue;
         }
-        bool match = (runes[h.pos - 1] == *h.car);
         if (h.inverted) {
             if (match) return false;
         } else {
@@ -321,7 +407,7 @@ static std::pair<std::vector<int>, std::vector<std::string>> planLengths(
     return {lengths, carsChars};
 }
 
-// manyFanOut runs `scan` for each planned length on the shared pool and
+// manyFanOut runs `scan` for each planned length across the thread budget and
 // reassembles results longest-first.
 static std::vector<std::string> manyFanOut(
     const std::string& cars, const std::vector<Hint>& hints,
@@ -330,15 +416,9 @@ static std::vector<std::string> manyFanOut(
     if (lengths.empty()) return {};
 
     std::vector<std::vector<std::string>> partials(lengths.size());
-    std::vector<std::future<void>> futs;
-    futs.reserve(lengths.size());
-    for (size_t idx = 0; idx < lengths.size(); idx++) {
-        int length = lengths[idx];
-        futs.push_back(search_pool.post([&, idx, length]() {
-            partials[idx] = scan(length, letters);
-        }));
-    }
-    for (auto& f : futs) f.get();
+    runParallel(lengths.size(), [&](size_t idx) {
+        partials[idx] = scan(lengths[idx], letters);
+    });
 
     std::vector<std::string> result;
     for (auto& p : partials) {
@@ -395,16 +475,11 @@ std::vector<std::string> inFileSplit(const std::string& lang,
 
     size_t chunk = (total + n - 1) / n; // ceil keeps chunks contiguous
     std::vector<std::vector<std::string>> partials(n);
-    std::vector<std::thread> ths;
-    ths.reserve(n);
-    for (int idx = 0; idx < n; idx++) {
-        size_t start = std::min(static_cast<size_t>(idx) * chunk, total);
+    runParallel(static_cast<size_t>(n), [&](size_t idx) {
+        size_t start = std::min(idx * chunk, total);
         size_t end = std::min(start + chunk, total);
-        ths.emplace_back([&, idx, start, end]() {
-            partials[idx] = scanWords(*words, start, end, letters, hints, strict, emptyLetters, emptyHints);
-        });
-    }
-    for (auto& t : ths) t.join();
+        partials[idx] = scanWords(*words, start, end, letters, hints, strict, emptyLetters, emptyHints);
+    });
 
     std::vector<std::string> result;
     for (auto& p : partials) {

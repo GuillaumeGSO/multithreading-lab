@@ -18,7 +18,7 @@ config:
       arrivalRate: 2
     - name: Measure
       duration: 120
-      arrivalRate: 5
+      arrivalRate: 10
   timeout: 30
   defaults:
     headers:
