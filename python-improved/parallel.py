@@ -21,6 +21,7 @@ re-deriving it per word — the index is the point of this variant.
 
 import os
 import threading
+from collections import Counter
 from typing import List
 
 from seek_words import (
@@ -42,42 +43,47 @@ def split_degree() -> int:
     return max(1, n)
 
 
-def _matches(entry, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint) -> bool:
-    word, normalized, counter = entry
-    by_content = is_search_by_content(normalized, counter, list(lst_car), strict)
-    by_hint = is_search_by_hint(word, lst_hint)
-    if by_content and is_empty_hint:
-        return True
-    if is_empty_cars and by_hint:
-        return True
-    return by_content and by_hint
+def _matches(entry, avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint) -> bool:
+    word, normalized, word_chars = entry
+    if is_empty_hint:
+        return is_search_by_content(word_chars, normalized, avail_set, avail_counter, strict)
+    if is_empty_cars:
+        return is_search_by_hint(word, lst_hint)
+    return (is_search_by_content(word_chars, normalized, avail_set, avail_counter, strict)
+            and is_search_by_hint(word, lst_hint))
 
 
-def _scan(entries, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint) -> List[str]:
+def _scan(entries, avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint) -> List[str]:
     return [
         entry[0] for entry in entries
-        if _matches(entry, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint)
+        if _matches(entry, avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint)
     ]
 
 
 def search_in_file_parallel(
-    lang="fr", nb_car=0, lst_car: List[str] = [], lst_hint: List[Hint] = [],
+    lang="fr", nb_car=0, lst_car: List[str] = None, lst_hint: List[Hint] = None,
     strict=False, threads: int | None = None,
 ) -> List[str]:
     """Intra-file split (axis B). Mirrors ``search_in_file`` but scans the word
     list in ``threads`` contiguous chunks. threads=1 runs inline (== baseline).
     """
+    lst_car = lst_car or []
+    lst_hint = lst_hint or []
     is_empty_hint = is_hint_list_empty_or_full_of_none(lst_hint)
     is_empty_cars = is_list_empty_or_full_of_none(lst_car)
     if nb_car == 0 or (is_empty_cars and is_empty_hint):
         raise Exception("Parameters lstCar et lstHint cannot be empty at the same time")
 
     entries = _load_word_indexes(lang, nb_car)
+    # Pool built once and shared read-only across the worker threads.
+    avail = [c for c in lst_car if c]
+    avail_set = set(avail)
+    avail_counter = Counter(avail) if strict else None
     n = threads if threads is not None else split_degree()
     n = max(1, min(n, max(1, len(entries))))
 
     if n == 1:
-        return _scan(entries, lst_car, lst_hint, strict, is_empty_cars, is_empty_hint)
+        return _scan(entries, avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint)
 
     chunk = (len(entries) + n - 1) // n  # ceil so chunks stay contiguous
     partials: list[list[str] | None] = [None] * n
@@ -85,7 +91,7 @@ def search_in_file_parallel(
 
     def work(idx: int, start: int, end: int) -> None:
         partials[idx] = _scan(
-            entries[start:end], lst_car, lst_hint, strict, is_empty_cars, is_empty_hint
+            entries[start:end], avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint
         )
 
     for idx in range(n):
@@ -105,7 +111,7 @@ def search_in_file_parallel(
 
 
 def search_in_many_parallel(
-    lang="fr", cars="", lst_hint: List[Hint] = [], threads: int | None = None,
+    lang="fr", cars="", lst_hint: List[Hint] = None, threads: int | None = None,
 ) -> List[str]:
     """Per-length fan-out (axis A). One thread per word length, longest first.
 
@@ -114,6 +120,7 @@ def search_in_many_parallel(
       - threads=N  → nested mode (threads spawning threads)
     Results are reassembled longest-first, matching ``search_in_many_files``.
     """
+    lst_hint = lst_hint or []
     min_len = max(
         (int(h.pos) for h in lst_hint if h.car and not h.inverted),
         default=1,

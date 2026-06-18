@@ -1,4 +1,6 @@
+import logging
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -11,7 +13,15 @@ from seek_words import Hint, search_in_file, search_in_many_files
 # SEARCH_MODE=baseline keeps the original single-threaded path.
 _PARALLEL = os.environ.get("SEARCH_MODE", "parallel").lower() != "baseline"
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # uvicorn runs with --log-level warning; keep the index-build INFO logs visible.
+    logging.getLogger("seek_words").setLevel(logging.INFO)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 class HintModel(BaseModel):

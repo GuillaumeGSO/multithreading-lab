@@ -1,19 +1,27 @@
+import logging
 import os
 from pathlib import Path
 import unidecode
 from typing import List
 from collections import Counter
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
+
 _ASSETS_ROOT = Path(os.environ.get("ASSETS_ROOT") or str(Path(__file__).parent.parent / "assets"))
 
 # Word indexes loaded once per (lang, length) key; subsequent requests skip disk I/O entirely.
-# Each entry contains: (original_word, normalized_word, char_counter)
-_word_cache: dict[str, list[tuple[str, str, Counter]]] = {}
+# Each entry is (original_word, normalized_word, char_set), where char_set is the set of
+# unique normalized characters. The common non-strict search only needs membership of those
+# unique chars, so a frozenset is lighter than a Counter and supports a direct subset test;
+# strict mode rebuilds a Counter from normalized_word on demand (it is the rare path).
+_word_cache: dict[str, list[tuple[str, str, frozenset]]] = {}
 
-def _load_word_indexes(lang: str, nb_car: int) -> list[tuple[str, str, Counter]]:
-    """Load words and build indexes in a single loop: word, normalized_word, char_counter"""
+def _load_word_indexes(lang: str, nb_car: int) -> list[tuple[str, str, frozenset]]:
+    """Load words and build the on-load index in one pass: (word, normalized_word, char_set)."""
     key = f"{lang}/{nb_car}"
     if key not in _word_cache:
+        logger.info("index build: %s", key)
         file_name = _ASSETS_ROOT / lang / f"{nb_car}.txt"
         try:
             with open(file_name, "r", encoding="utf-8") as f:
@@ -22,8 +30,10 @@ def _load_word_indexes(lang: str, nb_car: int) -> list[tuple[str, str, Counter]]
                     word = line.strip()
                     if word:
                         normalized = unidecode.unidecode(word)
-                        char_counter = Counter(normalized)
-                        word_indexes.append((word, normalized, char_counter))
+                        if normalized == word:
+                            normalized = word  # share one string for accent-free words
+                        char_set = frozenset(normalized)
+                        word_indexes.append((word, normalized, char_set))
         except FileNotFoundError:
             word_indexes = []
         _word_cache[key] = word_indexes
@@ -55,29 +65,30 @@ def is_hint_list_empty_or_full_of_none(lst: List[Hint]):
         return True
     return False
 
-def is_search_by_content(normalized_word: str, word_counter: Counter, lst_car: List[str]=[], strict = False):
-    """
-    Returns False if normalized_word is not set
-    Returns False if lstCar is empty
-    Returns False if less caracters in lstCar than in word
-    Returns True if each and every caracters are in lstCar
-    """
-    if not normalized_word:
-        return False
-    if is_list_empty_or_full_of_none(lst_car):
-        return False
+def is_search_by_content(word_chars: frozenset, normalized_word: str, avail_set: set,
+                         avail_counter: Counter | None = None, strict=False):
+    """Does the word fit the available pool? Pure predicate, no per-word allocation.
 
+    word_chars     : precomputed set of the word's unique (normalized) characters
+    normalized_word: only used to rebuild a Counter when strict
+    avail_set      : pool of available letters, built once per scan by the caller
+    avail_counter  : pool letter counts, built once per scan, required only when strict
+
+    Returns False if the word is empty or the pool is empty.
+    Non-strict: every distinct letter of the word must be in the pool.
+    Strict: the pool must hold at least as many of each letter as the word needs.
+    """
+    if not word_chars:
+        return False
+    if not avail_set:
+        return False
     if strict:
-        lst_car_counter = Counter(lst_car)
-        return all(word_counter[char] <= lst_car_counter[char] for char in word_counter)
-    else:
-        lst_car_set = set(lst_car)
-        return all(char in lst_car_set for char in word_counter)
-        
-    return True
+        word_counter = Counter(normalized_word)
+        return all(word_counter[char] <= avail_counter[char] for char in word_counter)
+    return word_chars <= avail_set
 
 
-def is_search_by_hint(word: str, hint_list: List[Hint]=[]):
+def is_search_by_hint(word: str, hint_list: List[Hint]=None):
     """
     Returns False if word is not provided.
     Returns True if no hints are provided.
@@ -87,41 +98,52 @@ def is_search_by_hint(word: str, hint_list: List[Hint]=[]):
     """
     if not word:
         return False
+    hint_list = hint_list or []
     if is_hint_list_empty_or_full_of_none(hint_list):
         return True
 
     for hint in (x for x in hint_list if x.car):
-        if int(hint.pos) > len(word):
+        if hint.pos > len(word):
             if not hint.inverted:
                 return False
         elif hint.inverted:
-            if word[int(hint.pos)-1] == hint.car:
+            if word[hint.pos-1] == hint.car:
                 return False
         else:
-            if word[int(hint.pos)-1] != hint.car:
+            if word[hint.pos-1] != hint.car:
                 return False
     return True
 
 
-def search_in_file(lang="fr", nb_car=0, lst_car: List[str]=[], lst_hint: List[Hint]=[], strict=False):
+def search_in_file(lang="fr", nb_car=0, lst_car: List[str]=None, lst_hint: List[Hint]=None, strict=False):
+    lst_car = lst_car or []
+    lst_hint = lst_hint or []
     is_empty_hint = is_hint_list_empty_or_full_of_none(lst_hint)
     is_empty_cars = is_list_empty_or_full_of_none(lst_car)
     if nb_car == 0 or (is_empty_cars and is_empty_hint):
         raise Exception(
             "Parameters lstCar et lstHint cannot be empty at the same time")
 
-    for word, normalized_word, word_counter in _load_word_indexes(lang, nb_car):
-        searchByContent = is_search_by_content(normalized_word, word_counter, list(lst_car), strict)
-        searchByHint = is_search_by_hint(word, lst_hint)
-        if searchByContent and is_empty_hint:
-            yield word
-        elif is_empty_cars and searchByHint:
-            yield word
-        elif searchByContent and searchByHint:
+    # Build the available-letter pool once for the whole scan (the `if c` keeps the
+    # all-None/empty semantics of is_list_empty_or_full_of_none); counts only when strict.
+    avail = [c for c in lst_car if c]
+    avail_set = set(avail)
+    avail_counter = Counter(avail) if strict else None
+
+    for word, normalized_word, word_chars in _load_word_indexes(lang, nb_car):
+        if is_empty_hint:  # cars are non-empty here (guaranteed by the guard above)
+            if is_search_by_content(word_chars, normalized_word, avail_set, avail_counter, strict):
+                yield word
+        elif is_empty_cars:
+            if is_search_by_hint(word, lst_hint):
+                yield word
+        elif (is_search_by_content(word_chars, normalized_word, avail_set, avail_counter, strict)
+              and is_search_by_hint(word, lst_hint)):
             yield word
 
 
-def search_in_many_files(lang="fr", cars="", lst_hint=[]):
+def search_in_many_files(lang="fr", cars="", lst_hint=None):
+    lst_hint = lst_hint or []
     min_len = max(
         (int(h.pos) for h in lst_hint if h.car and not h.inverted),
         default=1

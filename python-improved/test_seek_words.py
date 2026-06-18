@@ -13,12 +13,17 @@ from seek_words import (
 )
 
 
-def _content(word, lst_car=[], strict=False):
-    """python-improved normalizes + counts each word once at index-load time,
-    so is_search_by_content receives the already-normalized word and its Counter.
-    This helper reproduces that indexing step for predicate-level unit tests."""
+def _content(word, lst_car=None, strict=False):
+    """python-improved normalizes each word once at index-load time and stores the
+    set of its unique chars; the pool is prepared once per scan by the caller. This
+    helper reproduces both steps so the predicate can be unit-tested in isolation."""
+    lst_car = lst_car or []
     normalized = unidecode.unidecode(word)
-    return is_search_by_content(normalized, Counter(normalized), lst_car, strict)
+    word_chars = frozenset(normalized)
+    avail = [c for c in lst_car if c]
+    avail_set = set(avail)
+    avail_counter = Counter(avail) if strict else None
+    return is_search_by_content(word_chars, normalized, avail_set, avail_counter, strict)
 
 
 # --- is_list_empty_or_full_of_none ---
