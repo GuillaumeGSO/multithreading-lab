@@ -29,9 +29,11 @@ goroutines over contiguous word-list chunks) and a **nested** mode
 (`InManyFilesNested` — fan-out where each length is also split, i.e. goroutines
 spawning goroutines). Selected by `SEARCH_MODE` (`parallel` default routes
 `/search/file` → split and `/search/many` → nested; `baseline` restores the
-original). Because goroutines are real OS-thread-backed work, `nested` can
-oversubscribe the 2-CPU container (`GOMAXPROCS` defaults to the host's core
-count). Output is identical to baseline (`search_test.go` asserts it).
+original). `GOMAXPROCS` is pinned to **2** (via `docker-compose.yml`) to match the
+CPU budget — otherwise it defaults to the *host* core count and ignores the cgroup
+limit — so the runtime multiplexes the per-length × split goroutines onto 2 OS
+threads for a fair 2-core comparison. Output is identical to baseline
+(`search_test.go` asserts it).
 
 ```bash
 # Cross-language chart (from repo root)

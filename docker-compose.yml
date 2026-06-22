@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: python/Dockerfile
+    # Already pinned to 2 via `uvicorn --workers 2` (Dockerfile); threads are
+    # GIL-bound, so there is no host-core auto-sizing to cap here.
     ports:
       - "8007:8007"
     deploy:
@@ -15,6 +17,10 @@ services:
     build:
       context: .
       dockerfile: java/Dockerfile
+    # Pin parallelism to the 2-CPU budget for a fair cross-language comparison.
+    # JAVA_TOOL_OPTIONS is honored by every JVM launch (live API + benchmark).
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:ActiveProcessorCount=2"
     ports:
       - "8002:8002"
     deploy:
@@ -27,6 +33,10 @@ services:
     build:
       context: .
       dockerfile: go/Dockerfile
+    # GOMAXPROCS defaults to the HOST core count and ignores the cgroup CPU limit,
+    # so pin it to 2 to match the budget (the main fairness fix).
+    environment:
+      GOMAXPROCS: "2"
     ports:
       - "8003:8003"
     deploy:
@@ -39,6 +49,10 @@ services:
     build:
       context: .
       dockerfile: cpp/Dockerfile
+    # cpuBudget() reads the cgroup quota (→2) but CPU_BUDGET makes it explicit and
+    # independent of whether the limit is applied during `docker compose run`.
+    environment:
+      CPU_BUDGET: "2"
     ports:
       - "8004:8004"
     deploy:
@@ -51,6 +65,9 @@ services:
     build:
       context: .
       dockerfile: nest/Dockerfile
+    # Worker pool already defaults to 2; set it explicitly to match the budget.
+    environment:
+      WORKER_POOL_SIZE: "2"
     ports:
       - "8006:8006"
     deploy:

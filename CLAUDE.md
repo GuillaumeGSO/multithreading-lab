@@ -96,5 +96,16 @@ languages mirror these expected results.
 Each implementation additionally exposes an **intra-file split** (axis B) and a **nested** mode
 (see the in-process benchmark section). The split uses each language's native primitive
 (Python `threading` — GIL-bound; Go goroutines; C++ `std::thread`; Java virtual threads; Nest
-worker-pool tasks). `nested` deliberately stacks A+B: raw-thread languages (Go/C++) oversubscribe,
-while pool/virtual-thread languages (Nest/Java) queue or absorb the extra work.
+worker-pool tasks). `nested` deliberately stacks A+B, producing more concurrent work than cores;
+each runtime caps it differently (C++ a permit pool, Go the `GOMAXPROCS` scheduler, Nest a fixed
+worker pool, Java the virtual-thread carrier pool).
+
+### Fair 2-CPU budget
+
+Every container runs under a uniform **2-CPU budget** so the cross-language comparison is
+apples-to-apples. Beyond the `cpus: "2.0"` cgroup limit, each runtime is pinned **explicitly**
+(in `docker-compose.yml`), because several size their parallelism from the *host* core count and
+ignore the cgroup: `GOMAXPROCS=2` (Go — the key one), `CPU_BUDGET=2` (C++), `WORKER_POOL_SIZE=2`
+(Nest), `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2` (Java). Python is already pinned via
+`uvicorn --workers 2` (and threads are GIL-bound). These env vars apply to both `docker compose up`
+(live API) and `docker compose run` (the in-process benchmark).
