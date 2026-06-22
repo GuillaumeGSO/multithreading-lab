@@ -25,7 +25,7 @@ multithreading-lab/
 ├── assets/             # Shared word lists
 ├── load-tests/
 │   └── artillery.yml   # Single test file, environments select the target
-├── python/             # Python — strategy dispatcher (positional/frequency index ⟷ on-load scan), uvicorn --workers 2
+├── python/             # Python — strategy dispatcher (positional index ⟷ lean scan, both derive per-word data on the fly), uvicorn --workers 2
 ├── cpp/                # C++17, cpp-httplib, std::thread fan-out
 ├── nest/               # Node/NestJS, Fastify, worker_threads pool
 ├── docker-compose.yml  # Python=8007, Java=8002, Go=8003, C++=8004, Nest=8006
@@ -67,8 +67,12 @@ Two concurrency axes, exposed as named modes: **A** = per-length fan-out (`/sear
 (neither), `split` (B, `/file`), `fanout` (A), `nested` (A+B). All modes return byte-identical
 output to baseline (chunks/lengths merged in order — guarded by each impl's parallel unit tests).
 
-The same parallel paths are **wired into the live API** via `SEARCH_MODE` (default `parallel`;
-`baseline` restores original behavior) and `SPLIT_DEGREE`. See [`benchmarks/README.md`](benchmarks/README.md).
+The same parallel paths are **wired into the live API** via `SEARCH_MODE` and `SPLIT_DEGREE`.
+Go/C++/Java/Nest default to `parallel` (real threads = their best path); `baseline` restores
+original behavior. **Python is the exception:** its threads are GIL-bound, so it defaults to
+the **index-aware dispatcher** (not `parallel`) — serving each language via its best path keeps
+the HTTP comparison fair, and the dispatcher caches nothing per word so two `uvicorn` workers
+fit the 512 MB budget. See [`benchmarks/README.md`](benchmarks/README.md).
 
 ## Unit tests
 
@@ -87,7 +91,7 @@ languages mirror these expected results.
 
 | Implementation   | Model |
 |-----------------|-------|
-| Python          | Strategy dispatcher: each query runs the faster of a positional + frequency index (O(result) — used when a pinned hint or strict mode can exploit it) or a lean on-load scan (O(vocabulary), cheap per-word). Process-level scaling via `uvicorn --workers 2`. Threads are GIL-bound (the `split`/`nested` modes demonstrate this) |
+| Python          | Strategy dispatcher: `/search/file` runs the faster of a positional index (O(result) — used when a pinned hint can seed candidates) or a lean scan (O(vocabulary), cheap per-word); `/search/many` always scans (the index barely helps it but would cost pos_index for every length). Both strategies cache nothing per word — they derive letter data on the fly from the shared base — so two `uvicorn --workers 2` processes fit the 512 MB budget. Threads are GIL-bound (the `split`/`nested` modes demonstrate this) |
 | Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
 | Go              | Goroutines + `sync.WaitGroup` (per-length fan-out in `/search/many`) |
 | C++             | `std::thread` fan-out per length + `std::mutex` for word cache |

@@ -169,9 +169,18 @@ Results are always merged in index/length order, so every mode returns
 
 ## Live API
 
-The same parallel paths are wired into the running servers. `SEARCH_MODE`
-(default `parallel`) selects them; `SEARCH_MODE=baseline` restores each
-language's original endpoint behavior. `SPLIT_DEGREE` controls the chunk count.
+The same parallel paths are wired into the running servers. `SEARCH_MODE` selects them
+and `SPLIT_DEGREE` controls the chunk count. For **Go / C++ / Java / Nest** the default
+is `parallel` (real threads → their idiomatic best path); `SEARCH_MODE=baseline` restores
+each language's original endpoint behavior.
+
+**Python is the exception:** its threads are GIL-bound overhead, so it defaults to the
+**index-aware dispatcher** (the strategy that wins the in-process benchmark), not
+`parallel`. `SEARCH_MODE=parallel` opts python into the threaded scan as a deliberate
+GIL demonstration. This keeps the cross-language HTTP comparison fair — *each language
+served via its best path* — and is what lets the two `uvicorn` workers stay inside the
+512 MB budget under load (the dispatcher caches nothing per word; see
+[`../python/README.md`](../python/README.md)).
 
 ## Files
 

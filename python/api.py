@@ -8,10 +8,14 @@ from pydantic import BaseModel
 from parallel import search_in_file_parallel, search_in_many_parallel
 from seek_words import Hint, search_in_file, search_in_many_files
 
-# SEARCH_MODE=parallel (default) routes requests through the threaded variants
-# (intra-file split for /file, nested per-length fan-out for /many);
-# SEARCH_MODE=baseline keeps the single-threaded dispatcher path.
-_PARALLEL = os.environ.get("SEARCH_MODE", "parallel").lower() != "baseline"
+# The live default is the index-aware dispatcher (seek_words) — Python's best path:
+# the positional index serves pinned-hint queries in O(result), and caching nothing
+# per word keeps two uvicorn workers inside the 512 MB budget. SEARCH_MODE=parallel
+# opts into the GIL-bound threaded variants (the deliberate "threads don't help a
+# CPU-bound scan under the GIL" demo); SEARCH_MODE=baseline is the same dispatcher path.
+# (Unlike the real-thread languages, whose `parallel` IS their idiomatic best path,
+# Python threads are pure overhead here — so python alone defaults off `parallel`.)
+_PARALLEL = os.environ.get("SEARCH_MODE", "dispatcher").lower() == "parallel"
 
 
 @asynccontextmanager

@@ -1,16 +1,17 @@
-"""IndexedStrategy — the positional + frequency inverted index.
+"""IndexedStrategy — the positional inverted index.
 
-On first use per `(lang, length)`, two indexes are built from the shared base:
+On first use per `(lang, length)`, the **positional index** is built from the shared
+base — `pos → char → frozenset(words)`: a pinned hint becomes a set intersection, an
+excluded hint a set subtraction. That index is the *only* structure this strategy
+caches; everything else (iteration order, letter availability) is derived per query
+from `common.load_base` `(word, normalized)`, building a `Counter` on the fly only for
+the rare strict path. Caching only the irreducible index keeps the footprint small
+enough that two uvicorn workers can hold it alongside the scan path inside the 512 MB
+container budget.
 
-- **positional index** — `pos → char → frozenset(words)`: a pinned hint becomes a
-  set intersection, an excluded hint a set subtraction.
-- **frequency index** — `list[(word, Counter(normalized))]`: the letter-availability
-  check compares pre-computed counters instead of scanning characters per request.
-
-This wins when there is something to exploit: a pinned hint (which seeds a tight
-candidate set → O(result)), or strict mode (the precomputed Counters beat the scan's
-per-word Counter rebuild). Built from `common.load_base`, so normalization is shared
-with ScanStrategy and never repeated.
+This wins when there is a pinned hint to exploit — it seeds a tight candidate set →
+O(result). Built from `common.load_base`, so normalization is shared with ScanStrategy
+and never repeated.
 """
 
 from collections import Counter
@@ -26,8 +27,6 @@ from common import (
 
 # pos_index[key][pos][char] → frozenset of words with that char at that 1-based position
 _pos_index: dict[str, dict[int, dict[str, frozenset]]] = {}
-# freq_index[key] → list of (original_word, Counter(normalized_word)), in base order
-_freq_index: dict[str, list[tuple[str, Counter]]] = {}
 
 
 def _ensure_index(lang: str, nb_car: int) -> str:
@@ -37,10 +36,8 @@ def _ensure_index(lang: str, nb_car: int) -> str:
 
     logger.info("index build (indexed): %s", key)
     pos_idx: dict[int, dict[str, set]] = {pos: {} for pos in range(1, nb_car + 1)}
-    freq_idx: list[tuple[str, Counter]] = []
 
-    for word, normalized in load_base(lang, nb_car):
-        freq_idx.append((word, Counter(normalized)))
+    for word, _ in load_base(lang, nb_car):
         for pos in range(1, nb_car + 1):
             char = word[pos - 1]
             if char not in pos_idx[pos]:
@@ -51,7 +48,6 @@ def _ensure_index(lang: str, nb_car: int) -> str:
         pos: {c: frozenset(s) for c, s in chars.items()}
         for pos, chars in pos_idx.items()
     }
-    _freq_index[key] = freq_idx
     return key
 
 
@@ -69,7 +65,7 @@ class IndexedStrategy:
 
         key = _ensure_index(lang, nb_car)
         pos_idx = _pos_index[key]
-        freq_idx = _freq_index[key]
+        base = load_base(lang, nb_car)
 
         # Build candidate set from the positional index.
         candidates: frozenset | None = None
@@ -85,7 +81,7 @@ class IndexedStrategy:
                 candidates = hint_set if candidates is None else candidates & hint_set
 
             if candidates is None:
-                candidates = frozenset(w for w, _ in freq_idx)
+                candidates = frozenset(w for w, _ in base)
 
             for hint in active_hints:
                 if not hint.inverted:
@@ -96,24 +92,26 @@ class IndexedStrategy:
                 excluded = pos_idx.get(pos, {}).get(hint.car, frozenset())
                 candidates = candidates - excluded
 
-        # Filter by letter availability.
+        # Filter by letter availability. Counts are derived from the normalized word on
+        # the fly (a Counter only for the rare strict path) — nothing per-word is cached.
         if not is_empty_cars:
-            query_counter = Counter(lst_car)
+            query_counter = Counter(lst_car) if strict else None
             query_set = set(lst_car)
-            for word, word_counter in freq_idx:
+            for word, normalized in base:
                 if candidates is not None and word not in candidates:
                     continue
                 if strict:
+                    word_counter = Counter(normalized)
                     if not all(word_counter[c] <= query_counter[c] for c in word_counter):
                         continue
                 else:
-                    if not all(c in query_set for c in word_counter):
+                    if not all(c in query_set for c in normalized):
                         continue
                 yield word
         else:
             # Hints only — yield candidates in original word-list (base) order.
             candidate_set = candidates
-            for word, _ in freq_idx:
+            for word, _ in base:
                 if word in candidate_set:
                     yield word
 

@@ -1,8 +1,8 @@
 """Parallel variants of the word search, used by the live API (when
 SEARCH_MODE=parallel) and the in-process benchmark.
 
-These reuse the **scan** strategy's per-word data path and predicates — only the
-*partitioning* of work across threads differs. A word list is split into ``N``
+These reuse the shared ``common.load_base`` and the **scan** strategy's predicate —
+only the *partitioning* of work across threads differs. A word list is split into ``N``
 contiguous chunks scanned on separate threads and merged in index order, so the
 output is byte-identical to the sequential search regardless of thread timing.
 
@@ -24,8 +24,9 @@ from common import (
     is_hint_list_empty_or_full_of_none,
     is_list_empty_or_full_of_none,
     is_search_by_hint,
+    load_base,
 )
-from strategy_scan import _load_word_indexes, is_search_by_content
+from strategy_scan import is_search_by_content
 
 
 def split_degree() -> int:
@@ -38,12 +39,12 @@ def split_degree() -> int:
 
 
 def _matches(entry, avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint) -> bool:
-    word, normalized, word_chars = entry
+    word, normalized = entry
     if is_empty_hint:
-        return is_search_by_content(word_chars, normalized, avail_set, avail_counter, strict)
+        return is_search_by_content(normalized, avail_set, avail_counter, strict)
     if is_empty_cars:
         return is_search_by_hint(word, lst_hint)
-    return (is_search_by_content(word_chars, normalized, avail_set, avail_counter, strict)
+    return (is_search_by_content(normalized, avail_set, avail_counter, strict)
             and is_search_by_hint(word, lst_hint))
 
 
@@ -67,7 +68,7 @@ def search_in_file_parallel(
     if nb_car == 0 or (is_empty_cars and is_empty_hint):
         raise Exception("Parameters lstCar et lstHint cannot be empty at the same time")
 
-    entries = _load_word_indexes(lang, nb_car)
+    entries = load_base(lang, nb_car)
     # Pool built once and shared read-only across the worker threads.
     avail = [c for c in lst_car if c]
     avail_set = set(avail)
