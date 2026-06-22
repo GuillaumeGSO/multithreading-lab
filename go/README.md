@@ -18,8 +18,9 @@ Concurrency appears at two independent levels:
 
 The word-list cache is a `sync.Map`, safe for the concurrent requests above.
 
-The search algorithm itself is the same brute-force scan as `python-base` — no
-indexing. This isolates the concurrency model as the only variable.
+The search algorithm itself is the same brute-force scan as Python's scan strategy
+([`python/strategy_scan.py`](../python/strategy_scan.py)) — no indexing. This isolates
+the concurrency model as the only variable.
 
 ### Parallel modes & in-process benchmark
 
@@ -76,7 +77,7 @@ docker run -p 8003:8003 seek-words-go
 
 ## Unit tests
 
-Tests mirror the python-base pytest suite — unit tests for content/hint matching
+Tests mirror the Python pytest suite — unit tests for content/hint matching
 plus integration tests against the real asset files. `TestMain` points
 `ASSETS_ROOT` at the repo-root `assets/` directory automatically.
 

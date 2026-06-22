@@ -59,18 +59,6 @@ run_service() {
       bench python python \
         -e BENCH_LANGUAGE=python -e "BENCH_LABEL=Python" \
         --entrypoint .venv/bin/python python bench.py ;;
-    python-base)
-      bench python-base python-base \
-        -e BENCH_LANGUAGE=python-base -e "BENCH_LABEL=Python (base)" \
-        --entrypoint .venv/bin/python python-base bench.py ;;
-    python-improved)
-      bench python-improved python-improved \
-        -e BENCH_LANGUAGE=python-improved -e "BENCH_LABEL=Python (improved)" \
-        --entrypoint .venv/bin/python python-improved bench.py ;;
-    python-indexed)
-      bench python-indexed python-indexed \
-        -e BENCH_LANGUAGE=python-indexed -e "BENCH_LABEL=Python (indexed)" \
-        --entrypoint .venv/bin/python python-indexed bench.py ;;
     go)
       bench go go --entrypoint /app/bench go ;;
     cpp)
@@ -86,7 +74,7 @@ run_service() {
   esac
 }
 
-ALL=(python python-base python-improved python-indexed go cpp java nest)
+ALL=(python go cpp java nest)
 TARGETS=("$@")
 [ "${#TARGETS[@]}" -eq 0 ] && TARGETS=("${ALL[@]}")
 

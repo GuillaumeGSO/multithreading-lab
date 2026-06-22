@@ -20,11 +20,9 @@ CASES_PATH = os.path.join(HERE, "cases.json")
 OUT_PATH = os.path.join(HERE, "compare.html")
 
 # Preferred display order; anything else is appended alphabetically.
-ORDER = ["python-base", "python-improved", "python-indexed", "java", "go", "cpp", "nest"]
+ORDER = ["python", "java", "go", "cpp", "nest"]
 COLORS = {
-    "python-base": "#3776ab",
-    "python-improved": "#5a9bd4",
-    "python-indexed": "#86c5f0",
+    "python": "#3776ab",
     "java": "#e76f00",
     "go": "#00add8",
     "cpp": "#9b4f96",
@@ -123,9 +121,9 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   </ul>
   Caveats: <strong>Python</strong> threads share the GIL, so <code>split</code>/<code>nested</code>
   rarely beat <code>baseline</code> — Python scales at the process/API layer instead, not via
-  threads here. <em>python-improved</em> beats <em>python-base</em> on <code>baseline</code> not
-  through concurrency but because it builds a per-word index on load (precomputed normalized
-  form + letter counts), so each scan does less work. <strong>Go/C++</strong> use real
+  threads here. <em>python</em>'s <code>baseline</code> dispatches each query to the faster of two
+  strategies (a positional/frequency index when a pinned hint or strict mode can exploit it,
+  otherwise a lean on-load scan), so per-query cost is the min of the two. <strong>Go/C++</strong> use real
   threads/goroutines, so <code>nested</code> can oversubscribe the 2-CPU box; <strong>Nest</strong>'s fixed
   worker pool and <strong>Java</strong>'s virtual threads instead queue/absorb the extra work. These
   searches are sub-millisecond, so thread-creation overhead often dominates any speedup.

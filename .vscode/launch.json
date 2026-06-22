@@ -5,27 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python-base: main.py",
+            "name": "Python: uvicorn (api:app)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/python-base/main.py",
-            "python": "${workspaceFolder}/python-base/.venv/bin/python",
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}/python-base"
-            },
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Python-improved: main.py",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/python-improved/main.py",
-            "python": "${workspaceFolder}/python-improved/.venv/bin/python",
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}/python-improved"
-            },
+            "module": "uvicorn",
+            "args": ["api:app", "--port", "8007", "--reload"],
+            "cwd": "${workspaceFolder}/python",
+            "python": "${workspaceFolder}/python/.venv/bin/python",
             "console": "integratedTerminal"
         }
     ]

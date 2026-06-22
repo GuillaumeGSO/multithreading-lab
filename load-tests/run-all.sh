@@ -12,25 +12,21 @@ fi
 
 get_port() {
   case "$1" in
-    python-base)     echo 8000 ;;
-    python-improved) echo 8001 ;;
-    python-indexed)  echo 8005 ;;
-    java)            echo 8002 ;;
-    go)              echo 8003 ;;
-    cpp)             echo 8004 ;;
-    nest)            echo 8006 ;;
+    python) echo 8007 ;;
+    java)   echo 8002 ;;
+    go)     echo 8003 ;;
+    cpp)    echo 8004 ;;
+    nest)   echo 8006 ;;
   esac
 }
 
 get_container() {
   case "$1" in
-    python-base)     echo multithreading-lab-python-base-1 ;;
-    python-improved) echo multithreading-lab-python-improved-1 ;;
-    python-indexed)  echo multithreading-lab-python-indexed-1 ;;
-    java)            echo multithreading-lab-java-1 ;;
-    go)              echo multithreading-lab-go-1 ;;
-    cpp)             echo multithreading-lab-cpp-1 ;;
-    nest)            echo multithreading-lab-nest-1 ;;
+    python) echo multithreading-lab-python-1 ;;
+    java)   echo multithreading-lab-java-1 ;;
+    go)     echo multithreading-lab-go-1 ;;
+    cpp)    echo multithreading-lab-cpp-1 ;;
+    nest)   echo multithreading-lab-nest-1 ;;
   esac
 }
 
@@ -60,7 +56,7 @@ mkdir -p "$RESULTS_DIR"
 
 ran=()
 
-for env in python-base python-improved python-indexed java go cpp nest; do
+for env in python java go cpp nest; do
   port=$(get_port "$env")
   url="http://localhost:$port"
 

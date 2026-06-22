@@ -24,7 +24,7 @@ cd benchmarks
 bash run-all.sh
 ```
 
-**One service** (valid names: `python-base` `python-improved` `python-indexed` `go` `cpp` `java` `nest`):
+**One service** (valid names: `python` `go` `cpp` `java` `nest`):
 
 ```bash
 bash run-all.sh go
@@ -159,9 +159,9 @@ Results are always merged in index/length order, so every mode returns
 - **Sub-millisecond searches**: thread-creation/IPC overhead usually dominates,
   so `split`/`nested` rarely beat `baseline`. Push `SPLIT_DEGREE` and harder
   cases to change that.
-- **Python** threads share the GIL → `split`/`nested` ≈ `baseline` (or slower).
-  This is why **python-improved == python-base here**: its `uvicorn --workers 2`
-  edge only exists under concurrent HTTP load, not in-process.
+- **Python** threads share the GIL → `split`/`nested` ≈ `baseline` (or slower). Its
+  `uvicorn --workers 2` edge only exists under concurrent HTTP load, not in-process;
+  the `baseline` here is the per-query strategy dispatcher (index ⟷ scan).
 - **Go / C++** use real threads/goroutines → `nested` can oversubscribe the
   2-CPU box.
 - **Nest** uses a fixed worker pool and **Java** uses virtual threads → the
@@ -177,7 +177,7 @@ language's original endpoint behavior. `SPLIT_DEGREE` controls the chunk count.
 
 - `gen_cases.py` — **generates** `cases.json` (deterministic, balanced grid — see [Test cases](#test-cases)). Edit this, not the JSON.
 - `cases.json` — canonical case definitions (single source of truth, baked into every image).
-- `python_bench_shared.py` — shared Python runner (copied into each python image as `bench.py`).
+- `python_bench.py` — the Python in-process runner (copied into the python image as `bench.py`).
 - Go/C++/Java/Nest runners live in their own trees (`go/bench/`, `cpp/src/bench.cpp`,
   `com.lab.search.BenchmarkRunner`, `nest/src/bench.ts`).
 - `run-all.sh` — orchestrator. `aggregate.py` — chart generator. `results/` — output (gitignored).

@@ -1,8 +1,8 @@
-"""Shared in-process benchmark runner for the three Python implementations.
+"""In-process benchmark runner for the Python implementation.
 
-Copied into each python image as ``bench.py``. Reads the canonical cases from
-CASES_PATH, times each case per concurrency mode with warmup + median-of-N, and
-prints a single JSON object to stdout (logs go to stderr).
+Copied into the python image as ``bench.py``. Reads the canonical cases from
+CASES_PATH, times each case per concurrency mode with warmup + median-of-N, records
+process memory, and prints a single JSON object to stdout (logs go to stderr).
 
 Modes:
   file cases  -> baseline (single thread), split (intra-file, SPLIT_DEGREE chunks)
@@ -11,6 +11,7 @@ Modes:
 
 import json
 import os
+import resource
 import statistics
 import sys
 import time
@@ -18,6 +19,23 @@ from concurrent.futures import ThreadPoolExecutor
 
 from seek_words import Hint, search_in_file, search_in_many_files
 from parallel import search_in_file_parallel, search_in_many_parallel, split_degree
+
+
+def _peak_rss_mb() -> float:
+    """Peak resident set of this process, in MB. ru_maxrss is KB on Linux (the
+    bench container) and bytes on macOS."""
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return rss / (1024 * 1024) if sys.platform == "darwin" else rss / 1024
+
+
+def _current_rss_mb():
+    """Current resident set in MB (Linux /proc); None where unavailable."""
+    try:
+        with open("/proc/self/statm") as f:
+            resident_pages = int(f.read().split()[1])
+        return resident_pages * os.sysconf("SC_PAGE_SIZE") / (1024 * 1024)
+    except (FileNotFoundError, OSError, IndexError, ValueError):
+        return None
 
 WARMUP = int(os.environ.get("BENCH_WARMUP", "20"))
 ITERS = int(os.environ.get("BENCH_ITERS", "100"))
@@ -118,6 +136,10 @@ def main():
     with open(cases_path, encoding="utf-8") as f:
         cases = json.load(f)
 
+    # Baseline before any word file is loaded / index is built, so the delta below
+    # attributes the growth to the search indexes (shared across all modes).
+    rss_baseline = _current_rss_mb()
+
     out_cases = []
     for case in cases:
         modes = {}
@@ -138,12 +160,27 @@ def main():
     log(f"[{LABEL}] throughput: {throughput['ops_per_sec']:.1f} ops/s "
         f"@ concurrency {CONCURRENCY} ({throughput['count']} words/op)")
 
+    # Memory is process-level: indexes are built once per (lang, length) and cached,
+    # then shared across every mode — so there is no meaningful per-mode figure. We
+    # report the peak RSS and the growth from baseline (≈ what the indexes cost).
+    peak = _peak_rss_mb()
+    end_rss = _current_rss_mb()
+    memory = {
+        "peak_rss_mb": round(peak, 1),
+        "baseline_rss_mb": round(rss_baseline, 1) if rss_baseline is not None else None,
+        "end_rss_mb": round(end_rss, 1) if end_rss is not None else None,
+        "index_growth_mb": round(peak - rss_baseline, 1) if rss_baseline is not None else None,
+    }
+    log(f"[{LABEL}] memory: peak {memory['peak_rss_mb']} MB"
+        + (f", index growth {memory['index_growth_mb']} MB" if memory['index_growth_mb'] is not None else ""))
+
     report = {
         "language": LANGUAGE,
         "label": LABEL,
         "meta": {"warmup": WARMUP, "iterations": ITERS, "split_degree": split_degree()},
         "cases": out_cases,
         "throughput": throughput,
+        "memory": memory,
     }
     print(json.dumps(report))
 

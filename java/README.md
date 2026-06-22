@@ -75,7 +75,7 @@ in-memory word lists.
 
 ## Unit tests
 
-34 tests mirroring the python-base pytest suite — unit tests for content/hint matching, integration tests against the real asset files, and equivalence tests asserting the parallel modes (`fileSplit`, `manyNested`) return byte-identical results to the baseline.
+34 tests mirroring the Python pytest suite — unit tests for content/hint matching, integration tests against the real asset files, and equivalence tests asserting the parallel modes (`fileSplit`, `manyNested`) return byte-identical results to the baseline.
 
 ```bash
 # Run from the java/ directory (Maven sets the working directory there)

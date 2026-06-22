@@ -22,8 +22,8 @@ deliberate contrast with Go's single shared `sync.Map`. Each worker warms its
 own cache over its lifetime; no cache is shared across threads and no
 `SharedArrayBuffer` is used (the word lists are strings).
 
-The search algorithm itself is the same brute-force scan as `python-base` and
-`go` — no indexing. This isolates the concurrency model as the only variable.
+The search algorithm itself is the same brute-force scan as Python's scan strategy
+and `go` — no indexing. This isolates the concurrency model as the only variable.
 
 ### Parallel modes & in-process benchmark
 
@@ -97,7 +97,7 @@ docker run -p 8006:8006 seek-words-nest
 
 ## Unit tests
 
-Two suites mirror the python-base / go suites:
+Two suites mirror the Python / go suites:
 
 - `search.spec.ts` — pure algorithm: content/hint matching plus integration
   assertions against the real asset files. No worker threads.

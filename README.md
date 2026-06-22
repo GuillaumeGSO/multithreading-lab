@@ -6,7 +6,7 @@ A personal learning project to experiment with multithreading across multiple la
 
 Implement, then progressively optimize, identical concurrent programs in:
 
-- **Python** ✅ (baseline + improved + indexed)
+- **Python** ✅ (strategy dispatcher: positional/frequency index ⟷ on-load scan)
 - **Java** ✅ (virtual threads)
 - **Go** ✅ (goroutines)
 - **C++** ✅ (`std::thread` + bounded pool)
@@ -20,10 +20,7 @@ Each implementation exposes a word-search API over a shared dictionary dataset (
 
 ## Approach
 
-Each language gets a baseline directory and an improved directory, both wrapping the same search logic behind the same HTTP API:
-
-1. **Baseline** (`*-base`) — straightforward single-threaded solution, used as the reference
-2. **Improved** (`*-improved`) — applying language-specific concurrency techniques (thread pools, lock-free structures, async runtimes, etc.)
+Each language has one implementation wrapping the same search logic behind the same HTTP API, applying its own concurrency techniques (thread pools, virtual threads, goroutines, worker pools, etc.). The Python implementation consolidates the project's algorithm experiments — a brute-force scan, an on-load index, and a positional/frequency index — into a single **strategy dispatcher** that runs whichever algorithm is faster for each query.
 
 ## Structure
 
@@ -40,9 +37,7 @@ multithreading-lab/
 │   ├── gen_cases.py         # Deterministic case generator
 │   ├── run-all.sh           # Benches every container, builds compare.html
 │   └── aggregate.py         # Chart generator
-├── python-base/             # Reference implementation — no concurrency
-├── python-improved/         # Python with uvicorn --workers 2 (process-level)
-├── python-indexed/          # Python with pre-built positional + frequency indexes
+├── python/                  # Python — strategy dispatcher (index ⟷ scan), uvicorn --workers 2
 ├── java/                    # Spring Boot + virtual threads (Java 21)
 ├── go/                      # net/http + goroutines (Go 1.23)
 ├── nest/                    # NestJS + worker_threads pool (Node 22)
@@ -74,13 +69,11 @@ docker compose up <service-name>
 
 | Implementation   | Port |
 |-----------------|------|
-| python-base     | 8000 |
-| python-improved | 8001 |
 | Java            | 8002 |
 | Go              | 8003 |
 | C++             | 8004 |
-| python-indexed  | 8005 |
 | Nest            | 8006 |
+| Python          | 8007 |
 
 ## Load testing
 
@@ -123,9 +116,7 @@ Each implementation has its own test suite covering the core search logic. See t
 
 | Implementation   | Concurrency model |
 |-----------------|-------------------|
-| python-base     | None (reference); threaded split/nested available but GIL-bound |
-| python-improved | `uvicorn --workers 2` (process-level, API only — identical to base in-process) |
-| python-indexed  | None; index O(result). Parallel modes bypass the index (brute-force chunks) |
+| Python          | Strategy dispatcher (index ⟷ scan per query) + `uvicorn --workers 2` (process-level); threaded split/nested available but GIL-bound |
 | Java            | Virtual threads (`ExecutorService`) — per-length fan-out + intra-file split |
 | Go              | Goroutines + `sync.WaitGroup` — per-length fan-out + intra-file split |
 | C++             | `std::thread` (split) + bounded pool (`std::mutex` cache) |

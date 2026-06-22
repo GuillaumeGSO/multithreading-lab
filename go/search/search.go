@@ -1,4 +1,4 @@
-// Package search ports the brute-force word-search algorithm from python-base.
+// Package search ports the brute-force word-search algorithm (Python's scan strategy).
 // It filters word lists by available letters, positional hints, and word length.
 package search
 

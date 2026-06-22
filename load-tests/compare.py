@@ -20,11 +20,9 @@ RESULTS_DIR = SCRIPT_DIR / "results"
 OUTPUT = SCRIPT_DIR / "compare-report.html"
 
 # Preferred display order; anything else is appended alphabetically.
-ORDER = ["python-base", "python-improved", "python-indexed", "java", "go", "cpp", "nest"]
+ORDER = ["python", "java", "go", "cpp", "nest"]
 COLORS = {
-    "python-base": "#3776ab",
-    "python-improved": "#5a9bd4",
-    "python-indexed": "#86c5f0",
+    "python": "#3776ab",
     "java": "#e76f00",
     "go": "#00add8",
     "cpp": "#9b4f96",

@@ -33,22 +33,21 @@ npm install -g artillery
 
 ```bash
 # Run against a single implementation
-npm run run:python-indexed
+npm run run:python
 
 # Run against all reachable containers and generate compare-report.html
 ./run-all.sh
 ```
 
-Available environments: `python-base`, `python-improved`, `python-indexed`, `java`, `go`, `cpp`.
+Available environments: `python`, `java`, `go`, `cpp`, `nest`.
 
 | npm script | Port |
 |---|---|
-| `npm run run:python-base` | 8000 |
-| `npm run run:python-improved` | 8001 |
-| `npm run run:python-indexed` | 8005 |
+| `npm run run:python` | 8007 |
 | `npm run run:java` | 8002 |
 | `npm run run:go` | 8003 |
 | `npm run run:cpp` | 8004 |
+| `npm run run:nest` | 8006 |
 
 ## How randomized payloads work
 

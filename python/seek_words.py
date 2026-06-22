@@ -1,9 +1,10 @@
 """Public search surface + the strategy dispatcher.
 
 Two correctness-equivalent algorithms (both return byte-identical results to the
-old python-base reference) live behind one common interface; this module picks the
-faster one *per query* from the query shape alone. Because the two strategies always
-agree on output, dispatch is a pure performance choice that can never change results.
+original brute-force reference) live behind one common interface; this module picks
+the faster one *per query* from the query shape alone. Because the two strategies
+always agree on output, dispatch is a pure performance choice that can never change
+results.
 
 Dispatch rule (derived empirically — see the plan / README):
 

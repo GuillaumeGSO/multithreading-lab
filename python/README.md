@@ -3,9 +3,9 @@
 The consolidated Python implementation. It holds **both** word-search algorithms as
 explicit strategies and picks the faster one **per query**, from the query shape alone.
 
-> Intended to become the *single* Python implementation; `python-base`,
-> `python-improved`, and `python-indexed` are slated for removal in a later cleanup
-> pass. Runs on **8007** for now (canonical **8000** once the others are gone).
+> The single Python implementation. It consolidates three earlier experiments — a
+> brute-force baseline, an on-load index, and a positional/frequency index — into one
+> dispatcher. Runs on **8007**.
 
 ## The two strategies
 
@@ -14,7 +14,7 @@ explicit strategies and picks the faster one **per query**, from the query shape
 | **ScanStrategy** ([strategy_scan.py](strategy_scan.py)) | `(word, normalized, char_set)` per word | cheap frozenset subset (strict rebuilds a Counter on demand) | letters-only / excluded-hint-only, **non-strict** |
 | **IndexedStrategy** ([strategy_indexed.py](strategy_indexed.py)) | positional index `pos→char→frozenset(words)` + frequency index `(word, Counter)` | set intersection to seed, precomputed Counter to filter | a **pinned** hint to seed from, or **strict** mode |
 
-Both return **byte-identical** results to the old `python-base` reference (guarded by
+Both return **byte-identical** results to the original brute-force reference (guarded by
 `test_seek_words.py` and the cross-strategy equivalence checks in `test_dispatch.py`).
 That equivalence is what makes per-query dispatch *safe*: it only changes speed, never
 output.

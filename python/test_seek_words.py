@@ -1,7 +1,7 @@
 """Correctness reference for `python`.
 
 The integration assertions (result counts / membership for `search_in_file` and
-`search_in_many_files`) must match the old python-base reference byte-for-byte —
+`search_in_many_files`) must match the original brute-force reference byte-for-byte —
 whichever strategy the dispatcher picks. Per-strategy content predicates and the
 two strategies' mutual equivalence are covered in `test_dispatch.py`.
 """

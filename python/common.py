@@ -1,8 +1,7 @@
 """Shared substrate for the two search strategies.
 
-Holds the pieces that are genuinely common: the `Hint` value object, the hint /
-list predicates (identical across the old python-base / improved / indexed), and —
-crucially — the **shared base loader**.
+Holds the pieces that are genuinely common to both strategies: the `Hint` value
+object, the hint / list predicates, and — crucially — the **shared base loader**.
 
 `load_base(lang, n)` reads each word file once and runs `unidecode` once per word,
 caching `list[(word, normalized)]` per `(lang, length)`. Both strategies build their

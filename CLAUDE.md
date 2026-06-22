@@ -25,21 +25,17 @@ multithreading-lab/
 ├── assets/             # Shared word lists
 ├── load-tests/
 │   └── artillery.yml   # Single test file, environments select the target
-├── python-base/        # Reference implementation (no concurrency)
-├── python-improved/    # Python, per-word index built on load (normalized + Counter), uvicorn --workers 2
-├── python-indexed/     # Python with pre-built positional + frequency indexes
+├── python/             # Python — strategy dispatcher (positional/frequency index ⟷ on-load scan), uvicorn --workers 2
 ├── cpp/                # C++17, cpp-httplib, std::thread fan-out
 ├── nest/               # Node/NestJS, Fastify, worker_threads pool
-├── docker-compose.yml  # python-base=8000, python-improved=8001, python-indexed=8005, Java=8002, Go=8003, C++=8004, Nest=8006
+├── docker-compose.yml  # Python=8007, Java=8002, Go=8003, C++=8004, Nest=8006
 └── CLAUDE.md
 ```
 
 ## Per-implementation READMEs
 
 Each directory has its own README covering local dev, Docker, and API details:
-- [`python-base/README.md`](python-base/README.md)
-- [`python-improved/README.md`](python-improved/README.md)
-- [`python-indexed/README.md`](python-indexed/README.md)
+- [`python/README.md`](python/README.md)
 - [`cpp/README.md`](cpp/README.md)
 - [`nest/README.md`](nest/README.md)
 
@@ -52,7 +48,7 @@ Each directory has its own README covering local dev, Docker, and API details:
 cd load-tests && bash run-all.sh
 
 # Run a single environment manually (requires npm install in load-tests/ first)
-cd load-tests && npm run run:python-base
+cd load-tests && npm run run:python
 ```
 
 ## In-process benchmark (algorithm + concurrency)
@@ -76,21 +72,22 @@ The same parallel paths are **wired into the live API** via `SEARCH_MODE` (defau
 
 ## Unit tests
 
-Each implementation has a `test_seek_words.py` pytest suite. Run with:
+Each implementation has a `test_seek_words.py` pytest suite. Run the Python suite with:
 
 ```bash
-cd python-base && .venv/bin/pytest -v
+cd python && uv run pytest -v
 ```
 
-The test suite must pass before and after any change to `seek_words.py`. The `python-base` suite is the correctness reference — `python-improved` and `python-indexed` must produce identical results.
+The suite must pass before and after any change to `seek_words.py`. The `python` suite is
+the correctness reference; its `test_dispatch.py` additionally asserts the two strategies
+return byte-identical output (so per-query dispatch can never change results) and the other
+languages mirror these expected results.
 
 ## Concurrency models by implementation
 
 | Implementation   | Model |
 |-----------------|-------|
-| python-base     | None (single-threaded reference) |
-| python-improved | Process-level scaling — `uvicorn --workers 2`; word index built on load (each word stored as `(word, normalized, Counter)`) so per-request scans skip re-normalizing — distinct from python-indexed's positional index |
-| python-indexed  | Pre-built positional + frequency indexes; O(result) search instead of O(vocabulary) |
+| Python          | Strategy dispatcher: each query runs the faster of a positional + frequency index (O(result) — used when a pinned hint or strict mode can exploit it) or a lean on-load scan (O(vocabulary), cheap per-word). Process-level scaling via `uvicorn --workers 2`. Threads are GIL-bound (the `split`/`nested` modes demonstrate this) |
 | Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
 | Go              | Goroutines + `sync.WaitGroup` (per-length fan-out in `/search/many`) |
 | C++             | `std::thread` fan-out per length + `std::mutex` for word cache |

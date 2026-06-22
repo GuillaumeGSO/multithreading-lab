@@ -1,4 +1,4 @@
-"""IndexedStrategy — the positional + frequency inverted index (from python-indexed).
+"""IndexedStrategy — the positional + frequency inverted index.
 
 On first use per `(lang, length)`, two indexes are built from the shared base:
 

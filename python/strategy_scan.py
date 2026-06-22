@@ -1,4 +1,4 @@
-"""ScanStrategy — the lean on-load scan (from python-improved).
+"""ScanStrategy — the lean on-load scan.
 
 Each word file is turned, on first use, into `(word, normalized, char_set)` tuples
 (built from the shared `common.load_base`, so normalization is not repeated). The
