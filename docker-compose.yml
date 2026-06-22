@@ -1,4 +1,16 @@
 services:
+  python:
+    build:
+      context: .
+      dockerfile: python/Dockerfile
+    ports:
+      - "8007:8007"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 512m
+
   python-base:
     build:
       context: .

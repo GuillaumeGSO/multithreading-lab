@@ -55,6 +55,10 @@ want() { [ "$#" -eq 0 ] && return 0; for s in "$@"; do [ "$s" = "$SELECTED" ] &&
 run_service() {
   SELECTED="$1"
   case "$SELECTED" in
+    python)
+      bench python python \
+        -e BENCH_LANGUAGE=python -e "BENCH_LABEL=Python" \
+        --entrypoint .venv/bin/python python bench.py ;;
     python-base)
       bench python-base python-base \
         -e BENCH_LANGUAGE=python-base -e "BENCH_LABEL=Python (base)" \
@@ -82,7 +86,7 @@ run_service() {
   esac
 }
 
-ALL=(python-base python-improved python-indexed go cpp java nest)
+ALL=(python python-base python-improved python-indexed go cpp java nest)
 TARGETS=("$@")
 [ "${#TARGETS[@]}" -eq 0 ] && TARGETS=("${ALL[@]}")
 

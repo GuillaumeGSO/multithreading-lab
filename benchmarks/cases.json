@@ -1,6 +1,1411 @@
 [
   {
-    "name": "file len=8 pool=20 4hints",
+    "name": "file len=4 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [
+      "a",
+      "g",
+      "p",
+      "r",
+      "u",
+      "v"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=4 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [
+      "a",
+      "g",
+      "p",
+      "r",
+      "u",
+      "v"
+    ],
+    "lst_hint": [
+      {
+        "pos": 3,
+        "car": "v",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "p",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=4 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [
+      "a",
+      "g",
+      "p",
+      "r",
+      "u",
+      "v"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "o",
+        "inverted": true
+      },
+      {
+        "pos": 3,
+        "car": "k",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=4 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [
+      "a",
+      "g",
+      "p",
+      "r",
+      "u",
+      "v"
+    ],
+    "lst_hint": [
+      {
+        "pos": 3,
+        "car": "v",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "g",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=5 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [
+      "i",
+      "n",
+      "p",
+      "q",
+      "s",
+      "t",
+      "w"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=5 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [
+      "i",
+      "n",
+      "p",
+      "q",
+      "s",
+      "t",
+      "w"
+    ],
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "s",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=5 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [
+      "i",
+      "n",
+      "p",
+      "q",
+      "s",
+      "t",
+      "w"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "c",
+        "inverted": true
+      },
+      {
+        "pos": 3,
+        "car": "h",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=5 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [
+      "i",
+      "n",
+      "p",
+      "q",
+      "s",
+      "t",
+      "w"
+    ],
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "j",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=6 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [
+      "a",
+      "c",
+      "e",
+      "k",
+      "o",
+      "p",
+      "s",
+      "u"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=6 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [
+      "a",
+      "c",
+      "e",
+      "k",
+      "o",
+      "p",
+      "s",
+      "u"
+    ],
+    "lst_hint": [
+      {
+        "pos": 6,
+        "car": "k",
+        "inverted": false
+      },
+      {
+        "pos": 3,
+        "car": "p",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=6 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [
+      "a",
+      "c",
+      "e",
+      "k",
+      "o",
+      "p",
+      "s",
+      "u"
+    ],
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "b",
+        "inverted": true
+      },
+      {
+        "pos": 2,
+        "car": "k",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=6 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [
+      "a",
+      "c",
+      "e",
+      "k",
+      "o",
+      "p",
+      "s",
+      "u"
+    ],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 3,
+        "car": "c",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=7 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "i",
+      "l",
+      "o",
+      "t",
+      "u"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=7 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "i",
+      "l",
+      "o",
+      "t",
+      "u"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "t",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=7 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "i",
+      "l",
+      "o",
+      "t",
+      "u"
+    ],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 1,
+        "car": "b",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=7 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "i",
+      "l",
+      "o",
+      "t",
+      "u"
+    ],
+    "lst_hint": [
+      {
+        "pos": 7,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "f",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=8 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [
+      "a",
+      "d",
+      "e",
+      "g",
+      "m",
+      "o",
+      "q",
+      "r",
+      "u",
+      "z"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=8 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [
+      "a",
+      "d",
+      "e",
+      "g",
+      "m",
+      "o",
+      "q",
+      "r",
+      "u",
+      "z"
+    ],
+    "lst_hint": [
+      {
+        "pos": 3,
+        "car": "m",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "a",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=8 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [
+      "a",
+      "d",
+      "e",
+      "g",
+      "m",
+      "o",
+      "q",
+      "r",
+      "u",
+      "z"
+    ],
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "y",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "i",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=8 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [
+      "a",
+      "d",
+      "e",
+      "g",
+      "m",
+      "o",
+      "q",
+      "r",
+      "u",
+      "z"
+    ],
+    "lst_hint": [
+      {
+        "pos": 3,
+        "car": "m",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "d",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=9 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [
+      "a",
+      "c",
+      "e",
+      "f",
+      "g",
+      "i",
+      "l",
+      "p",
+      "r",
+      "s"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=9 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [
+      "a",
+      "c",
+      "e",
+      "f",
+      "g",
+      "i",
+      "l",
+      "p",
+      "r",
+      "s"
+    ],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "l",
+        "inverted": false
+      },
+      {
+        "pos": 2,
+        "car": "i",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=9 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [
+      "a",
+      "c",
+      "e",
+      "f",
+      "g",
+      "i",
+      "l",
+      "p",
+      "r",
+      "s"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "c",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "z",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=9 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [
+      "a",
+      "c",
+      "e",
+      "f",
+      "g",
+      "i",
+      "l",
+      "p",
+      "r",
+      "s"
+    ],
+    "lst_hint": [
+      {
+        "pos": 9,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 3,
+        "car": "e",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=10 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [
+      "a",
+      "c",
+      "d",
+      "e",
+      "i",
+      "k",
+      "r",
+      "s",
+      "v"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=10 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [
+      "a",
+      "c",
+      "d",
+      "e",
+      "i",
+      "k",
+      "r",
+      "s",
+      "v"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 6,
+        "car": "e",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=10 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [
+      "a",
+      "c",
+      "d",
+      "e",
+      "i",
+      "k",
+      "r",
+      "s",
+      "v"
+    ],
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "h",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "t",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=10 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [
+      "a",
+      "c",
+      "d",
+      "e",
+      "i",
+      "k",
+      "r",
+      "s",
+      "v"
+    ],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "c",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=11 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "c",
+      "d",
+      "e",
+      "h",
+      "i",
+      "n",
+      "o",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=11 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "c",
+      "d",
+      "e",
+      "h",
+      "i",
+      "n",
+      "o",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w"
+    ],
+    "lst_hint": [
+      {
+        "pos": 7,
+        "car": "v",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "c",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=11 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "c",
+      "d",
+      "e",
+      "h",
+      "i",
+      "n",
+      "o",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "w",
+        "inverted": true
+      },
+      {
+        "pos": 11,
+        "car": "n",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=11 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "c",
+      "d",
+      "e",
+      "h",
+      "i",
+      "n",
+      "o",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w"
+    ],
+    "lst_hint": [
+      {
+        "pos": 6,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 7,
+        "car": "n",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=12 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [
+      "a",
+      "b",
+      "d",
+      "e",
+      "h",
+      "i",
+      "n",
+      "r",
+      "s",
+      "t",
+      "u"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=12 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [
+      "a",
+      "b",
+      "d",
+      "e",
+      "h",
+      "i",
+      "n",
+      "r",
+      "s",
+      "t",
+      "u"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 8,
+        "car": "a",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=12 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [
+      "a",
+      "b",
+      "d",
+      "e",
+      "h",
+      "i",
+      "n",
+      "r",
+      "s",
+      "t",
+      "u"
+    ],
+    "lst_hint": [
+      {
+        "pos": 9,
+        "car": "b",
+        "inverted": true
+      },
+      {
+        "pos": 2,
+        "car": "v",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=12 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [
+      "a",
+      "b",
+      "d",
+      "e",
+      "h",
+      "i",
+      "n",
+      "r",
+      "s",
+      "t",
+      "u"
+    ],
+    "lst_hint": [
+      {
+        "pos": 9,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "c",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=13 none",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "a",
+      "e",
+      "g",
+      "h",
+      "i",
+      "m",
+      "n",
+      "o",
+      "p",
+      "r",
+      "s",
+      "t",
+      "w",
+      "y"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=13 normal",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "a",
+      "e",
+      "g",
+      "h",
+      "i",
+      "m",
+      "n",
+      "o",
+      "p",
+      "r",
+      "s",
+      "t",
+      "w",
+      "y"
+    ],
+    "lst_hint": [
+      {
+        "pos": 13,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 8,
+        "car": "s",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=13 inverted",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "a",
+      "e",
+      "g",
+      "h",
+      "i",
+      "m",
+      "n",
+      "o",
+      "p",
+      "r",
+      "s",
+      "t",
+      "w",
+      "y"
+    ],
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "x",
+        "inverted": true
+      },
+      {
+        "pos": 7,
+        "car": "y",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=13 mixed",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "a",
+      "e",
+      "g",
+      "h",
+      "i",
+      "m",
+      "n",
+      "o",
+      "p",
+      "r",
+      "s",
+      "t",
+      "w",
+      "y"
+    ],
+    "lst_hint": [
+      {
+        "pos": 13,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 9,
+        "car": "w",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "many rack=7 none",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "aoctsuv",
+    "lst_hint": []
+  },
+  {
+    "name": "many rack=7 normal",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "aoctsuv",
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "o",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "s",
+        "inverted": false
+      }
+    ]
+  },
+  {
+    "name": "many rack=7 inverted",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "aoctsuv",
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "s",
+        "inverted": true
+      },
+      {
+        "pos": 2,
+        "car": "t",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many rack=7 mixed",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "aoctsuv",
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "c",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many rack=8 none",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "enitardp",
+    "lst_hint": []
+  },
+  {
+    "name": "many rack=8 normal",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "enitardp",
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "r",
+        "inverted": false
+      },
+      {
+        "pos": 2,
+        "car": "e",
+        "inverted": false
+      }
+    ]
+  },
+  {
+    "name": "many rack=8 inverted",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "enitardp",
+    "lst_hint": [
+      {
+        "pos": 6,
+        "car": "i",
+        "inverted": true
+      },
+      {
+        "pos": 1,
+        "car": "l",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many rack=8 mixed",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "enitardp",
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "r",
+        "inverted": false
+      },
+      {
+        "pos": 2,
+        "car": "p",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many rack=9 none",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "trapexnid",
+    "lst_hint": []
+  },
+  {
+    "name": "many rack=9 normal",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "trapexnid",
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "p",
+        "inverted": false
+      }
+    ]
+  },
+  {
+    "name": "many rack=9 inverted",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "trapexnid",
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "z",
+        "inverted": true
+      },
+      {
+        "pos": 6,
+        "car": "e",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "many rack=9 mixed",
+    "kind": "many",
+    "lang": "fr",
+    "cars": "trapexnid",
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 3,
+        "car": "y",
+        "inverted": true
+      }
+    ]
+  },
+  {
+    "name": "file len=4 none-wide",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [
+      "a",
+      "b",
+      "c",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "l",
+      "m",
+      "n",
+      "r",
+      "s",
+      "v",
+      "w",
+      "z"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=5 none-wide",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [
+      "c",
+      "d",
+      "e",
+      "f",
+      "h",
+      "i",
+      "m",
+      "n",
+      "o",
+      "p",
+      "s",
+      "t",
+      "u",
+      "v",
+      "y",
+      "z"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=6 none-wide",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [
+      "a",
+      "c",
+      "d",
+      "e",
+      "g",
+      "h",
+      "i",
+      "k",
+      "l",
+      "o",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "y"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=7 none-wide",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "i",
+      "l",
+      "m",
+      "n",
+      "o",
+      "r",
+      "s",
+      "x",
+      "z"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=8 none-wide",
     "kind": "file",
     "lang": "fr",
     "nb_car": 8,
@@ -8,203 +1413,513 @@
       "a",
       "b",
       "c",
-      "d",
       "e",
-      "g",
-      "h",
+      "f",
       "i",
+      "j",
+      "k",
       "n",
-      "o",
-      "q",
-      "r",
+      "p",
       "s",
       "t",
       "u",
       "v",
       "w",
-      "x",
-      "y",
       "z"
     ],
-    "lst_hint": [
-      {
-        "pos": 3,
-        "car": "h",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "o",
-        "inverted": false
-      },
-      {
-        "pos": 4,
-        "car": "c",
-        "inverted": true
-      },
-      {
-        "pos": 8,
-        "car": "l",
-        "inverted": true
-      }
-    ],
+    "lst_hint": [],
     "strict": false
   },
   {
-    "name": "file len=9 pool=18 6hints",
+    "name": "file len=9 none-wide",
     "kind": "file",
     "lang": "fr",
     "nb_car": 9,
     "lst_car": [
+      "a",
+      "b",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "l",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s",
+      "u",
+      "v"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=10 none-wide",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [
+      "a",
+      "c",
+      "f",
+      "g",
+      "i",
+      "l",
+      "m",
+      "n",
+      "o",
+      "q",
+      "r",
+      "t",
+      "w",
+      "x",
+      "y",
+      "z"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=11 none-wide",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "a",
+      "b",
+      "d",
+      "e",
+      "f",
+      "i",
+      "j",
+      "k",
+      "m",
+      "o",
+      "r",
+      "s",
+      "t",
+      "u",
+      "x",
+      "z"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=12 none-wide",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [
+      "a",
       "b",
       "c",
       "d",
       "e",
-      "f",
-      "g",
+      "h",
+      "i",
+      "k",
+      "l",
+      "m",
+      "n",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u"
+    ],
+    "lst_hint": [],
+    "strict": false
+  },
+  {
+    "name": "file len=13 none-wide",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "a",
+      "e",
       "i",
       "j",
       "l",
       "m",
       "n",
       "o",
+      "p",
       "r",
       "s",
       "t",
       "u",
+      "v",
       "x",
-      "z"
+      "y"
     ],
-    "lst_hint": [
-      {
-        "pos": 2,
-        "car": "o",
-        "inverted": false
-      },
-      {
-        "pos": 1,
-        "car": "f",
-        "inverted": false
-      },
-      {
-        "pos": 6,
-        "car": "o",
-        "inverted": true
-      },
-      {
-        "pos": 9,
-        "car": "l",
-        "inverted": true
-      },
-      {
-        "pos": 3,
-        "car": "l",
-        "inverted": true
-      },
-      {
-        "pos": 8,
-        "car": "j",
-        "inverted": true
-      }
-    ],
+    "lst_hint": [],
     "strict": false
   },
   {
-    "name": "file len=10 hint-only 8hints",
+    "name": "file len=4 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [],
+    "nb_car": 4,
+    "lst_car": [
+      "o",
+      "s",
+      "a",
+      "b",
+      "x",
+      "k",
+      "e"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=4 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [
+      "o",
+      "s",
+      "a",
+      "b",
+      "x",
+      "k",
+      "e"
+    ],
     "lst_hint": [
       {
         "pos": 2,
-        "car": "h",
+        "car": "a",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "e",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=4 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [
+      "o",
+      "s",
+      "a",
+      "b",
+      "x",
+      "k",
+      "e"
+    ],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "x",
         "inverted": true
       },
       {
         "pos": 3,
-        "car": "z",
+        "car": "a",
         "inverted": true
-      },
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=4 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [
+      "o",
+      "s",
+      "a",
+      "b",
+      "x",
+      "k",
+      "e"
+    ],
+    "lst_hint": [
       {
         "pos": 4,
-        "car": "h",
-        "inverted": true
-      },
-      {
-        "pos": 10,
-        "car": "k",
-        "inverted": true
-      },
-      {
-        "pos": 8,
-        "car": "c",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "t",
-        "inverted": true
-      },
-      {
-        "pos": 9,
         "car": "e",
         "inverted": false
       },
       {
-        "pos": 5,
-        "car": "v",
+        "pos": 2,
+        "car": "b",
         "inverted": true
       }
     ],
-    "strict": false
+    "strict": true
   },
   {
-    "name": "file len=11 pool=16 5hints strict",
+    "name": "file len=5 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
+    "nb_car": 5,
     "lst_car": [
-      "b",
-      "n",
-      "a",
-      "r",
-      "t",
-      "n",
-      "s",
-      "c",
-      "o",
       "i",
-      "s",
-      "v",
-      "l",
-      "p",
-      "g",
-      "a"
+      "o",
+      "u",
+      "x",
+      "j",
+      "c",
+      "r",
+      "m"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=5 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [
+      "i",
+      "o",
+      "u",
+      "x",
+      "j",
+      "c",
+      "r",
+      "m"
     ],
     "lst_hint": [
       {
-        "pos": 9,
-        "car": "n",
+        "pos": 2,
+        "car": "o",
         "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "i",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=5 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [
+      "i",
+      "o",
+      "u",
+      "x",
+      "j",
+      "c",
+      "r",
+      "m"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "i",
+        "inverted": true
       },
       {
         "pos": 1,
         "car": "n",
         "inverted": true
-      },
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=5 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [
+      "i",
+      "o",
+      "u",
+      "x",
+      "j",
+      "c",
+      "r",
+      "m"
+    ],
+    "lst_hint": [
       {
-        "pos": 2,
-        "car": "a",
-        "inverted": true
-      },
-      {
-        "pos": 5,
-        "car": "t",
+        "pos": 3,
+        "car": "u",
         "inverted": false
       },
       {
+        "pos": 2,
+        "car": "p",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=6 none strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [
+      "s",
+      "e",
+      "d",
+      "y",
+      "h",
+      "u",
+      "i",
+      "c",
+      "f"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=6 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [
+      "s",
+      "e",
+      "d",
+      "y",
+      "h",
+      "u",
+      "i",
+      "c",
+      "f"
+    ],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "h",
+        "inverted": false
+      },
+      {
+        "pos": 3,
+        "car": "c",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=6 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [
+      "s",
+      "e",
+      "d",
+      "y",
+      "h",
+      "u",
+      "i",
+      "c",
+      "f"
+    ],
+    "lst_hint": [
+      {
+        "pos": 3,
+        "car": "u",
+        "inverted": true
+      },
+      {
+        "pos": 2,
+        "car": "u",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=6 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [
+      "s",
+      "e",
+      "d",
+      "y",
+      "h",
+      "u",
+      "i",
+      "c",
+      "f"
+    ],
+    "lst_hint": [
+      {
+        "pos": 6,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "z",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=7 none strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [
+      "o",
+      "o",
+      "i",
+      "m",
+      "c",
+      "n",
+      "f",
+      "e",
+      "q",
+      "d"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=7 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [
+      "o",
+      "o",
+      "i",
+      "m",
+      "c",
+      "n",
+      "f",
+      "e",
+      "q",
+      "d"
+    ],
+    "lst_hint": [
+      {
         "pos": 7,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 4,
         "car": "o",
         "inverted": false
       }
@@ -212,403 +1927,1227 @@
     "strict": true
   },
   {
-    "name": "file len=12 hint-only 10hints",
+    "name": "file len=7 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [
+      "o",
+      "o",
+      "i",
+      "m",
+      "c",
+      "n",
+      "f",
+      "e",
+      "q",
+      "d"
+    ],
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "m",
+        "inverted": true
+      },
+      {
+        "pos": 4,
+        "car": "v",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=7 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [
+      "o",
+      "o",
+      "i",
+      "m",
+      "c",
+      "n",
+      "f",
+      "e",
+      "q",
+      "d"
+    ],
+    "lst_hint": [
+      {
+        "pos": 7,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "x",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=8 none strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [
+      "l",
+      "f",
+      "q",
+      "e",
+      "g",
+      "e",
+      "d",
+      "o",
+      "n",
+      "z",
+      "s"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=8 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [
+      "l",
+      "f",
+      "q",
+      "e",
+      "g",
+      "e",
+      "d",
+      "o",
+      "n",
+      "z",
+      "s"
+    ],
+    "lst_hint": [
+      {
+        "pos": 6,
+        "car": "o",
+        "inverted": false
+      },
+      {
+        "pos": 7,
+        "car": "n",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=8 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [
+      "l",
+      "f",
+      "q",
+      "e",
+      "g",
+      "e",
+      "d",
+      "o",
+      "n",
+      "z",
+      "s"
+    ],
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "i",
+        "inverted": true
+      },
+      {
+        "pos": 3,
+        "car": "u",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=8 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [
+      "l",
+      "f",
+      "q",
+      "e",
+      "g",
+      "e",
+      "d",
+      "o",
+      "n",
+      "z",
+      "s"
+    ],
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "l",
+        "inverted": false
+      },
+      {
+        "pos": 8,
+        "car": "a",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=9 none strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [
+      "p",
+      "e",
+      "t",
+      "c",
+      "r",
+      "a",
+      "j",
+      "i",
+      "r",
+      "h",
+      "z",
+      "e"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=9 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [
+      "p",
+      "e",
+      "t",
+      "c",
+      "r",
+      "a",
+      "j",
+      "i",
+      "r",
+      "h",
+      "z",
+      "e"
+    ],
+    "lst_hint": [
+      {
+        "pos": 6,
+        "car": "r",
+        "inverted": false
+      },
+      {
+        "pos": 8,
+        "car": "i",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=9 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [
+      "p",
+      "e",
+      "t",
+      "c",
+      "r",
+      "a",
+      "j",
+      "i",
+      "r",
+      "h",
+      "z",
+      "e"
+    ],
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "j",
+        "inverted": true
+      },
+      {
+        "pos": 9,
+        "car": "h",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=9 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [
+      "p",
+      "e",
+      "t",
+      "c",
+      "r",
+      "a",
+      "j",
+      "i",
+      "r",
+      "h",
+      "z",
+      "e"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "l",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=10 none strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [
+      "t",
+      "r",
+      "e",
+      "h",
+      "s",
+      "q",
+      "i",
+      "b",
+      "x",
+      "a",
+      "n",
+      "c",
+      "r"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=10 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [
+      "t",
+      "r",
+      "e",
+      "h",
+      "s",
+      "q",
+      "i",
+      "b",
+      "x",
+      "a",
+      "n",
+      "c",
+      "r"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "h",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "c",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=10 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [
+      "t",
+      "r",
+      "e",
+      "h",
+      "s",
+      "q",
+      "i",
+      "b",
+      "x",
+      "a",
+      "n",
+      "c",
+      "r"
+    ],
+    "lst_hint": [
+      {
+        "pos": 10,
+        "car": "p",
+        "inverted": true
+      },
+      {
+        "pos": 5,
+        "car": "p",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=10 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [
+      "t",
+      "r",
+      "e",
+      "h",
+      "s",
+      "q",
+      "i",
+      "b",
+      "x",
+      "a",
+      "n",
+      "c",
+      "r"
+    ],
+    "lst_hint": [
+      {
+        "pos": 8,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 6,
+        "car": "g",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=11 none strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "g",
+      "a",
+      "u",
+      "u",
+      "t",
+      "d",
+      "y",
+      "s",
+      "o",
+      "e",
+      "g",
+      "i",
+      "k",
+      "a"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=11 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "g",
+      "a",
+      "u",
+      "u",
+      "t",
+      "d",
+      "y",
+      "s",
+      "o",
+      "e",
+      "g",
+      "i",
+      "k",
+      "a"
+    ],
+    "lst_hint": [
+      {
+        "pos": 10,
+        "car": "g",
+        "inverted": false
+      },
+      {
+        "pos": 2,
+        "car": "u",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=11 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "g",
+      "a",
+      "u",
+      "u",
+      "t",
+      "d",
+      "y",
+      "s",
+      "o",
+      "e",
+      "g",
+      "i",
+      "k",
+      "a"
+    ],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "i",
+        "inverted": true
+      },
+      {
+        "pos": 11,
+        "car": "w",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=11 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [
+      "g",
+      "a",
+      "u",
+      "u",
+      "t",
+      "d",
+      "y",
+      "s",
+      "o",
+      "e",
+      "g",
+      "i",
+      "k",
+      "a"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "u",
+        "inverted": false
+      },
+      {
+        "pos": 3,
+        "car": "h",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=12 none strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [
+      "i",
+      "s",
+      "d",
+      "s",
+      "p",
+      "r",
+      "l",
+      "e",
+      "e",
+      "e",
+      "o",
+      "n",
+      "v",
+      "s",
+      "q"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=12 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [
+      "i",
+      "s",
+      "d",
+      "s",
+      "p",
+      "r",
+      "l",
+      "e",
+      "e",
+      "e",
+      "o",
+      "n",
+      "v",
+      "s",
+      "q"
+    ],
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "d",
+        "inverted": false
+      },
+      {
+        "pos": 3,
+        "car": "s",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=12 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [
+      "i",
+      "s",
+      "d",
+      "s",
+      "p",
+      "r",
+      "l",
+      "e",
+      "e",
+      "e",
+      "o",
+      "n",
+      "v",
+      "s",
+      "q"
+    ],
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "y",
+        "inverted": true
+      },
+      {
+        "pos": 10,
+        "car": "t",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=12 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [
+      "i",
+      "s",
+      "d",
+      "s",
+      "p",
+      "r",
+      "l",
+      "e",
+      "e",
+      "e",
+      "o",
+      "n",
+      "v",
+      "s",
+      "q"
+    ],
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 8,
+        "car": "d",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=13 none strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "t",
+      "e",
+      "t",
+      "v",
+      "e",
+      "s",
+      "o",
+      "c",
+      "g",
+      "n",
+      "m",
+      "e",
+      "a",
+      "q",
+      "s",
+      "n"
+    ],
+    "lst_hint": [],
+    "strict": true
+  },
+  {
+    "name": "file len=13 normal strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "t",
+      "e",
+      "t",
+      "v",
+      "e",
+      "s",
+      "o",
+      "c",
+      "g",
+      "n",
+      "m",
+      "e",
+      "a",
+      "q",
+      "s",
+      "n"
+    ],
+    "lst_hint": [
+      {
+        "pos": 11,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 8,
+        "car": "n",
+        "inverted": false
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=13 inverted strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "t",
+      "e",
+      "t",
+      "v",
+      "e",
+      "s",
+      "o",
+      "c",
+      "g",
+      "n",
+      "m",
+      "e",
+      "a",
+      "q",
+      "s",
+      "n"
+    ],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "m",
+        "inverted": true
+      },
+      {
+        "pos": 8,
+        "car": "o",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=13 mixed strict",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 13,
+    "lst_car": [
+      "t",
+      "e",
+      "t",
+      "v",
+      "e",
+      "s",
+      "o",
+      "c",
+      "g",
+      "n",
+      "m",
+      "e",
+      "a",
+      "q",
+      "s",
+      "n"
+    ],
+    "lst_hint": [
+      {
+        "pos": 6,
+        "car": "t",
+        "inverted": false
+      },
+      {
+        "pos": 13,
+        "car": "w",
+        "inverted": true
+      }
+    ],
+    "strict": true
+  },
+  {
+    "name": "file len=4 normal nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 2,
+        "car": "o",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "s",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=4 mixed nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 4,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 3,
+        "car": "p",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=5 normal nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "u",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "g",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=5 mixed nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 5,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "u",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "l",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=6 normal nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 3,
+        "car": "r",
+        "inverted": false
+      },
+      {
+        "pos": 1,
+        "car": "e",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=6 mixed nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 6,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "a",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "a",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=7 normal nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 7,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "s",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=7 mixed nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 7,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 7,
+        "car": "b",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=8 normal nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 6,
+        "car": "a",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "s",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=8 mixed nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 8,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 8,
+        "car": "s",
+        "inverted": false
+      },
+      {
+        "pos": 6,
+        "car": "p",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=9 normal nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 4,
+        "car": "a",
+        "inverted": false
+      },
+      {
+        "pos": 5,
+        "car": "r",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=9 mixed nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 9,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 9,
+        "car": "t",
+        "inverted": false
+      },
+      {
+        "pos": 3,
+        "car": "j",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=10 normal nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 8,
+        "car": "e",
+        "inverted": false
+      },
+      {
+        "pos": 2,
+        "car": "n",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=10 mixed nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 10,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "i",
+        "inverted": false
+      },
+      {
+        "pos": 4,
+        "car": "x",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=11 normal nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 5,
+        "car": "u",
+        "inverted": false
+      },
+      {
+        "pos": 9,
+        "car": "m",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=11 mixed nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 11,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 1,
+        "car": "d",
+        "inverted": false
+      },
+      {
+        "pos": 9,
+        "car": "o",
+        "inverted": true
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=12 normal nopool",
     "kind": "file",
     "lang": "fr",
     "nb_car": 12,
     "lst_car": [],
     "lst_hint": [
       {
-        "pos": 9,
-        "car": "f",
-        "inverted": true
-      },
-      {
-        "pos": 3,
-        "car": "z",
-        "inverted": true
-      },
-      {
-        "pos": 12,
-        "car": "s",
+        "pos": 4,
+        "car": "c",
         "inverted": false
       },
       {
         "pos": 2,
-        "car": "i",
+        "car": "o",
+        "inverted": false
+      }
+    ],
+    "strict": false
+  },
+  {
+    "name": "file len=12 mixed nopool",
+    "kind": "file",
+    "lang": "fr",
+    "nb_car": 12,
+    "lst_car": [],
+    "lst_hint": [
+      {
+        "pos": 8,
+        "car": "n",
         "inverted": false
       },
       {
-        "pos": 5,
-        "car": "q",
-        "inverted": true
-      },
-      {
-        "pos": 7,
-        "car": "l",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "k",
-        "inverted": true
-      },
-      {
-        "pos": 8,
-        "car": "i",
-        "inverted": true
-      },
-      {
-        "pos": 10,
-        "car": "c",
-        "inverted": true
-      },
-      {
-        "pos": 1,
-        "car": "q",
+        "pos": 2,
+        "car": "v",
         "inverted": true
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=13 pool=26 4hints",
+    "name": "file len=13 normal nopool",
     "kind": "file",
     "lang": "fr",
     "nb_car": 13,
-    "lst_car": [
-      "a",
-      "b",
-      "c",
-      "d",
-      "e",
-      "f",
-      "g",
-      "h",
-      "i",
-      "j",
-      "k",
-      "l",
-      "m",
-      "n",
-      "o",
-      "p",
-      "q",
-      "r",
-      "s",
-      "t",
-      "u",
-      "v",
-      "w",
-      "x",
-      "y",
-      "z"
-    ],
+    "lst_car": [],
     "lst_hint": [
       {
         "pos": 8,
-        "car": "n",
-        "inverted": true
+        "car": "s",
+        "inverted": false
       },
       {
-        "pos": 7,
-        "car": "o",
-        "inverted": true
-      },
-      {
-        "pos": 4,
-        "car": "y",
-        "inverted": true
-      },
-      {
-        "pos": 2,
-        "car": "v",
-        "inverted": true
+        "pos": 12,
+        "car": "i",
+        "inverted": false
       }
     ],
     "strict": false
   },
   {
-    "name": "many cars=14 5hints(inv)",
-    "kind": "many",
+    "name": "file len=13 mixed nopool",
+    "kind": "file",
     "lang": "fr",
-    "cars": "tsuclfjbpqerih",
+    "nb_car": 13,
+    "lst_car": [],
     "lst_hint": [
-      {
-        "pos": 4,
-        "car": "n",
-        "inverted": true
-      },
-      {
-        "pos": 7,
-        "car": "o",
-        "inverted": true
-      },
-      {
-        "pos": 1,
-        "car": "x",
-        "inverted": true
-      },
-      {
-        "pos": 3,
-        "car": "r",
-        "inverted": true
-      },
-      {
-        "pos": 13,
-        "car": "q",
-        "inverted": true
-      }
-    ]
-  },
-  {
-    "name": "many cars=16 7hints(inv)",
-    "kind": "many",
-    "lang": "fr",
-    "cars": "rbhuzpdoagiysnve",
-    "lst_hint": [
-      {
-        "pos": 14,
-        "car": "x",
-        "inverted": true
-      },
-      {
-        "pos": 11,
-        "car": "j",
-        "inverted": true
-      },
-      {
-        "pos": 10,
-        "car": "w",
-        "inverted": true
-      },
-      {
-        "pos": 16,
-        "car": "o",
-        "inverted": true
-      },
-      {
-        "pos": 9,
-        "car": "z",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "a",
-        "inverted": true
-      },
       {
         "pos": 5,
-        "car": "t",
-        "inverted": true
-      }
-    ]
-  },
-  {
-    "name": "many cars=18 6hints(inv)",
-    "kind": "many",
-    "lang": "fr",
-    "cars": "dsctlihjzapoenkgfu",
-    "lst_hint": [
-      {
-        "pos": 17,
-        "car": "o",
-        "inverted": true
-      },
-      {
-        "pos": 16,
-        "car": "b",
-        "inverted": true
+        "car": "y",
+        "inverted": false
       },
       {
         "pos": 9,
-        "car": "z",
-        "inverted": true
-      },
-      {
-        "pos": 15,
-        "car": "j",
-        "inverted": true
-      },
-      {
-        "pos": 14,
-        "car": "o",
-        "inverted": true
-      },
-      {
-        "pos": 1,
-        "car": "o",
-        "inverted": true
-      }
-    ]
-  },
-  {
-    "name": "many cars=18 9hints(inv)",
-    "kind": "many",
-    "lang": "fr",
-    "cars": "trplzsaiyfdnmbweco",
-    "lst_hint": [
-      {
-        "pos": 14,
         "car": "x",
         "inverted": true
-      },
-      {
-        "pos": 1,
-        "car": "b",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "i",
-        "inverted": true
-      },
-      {
-        "pos": 12,
-        "car": "p",
-        "inverted": true
-      },
-      {
-        "pos": 16,
-        "car": "h",
-        "inverted": true
-      },
-      {
-        "pos": 13,
-        "car": "w",
-        "inverted": true
-      },
-      {
-        "pos": 7,
-        "car": "l",
-        "inverted": true
-      },
-      {
-        "pos": 11,
-        "car": "c",
-        "inverted": true
-      },
-      {
-        "pos": 4,
-        "car": "i",
-        "inverted": true
       }
-    ]
-  },
-  {
-    "name": "many cars=20 8hints(inv)",
-    "kind": "many",
-    "lang": "fr",
-    "cars": "mlruspxfotdziwbnyavc",
-    "lst_hint": [
-      {
-        "pos": 10,
-        "car": "g",
-        "inverted": true
-      },
-      {
-        "pos": 17,
-        "car": "n",
-        "inverted": true
-      },
-      {
-        "pos": 20,
-        "car": "f",
-        "inverted": true
-      },
-      {
-        "pos": 14,
-        "car": "j",
-        "inverted": true
-      },
-      {
-        "pos": 11,
-        "car": "a",
-        "inverted": true
-      },
-      {
-        "pos": 7,
-        "car": "g",
-        "inverted": true
-      },
-      {
-        "pos": 12,
-        "car": "t",
-        "inverted": true
-      },
-      {
-        "pos": 5,
-        "car": "l",
-        "inverted": true
-      }
-    ]
-  },
-  {
-    "name": "many cars=22 12hints(inv)",
-    "kind": "many",
-    "lang": "fr",
-    "cars": "rysfltizgcumhxaedpovnj",
-    "lst_hint": [
-      {
-        "pos": 4,
-        "car": "w",
-        "inverted": true
-      },
-      {
-        "pos": 14,
-        "car": "s",
-        "inverted": true
-      },
-      {
-        "pos": 8,
-        "car": "z",
-        "inverted": true
-      },
-      {
-        "pos": 6,
-        "car": "u",
-        "inverted": true
-      },
-      {
-        "pos": 17,
-        "car": "q",
-        "inverted": true
-      },
-      {
-        "pos": 15,
-        "car": "s",
-        "inverted": true
-      },
-      {
-        "pos": 2,
-        "car": "g",
-        "inverted": true
-      },
-      {
-        "pos": 9,
-        "car": "p",
-        "inverted": true
-      },
-      {
-        "pos": 22,
-        "car": "z",
-        "inverted": true
-      },
-      {
-        "pos": 16,
-        "car": "v",
-        "inverted": true
-      },
-      {
-        "pos": 20,
-        "car": "z",
-        "inverted": true
-      },
-      {
-        "pos": 3,
-        "car": "v",
-        "inverted": true
-      }
-    ]
+    ],
+    "strict": false
   }
 ]
