@@ -92,7 +92,7 @@ languages mirror these expected results.
 | Implementation   | Model |
 |-----------------|-------|
 | Python          | Strategy dispatcher: `/search/file` runs the faster of a positional index (O(result) — used when a pinned hint can seed candidates) or a lean scan (O(vocabulary), cheap per-word); `/search/many` always scans (the index barely helps it but would cost pos_index for every length). Both strategies cache nothing per word — they derive letter data on the fly from the shared base — so two `uvicorn --workers 2` processes fit the 512 MB budget. Threads are GIL-bound (the `split`/`nested` modes demonstrate this) |
-| Java            | `Thread`, `ExecutorService`, `java.util.concurrent` |
+| Java            | Strategy dispatcher (mirrors Python): `SEARCH_MODE=baseline` routes `/search/file` to `IndexedStrategy` (positional index, O(result) with pinned hints) or `ScanStrategy` (O(vocabulary)); `/search/many` always scans. `SEARCH_MODE=parallel` (default) routes through virtual-thread fan-out (`ExecutorService.newVirtualThreadPerTaskExecutor`) — per-length fan-out for `/search/many`, intra-file split for `/search/file` |
 | Go              | Goroutines + `sync.WaitGroup` (per-length fan-out in `/search/many`) |
 | C++             | `std::thread` fan-out per length + `std::mutex` for word cache |
 | Node/NestJS     | `worker_threads` pool — N persistent workers; per-length fan-out in `/search/many` |

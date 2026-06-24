@@ -11,15 +11,24 @@ Virtual threads are used at two independent levels:
 1. **HTTP layer** — `spring.threads.virtual.enabled=true` makes Tomcat dispatch each incoming request on its own virtual thread, so all endpoints handle concurrent requests without a fixed thread pool
 2. **Search layer** — `WordSearchService.searchInManyFiles` spawns one virtual thread per word length via `Executors.newVirtualThreadPerTaskExecutor()`, so all file scans for a single `/search/many` request run in parallel and results are collected in longest-first order
 
+### Algorithm dispatch (baseline mode)
+
+`SEARCH_MODE=baseline` also selects the search algorithm per request, mirroring the Python dispatcher:
+
+- **`IndexedStrategy`** — builds a positional inverted index (`pos → char → Set<word>`) per `(lang, nb_car)` on first use. For queries with at least one pinned hint (non-inverted, non-null `car`), it seeds a tight candidate set by intersecting index buckets — O(result) instead of O(vocabulary). Wins 3–38× over scan when pinned hints are present.
+- **`ScanStrategy`** — iterates the full word list on every query. Wins 1.4–2.4× when no pinned hints are present (no index overhead, zero caching).
+
+The dispatch rule: `IndexedStrategy` is chosen when any `Hint` has `car != null && !inverted`; `ScanStrategy` otherwise. `/search/many` always uses scan (building an index per length would be wasteful).
+
 ### Parallel modes & in-process benchmark
 
 `WordSearchService` also adds an **intra-file split** (`fileSplit` — virtual
 threads over contiguous chunks) and a **nested** mode (`manyNested` — per-length
 fan-out where each length is also split). `SEARCH_MODE=parallel` (default) routes
 `/search/file` → split and `/search/many` → nested; `SEARCH_MODE=baseline`
-restores the original fan-out. Virtual threads are cheap, so `nested` is absorbed
-by the carrier pool rather than exploding. Output is identical to baseline
-(`WordSearchServiceTest` asserts it).
+restores the original fan-out with algorithm dispatch. Virtual threads are cheap,
+so `nested` is absorbed by the carrier pool rather than exploding. Output is
+identical to baseline (`WordSearchServiceTest` asserts it).
 
 ```bash
 # Cross-language chart (from repo root)
@@ -37,8 +46,14 @@ java/
 ├── src/
 │   ├── main/java/com/lab/search/
 │   │   ├── SearchApplication.java
+│   │   ├── BenchmarkRunner.java
 │   │   ├── controller/SearchController.java
-│   │   ├── service/WordSearchService.java
+│   │   ├── service/
+│   │   │   ├── WordSearchService.java
+│   │   │   └── strategy/
+│   │   │       ├── SearchStrategy.java   # interface
+│   │   │       ├── ScanStrategy.java     # flat scan (stateless)
+│   │   │       └── IndexedStrategy.java  # positional index (self-cached)
 │   │   └── model/               # Hint, SearchFileRequest, SearchManyRequest, SearchResponse
 │   └── test/java/com/lab/search/
 │       └── service/WordSearchServiceTest.java
@@ -75,7 +90,7 @@ in-memory word lists.
 
 ## Unit tests
 
-34 tests mirroring the Python pytest suite — unit tests for content/hint matching, integration tests against the real asset files, and equivalence tests asserting the parallel modes (`fileSplit`, `manyNested`) return byte-identical results to the baseline.
+41 tests mirroring the Python pytest suite — unit tests for content/hint matching, integration tests against the real asset files, equivalence tests asserting the parallel modes (`fileSplit`, `manyNested`) return byte-identical results to the baseline, and strategy tests verifying that `IndexedStrategy` returns byte-identical output to `ScanStrategy` and that `fileDispatch` routes correctly.
 
 ```bash
 # Run from the java/ directory (Maven sets the working directory there)
@@ -138,7 +153,7 @@ RFC 9457 `application/problem+json` body:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ASSETS_ROOT` | `assets` (relative) | Path to the word list directory |
-| `SEARCH_MODE` | `parallel` | `parallel` routes the API through split/nested; `baseline` restores the original fan-out |
+| `SEARCH_MODE` | `parallel` | `parallel` routes `/search/file` → split and `/search/many` → nested; `baseline` uses algorithm dispatch (indexed or scan based on hints) |
 | `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |
 
 ## Load test results (2026-05-15)

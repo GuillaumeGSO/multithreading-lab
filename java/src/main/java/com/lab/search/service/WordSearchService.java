@@ -2,6 +2,9 @@ package com.lab.search.service;
 
 import com.lab.search.model.Hint;
 import com.lab.search.model.SearchResponse;
+import com.lab.search.service.strategy.IndexedStrategy;
+import com.lab.search.service.strategy.ScanStrategy;
+import com.lab.search.service.strategy.SearchStrategy;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -24,6 +27,8 @@ public class WordSearchService {
     private final ConcurrentHashMap<String, List<String>> wordCache = new ConcurrentHashMap<>();
     private final boolean parallel;
     private final int splitDegree;
+    private final ScanStrategy    scanStrategy    = new ScanStrategy();
+    private final IndexedStrategy indexedStrategy = new IndexedStrategy();
 
     public WordSearchService() {
         this(Path.of(envOr("ASSETS_ROOT", "assets")));
@@ -62,7 +67,7 @@ public class WordSearchService {
     public SearchResponse searchInFile(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict) {
         var words = parallel
                 ? fileSplit(lang, nbCar, lstCar, lstHint, strict, splitDegree)
-                : fileBaseline(lang, nbCar, lstCar, lstHint, strict);
+                : fileDispatch(lang, nbCar, lstCar, lstHint, strict);
         return SearchResponse.of(words);
     }
 
@@ -71,6 +76,40 @@ public class WordSearchService {
                 ? manyNested(lang, cars, lstHint, splitDegree)
                 : manyFanout(lang, cars, lstHint);
         return SearchResponse.of(words);
+    }
+
+    // --- strategy dispatch (baseline path for /search/file) ---
+
+    /// Routes to IndexedStrategy when a pinned hint is present, ScanStrategy otherwise.
+    /// Used by searchInFile() when parallel=false; also callable directly (tests, benchmark).
+    public List<String> fileDispatch(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict) {
+        if (isEffectivelyEmpty(lstCar) && hasNoCarHints(lstHint)) {
+            throw new IllegalArgumentException("Either lst_car or lst_hint must be provided");
+        }
+        var words = loadWords(lang, nbCar);
+        return chooseStrategy(lstHint).searchInFile(lang, nbCar, words, lstCar, lstHint, strict,
+                isEffectivelyEmpty(lstCar), hasNoCarHints(lstHint));
+    }
+
+    /// Forces IndexedStrategy regardless of hints. Used for benchmarking and direct tests.
+    public List<String> fileIndexed(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict) {
+        if (isEffectivelyEmpty(lstCar) && hasNoCarHints(lstHint)) {
+            throw new IllegalArgumentException("Either lst_car or lst_hint must be provided");
+        }
+        var words = loadWords(lang, nbCar);
+        return indexedStrategy.searchInFile(lang, nbCar, words, lstCar, lstHint, strict,
+                isEffectivelyEmpty(lstCar), hasNoCarHints(lstHint));
+    }
+
+    private SearchStrategy chooseStrategy(List<Hint> lstHint) {
+        return hasPinned(lstHint) ? indexedStrategy : scanStrategy;
+    }
+
+    private static boolean hasPinned(List<Hint> lstHint) {
+        if (lstHint == null) return false;
+        for (Hint h : lstHint)
+            if (h.car() != null && !h.car().isEmpty() && !h.inverted()) return true;
+        return false;
     }
 
     // --- search modes (also called directly by the benchmark) ---
@@ -234,7 +273,7 @@ public class WordSearchService {
                 .replaceAll("\\p{InCombiningDiacriticalMarks}", "");
     }
 
-    static boolean matchesContent(String word, List<String> lstCar, boolean strict) {
+    public static boolean matchesContent(String word, List<String> lstCar, boolean strict) {
         String normalized = normalize(word);
         if (normalized.isEmpty() || lstCar.isEmpty()) return false;
         if (strict) {
@@ -255,7 +294,7 @@ public class WordSearchService {
         }
     }
 
-    static boolean matchesHints(String word, List<Hint> lstHint) {
+    public static boolean matchesHints(String word, List<Hint> lstHint) {
         for (Hint hint : lstHint) {
             if (hint.car() == null) continue;
             int pos = hint.pos();
@@ -272,11 +311,11 @@ public class WordSearchService {
         return true;
     }
 
-    static boolean isEffectivelyEmpty(List<String> lst) {
+    public static boolean isEffectivelyEmpty(List<String> lst) {
         return lst == null || lst.stream().allMatch(s -> s == null || s.isEmpty());
     }
 
-    static boolean hasNoCarHints(List<Hint> lst) {
+    public static boolean hasNoCarHints(List<Hint> lst) {
         return lst == null || lst.stream().allMatch(h -> h.car() == null || h.car().isEmpty());
     }
 }

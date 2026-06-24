@@ -115,6 +115,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   load test covers). Read the modes as:
   <ul>
     <li><code>baseline</code> — single-threaded scan.</li>
+    <li><code>indexed</code> — positional inverted index (Java only): seeds candidates from pinned hints, O(result) when hints are present. Falls back to scan when no pinned hints.</li>
     <li><code>split</code> — one file scanned in N contiguous chunks across threads (intra-file parallelism).</li>
     <li><code>fanout</code> — one thread/task per word length (per-length fan-out).</li>
     <li><code>nested</code> — per-length fan-out where each length is also split (threads spawning work).</li>
@@ -123,10 +124,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   rarely beat <code>baseline</code> — Python scales at the process/API layer instead, not via
   threads here. <em>python</em>'s <code>baseline</code> dispatches each query to the faster of two
   strategies (a positional/frequency index when a pinned hint or strict mode can exploit it,
-  otherwise a lean on-load scan), so per-query cost is the min of the two. <strong>Go/C++</strong> use real
-  threads/goroutines, so <code>nested</code> can oversubscribe the 2-CPU box; <strong>Nest</strong>'s fixed
-  worker pool and <strong>Java</strong>'s virtual threads instead queue/absorb the extra work. These
-  searches are sub-millisecond, so thread-creation overhead often dominates any speedup.
+  otherwise a lean on-load scan), so per-query cost is the min of the two. <strong>Java</strong>'s
+  <code>indexed</code> mode mirrors this dispatch: it builds a pos→char→Set index per (lang, length)
+  and seeds a tight candidate set from pinned hints, reducing work to O(result) instead of O(vocabulary).
+  <strong>Go/C++</strong> use real threads/goroutines, so <code>nested</code> can oversubscribe the
+  2-CPU box; <strong>Nest</strong>'s fixed worker pool and <strong>Java</strong>'s virtual threads
+  instead queue/absorb the extra work. These searches are sub-millisecond, so thread-creation
+  overhead often dominates any speedup.
 </div>
 
 <div class="controls">
@@ -166,9 +170,9 @@ document.getElementById('iters').textContent = metaField('iterations');
 document.getElementById('warmup').textContent = metaField('warmup');
 document.getElementById('split').textContent = metaField('split_degree');
 
-const FILE_MODES = ['baseline', 'split'];
+const FILE_MODES = ['baseline', 'indexed', 'split'];
 const MANY_MODES = ['baseline', 'fanout', 'nested'];
-const ALL_MODES = ['baseline', 'split', 'fanout', 'nested'];
+const ALL_MODES = ['baseline', 'indexed', 'split', 'fanout', 'nested'];
 
 const fileCases = DATA.cases.filter(c => c.kind === 'file').map(c => c.name);
 const manyCases = DATA.cases.filter(c => c.kind === 'many').map(c => c.name);
@@ -222,7 +226,7 @@ function render() {
   const log = document.getElementById('log').checked;
   const useMin = document.getElementById('useMin').checked;
   // file chart: 'fanout'/'nested' don't apply -> fall back to 'split' then 'baseline'.
-  const fileMode = FILE_MODES.includes(mode) ? mode : (present.has('split') ? 'split' : 'baseline');
+  const fileMode = FILE_MODES.includes(mode) && present.has(mode) ? mode : (present.has('split') ? 'split' : 'baseline');
   const manyMode = MANY_MODES.includes(mode) ? mode : 'baseline';
   if (fileChart) fileChart.destroy();
   if (manyChart) manyChart.destroy();

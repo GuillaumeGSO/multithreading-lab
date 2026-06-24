@@ -65,7 +65,7 @@ run_service() {
       bench cpp cpp --entrypoint /app/bench cpp ;;
     java)
       bench java java --entrypoint java java \
-        -XX:+UseCompactObjectHeaders \
+        -XX:+UseCompactObjectHeaders -Xmx380m \
         -Dloader.main=com.lab.search.BenchmarkRunner -cp /app/app.jar \
         org.springframework.boot.loader.launch.PropertiesLauncher ;;
     nest)

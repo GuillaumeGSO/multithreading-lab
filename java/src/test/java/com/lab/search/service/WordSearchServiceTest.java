@@ -161,4 +161,54 @@ class WordSearchServiceTest {
             }
         }
     }
+
+    // --- IndexedStrategy equivalence: must return byte-identical results to scan ---
+
+    @Test void indexedMatchesScanForPinnedHints() {
+        List<Hint> hints = List.of(new Hint(1, "s", false), new Hint(3, "a", false), new Hint(5, "e", false));
+        assertEquals(service.fileBaseline("fr", 5, List.of(), hints, false),
+                     service.fileIndexed ("fr", 5, List.of(), hints, false));
+    }
+
+    @Test void indexedMatchesScanForContentAndHint() {
+        List<Hint> hints = List.of(new Hint(1, "l", false), new Hint(5, "s", false));
+        List<String> cars = List.of("e","l","i","s","a");
+        assertEquals(service.fileBaseline("fr", 5, cars, hints, false),
+                     service.fileIndexed ("fr", 5, cars, hints, false));
+    }
+
+    @Test void indexedMatchesScanForLettersOnly() {
+        List<String> cars = List.of("e","l","i","s","a");
+        assertEquals(service.fileBaseline("fr", 5, cars, List.of(), true),
+                     service.fileIndexed ("fr", 5, cars, List.of(), true));
+    }
+
+    // --- fileDispatch routing ---
+
+    @Test void fileDispatchUsesIndexedWhenPinnedHint() {
+        List<Hint> hints = List.of(new Hint(1, "s", false), new Hint(5, "e", false));
+        assertEquals(service.fileIndexed ("fr", 5, List.of(), hints, false),
+                     service.fileDispatch("fr", 5, List.of(), hints, false));
+    }
+
+    @Test void fileDispatchUsesScanWhenNoPin() {
+        List<Hint> hints = List.of(new Hint(1, "x", true));
+        List<String> cars = List.of("e","l","i","s","a");
+        assertEquals(service.fileBaseline("fr", 5, cars, hints, false),
+                     service.fileDispatch("fr", 5, cars, hints, false));
+    }
+
+    // --- IndexedStrategy edge cases ---
+
+    @Test void indexedPinnedBeyondLengthReturnsEmpty() {
+        List<String> result = service.fileIndexed("fr", 5, List.of(),
+                List.of(new Hint(10, "a", false)), false);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test void indexedCacheReusedAcrossCalls() {
+        List<Hint> hints = List.of(new Hint(1, "s", false));
+        assertEquals(service.fileIndexed("fr", 5, List.of(), hints, false),
+                     service.fileIndexed("fr", 5, List.of(), hints, false));
+    }
 }
