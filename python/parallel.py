@@ -16,7 +16,6 @@ away.
 
 import os
 import threading
-from collections import Counter
 from typing import List
 
 from common import (
@@ -26,7 +25,7 @@ from common import (
     is_search_by_hint,
     load_base,
 )
-from strategy_scan import is_search_by_content
+from strategy_scan import _build_avail_arr, is_search_by_content
 
 
 def split_degree() -> int:
@@ -38,20 +37,20 @@ def split_degree() -> int:
     return max(1, n)
 
 
-def _matches(entry, avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint) -> bool:
-    word, normalized = entry
+def _matches(entry, avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint) -> bool:
+    word, normalized, word_freq = entry
     if is_empty_hint:
-        return is_search_by_content(normalized, avail_set, avail_counter, strict)
+        return is_search_by_content(normalized, avail_set, avail_arr, strict, word_freq)
     if is_empty_cars:
         return is_search_by_hint(word, lst_hint)
-    return (is_search_by_content(normalized, avail_set, avail_counter, strict)
+    return (is_search_by_content(normalized, avail_set, avail_arr, strict, word_freq)
             and is_search_by_hint(word, lst_hint))
 
 
-def _scan(entries, avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint) -> List[str]:
+def _scan(entries, avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint) -> List[str]:
     return [
         entry[0] for entry in entries
-        if _matches(entry, avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint)
+        if _matches(entry, avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint)
     ]
 
 
@@ -72,12 +71,12 @@ def search_in_file_parallel(
     # Pool built once and shared read-only across the worker threads.
     avail = [c for c in lst_car if c]
     avail_set = set(avail)
-    avail_counter = Counter(avail) if strict else None
+    avail_arr = _build_avail_arr(avail) if strict else None
     n = threads if threads is not None else split_degree()
     n = max(1, min(n, max(1, len(entries))))
 
     if n == 1:
-        return _scan(entries, avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint)
+        return _scan(entries, avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint)
 
     chunk = (len(entries) + n - 1) // n  # ceil so chunks stay contiguous
     partials: list[list[str] | None] = [None] * n
@@ -85,7 +84,7 @@ def search_in_file_parallel(
 
     def work(idx: int, start: int, end: int) -> None:
         partials[idx] = _scan(
-            entries[start:end], avail_set, avail_counter, lst_hint, strict, is_empty_cars, is_empty_hint
+            entries[start:end], avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint
         )
 
     for idx in range(n):

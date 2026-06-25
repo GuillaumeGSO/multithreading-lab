@@ -1,19 +1,16 @@
 """ScanStrategy — the lean on-load scan.
 
-The scan iterates the shared `common.load_base` `(word, normalized)` tuples directly —
-it stores **no** per-word superstructure of its own. The per-request scan is
-O(vocabulary) but with a cheap per-word predicate derived on the fly from the
-normalized string: a membership test for the non-strict content check (strict rebuilds
-a Counter on demand — the rare path). Deriving instead of caching keeps the scan's
-memory footprint at ≈ the base, which is what lets two uvicorn workers + the indexed
-strategy coexist inside the 512 MB container budget. This wins when the index has
-nothing to seed from: letters-only or excluded-hint-only, non-strict queries.
+The scan iterates the shared `common.load_base` `(word, normalized, freq)` tuples
+directly — it stores **no** per-word superstructure of its own. The per-request scan is
+O(vocabulary) but with a cheap per-word predicate: a membership test for non-strict
+queries, or a 26-integer array comparison for strict queries (no Counter allocation —
+the frequency array is precomputed in load_base). This wins when the index has nothing
+to seed from: letters-only or excluded-hint-only queries.
 
 The module-level `is_search_by_content` is also imported by `parallel.py` (the GIL-demo
 threaded modes run on this scan data path).
 """
 
-from collections import Counter
 from typing import List
 
 from common import (
@@ -26,21 +23,33 @@ from common import (
 
 
 def is_search_by_content(normalized_word: str, avail_set: set,
-                         avail_counter: Counter | None = None, strict=False):
-    """Does the word fit the available pool? Pure predicate, no cached per-word data.
+                         avail_arr: list[int] | None = None, strict: bool = False,
+                         word_freq: bytes | None = None):
+    """Does the word fit the available pool? Pure predicate, zero per-word allocation.
 
     Non-strict: every letter of the normalized word must be in the pool (membership).
-    Strict: the pool must hold at least as many of each letter as the word needs
-    (rebuilds a Counter from the normalized word — the rare path).
+    Strict: membership check first (fast early-exit for non-pool chars), then a
+    fixed-cost 26-integer frequency comparison against the precomputed `word_freq`.
     """
     if not normalized_word:
         return False
     if not avail_set:
         return False
+    if not all(char in avail_set for char in normalized_word):
+        return False
     if strict:
-        word_counter = Counter(normalized_word)
-        return all(word_counter[char] <= avail_counter[char] for char in word_counter)
-    return all(char in avail_set for char in normalized_word)
+        return all(wf <= af for wf, af in zip(word_freq, avail_arr))
+    return True
+
+
+def _build_avail_arr(avail: list[str]) -> list[int]:
+    """26-int letter-frequency array for the query pool, built once per search call."""
+    arr = [0] * 26
+    for c in avail:
+        i = ord(c) - 97
+        if 0 <= i < 26:
+            arr[i] += 1
+    return arr
 
 
 class ScanStrategy:
@@ -55,19 +64,19 @@ class ScanStrategy:
         if nb_car == 0 or (is_empty_cars and is_empty_hint):
             raise Exception("Parameters lstCar et lstHint cannot be empty at the same time")
 
-        # Build the available-letter pool once for the whole scan; counts only when strict.
+        # Build the available-letter pool once for the whole scan.
         avail = [c for c in lst_car if c]
         avail_set = set(avail)
-        avail_counter = Counter(avail) if strict else None
+        avail_arr = _build_avail_arr(avail) if strict else None
 
-        for word, normalized_word in load_base(lang, nb_car):
+        for word, normalized_word, word_freq in load_base(lang, nb_car):
             if is_empty_hint:  # cars non-empty here (guaranteed by the guard above)
-                if is_search_by_content(normalized_word, avail_set, avail_counter, strict):
+                if is_search_by_content(normalized_word, avail_set, avail_arr, strict, word_freq):
                     yield word
             elif is_empty_cars:
                 if is_search_by_hint(word, lst_hint):
                     yield word
-            elif (is_search_by_content(normalized_word, avail_set, avail_counter, strict)
+            elif (is_search_by_content(normalized_word, avail_set, avail_arr, strict, word_freq)
                   and is_search_by_hint(word, lst_hint)):
                 yield word
 

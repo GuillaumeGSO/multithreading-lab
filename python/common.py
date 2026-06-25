@@ -4,10 +4,11 @@ Holds the pieces that are genuinely common to both strategies: the `Hint` value
 object, the hint / list predicates, and — crucially — the **shared base loader**.
 
 `load_base(lang, n)` reads each word file once and runs `unidecode` once per word,
-caching `list[(word, normalized)]` per `(lang, length)`. Both strategies build their
-specialized indexes *from this base*, so the dominant index-build cost (file IO +
-normalization) is paid once per length total, not once per strategy. See the plan's
-"Index building: share the base, specialize lazily".
+caching `list[(word, normalized, freq)]` per `(lang, length)`. `freq` is a 26-byte
+letter-frequency array computed at load time so the strict-mode predicate pays zero
+per-word allocation at query time. Both strategies build their specialized indexes
+*from this base*, so the dominant index-build cost (file IO + normalization) is paid
+once per length total, not once per strategy.
 """
 
 import logging
@@ -22,12 +23,15 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 
 _ASSETS_ROOT = Path(os.environ.get("ASSETS_ROOT") or str(Path(__file__).parent.parent / "assets"))
 
-# Shared base: (word, normalized) per (lang, length). File read once, unidecode once.
-_base_cache: dict[str, list[tuple[str, str]]] = {}
+# Shared base: (word, normalized, freq) per (lang, length). File read once, unidecode once.
+# freq is bytes(26): freq[i] = count of chr(i + ord('a')) in the normalized word.
+_base_cache: dict[str, list[tuple[str, str, bytes]]] = {}
 
 
-def load_base(lang: str, nb_car: int) -> list[tuple[str, str]]:
-    """Words of length `nb_car` as `(word, normalized)` tuples, cached per key.
+def load_base(lang: str, nb_car: int) -> list[tuple[str, str, bytes]]:
+    """Words of length `nb_car` as `(word, normalized, freq)` tuples, cached per key.
+    freq is a 26-byte letter-frequency array for the normalized form, computed once at
+    load time so the strict-mode predicate needs no per-word Counter at query time.
     Missing file → []. Accent-free words share one string for word and normalized."""
     key = f"{lang}/{nb_car}"
     if key not in _base_cache:
@@ -35,14 +39,19 @@ def load_base(lang: str, nb_car: int) -> list[tuple[str, str]]:
         file_name = _ASSETS_ROOT / lang / f"{nb_car}.txt"
         try:
             with open(file_name, "r", encoding="utf-8") as f:
-                base: list[tuple[str, str]] = []
+                base: list[tuple[str, str, bytes]] = []
                 for line in f:
                     word = line.strip()
                     if word:
                         normalized = unidecode.unidecode(word)
                         if normalized == word:
                             normalized = word  # share one string for accent-free words
-                        base.append((word, normalized))
+                        arr = [0] * 26
+                        for c in normalized:
+                            i = ord(c) - 97
+                            if 0 <= i < 26:
+                                arr[i] += 1
+                        base.append((word, normalized, bytes(arr)))
         except FileNotFoundError:
             base = []
         _base_cache[key] = base
