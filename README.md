@@ -11,6 +11,7 @@ Implement, then progressively optimize, identical concurrent programs in:
 - **Go** ✅ (goroutines)
 - **C++** ✅ (`std::thread` + bounded pool)
 - **Nest** ✅ (worker_threads pool)
+- **C#** ✅ (`Task.WhenAll` + `Task.Run` / ThreadPool)
 
 The intent is to observe and compare how each language expresses concurrency, what primitives it provides, and how performance characteristics differ — not to build something production-ready.
 
@@ -42,6 +43,7 @@ multithreading-lab/
 ├── go/                      # net/http + goroutines (Go 1.23)
 ├── nest/                    # NestJS + worker_threads pool (Node 22)
 ├── cpp/                     # C++17 + std::thread + bounded pool (cpp-httplib)
+├── csharp/                  # ASP.NET Core 9 + Task.WhenAll / ThreadPool (.NET 9)
 └── docker-compose.yml       # One service per implementation
 ```
 
@@ -72,6 +74,7 @@ docker compose up <service-name>
 | Java            | 8002 |
 | Go              | 8003 |
 | C++             | 8004 |
+| C#              | 8005 |
 | Nest            | 8006 |
 | Python          | 8007 |
 
@@ -121,6 +124,7 @@ Each implementation has its own test suite covering the core search logic. See t
 | Go              | Goroutines + `sync.WaitGroup` — per-length fan-out + intra-file split |
 | C++             | `std::thread` (split) + bounded pool (`std::mutex` cache) |
 | Nest            | `worker_threads` pool — fan-out + split tasks queue on the fixed pool |
+| C#              | `Task.WhenAll` + `Task.Run` (ThreadPool) — per-length fan-out + intra-file split; `DOTNET_PROCESSOR_COUNT=2` |
 
 Each implementation exposes the same `baseline` / `split` / `fanout` / `nested` modes via
 `SEARCH_MODE` + `SPLIT_DEGREE`; the in-process benchmark charts them (see above).
