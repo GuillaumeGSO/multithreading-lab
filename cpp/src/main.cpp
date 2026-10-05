@@ -50,6 +50,27 @@ static std::vector<Hint> toHints(const json& arr) {
 
 // g_openApiSpec holds the contents of openapi.yaml, loaded once at startup.
 static std::string g_openApiSpec;
+// g_openApiSpecJson holds the pre-converted JSON version (from openapi.json).
+static std::string g_openApiSpecJson;
+
+static const std::string kSwaggerUIHTML = R"html(<!DOCTYPE html>
+<html>
+<head>
+  <title>Word Search API</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+<script>
+window.onload = function() {
+  SwaggerUIBundle({ url: "/openapi.json", dom_id: "#swagger-ui", presets: [SwaggerUIBundle.presets.apis], layout: "BaseLayout" });
+}
+</script>
+</body>
+</html>)html";
 
 // handleOpenApi serves the repo-level openapi.yaml spec.
 // The file path is controlled by OPENAPI_PATH (default: /app/openapi.yaml).
@@ -61,6 +82,23 @@ static void handleOpenApi(const httplib::Request&, httplib::Response& res) {
     }
     res.status = 200;
     res.set_content(g_openApiSpec, "application/yaml");
+}
+
+// handleOpenApiJson serves the JSON-encoded OpenAPI spec at /openapi.json.
+static void handleOpenApiJson(const httplib::Request&, httplib::Response& res) {
+    if (g_openApiSpecJson.empty()) {
+        res.status = 503;
+        res.set_content("{\"error\":\"OpenAPI spec not loaded\"}", "application/json");
+        return;
+    }
+    res.status = 200;
+    res.set_content(g_openApiSpecJson, "application/json");
+}
+
+// handleDocs serves an embedded Swagger UI pointing to /openapi.json.
+static void handleDocs(const httplib::Request&, httplib::Response& res) {
+    res.status = 200;
+    res.set_content(kSwaggerUIHTML, "text/html; charset=utf-8");
 }
 
 static void handleHealth(const httplib::Request&, httplib::Response& res) {
@@ -120,13 +158,25 @@ static void handleSearchMany(const httplib::Request& req,
 
 int main() {
     const char* specPath = std::getenv("OPENAPI_PATH");
-    std::ifstream specFile(specPath ? specPath : "/app/openapi.yaml");
+    std::string yamlPath = specPath ? specPath : "/app/openapi.yaml";
+    std::ifstream specFile(yamlPath);
     if (specFile) {
         std::ostringstream ss;
         ss << specFile.rdbuf();
         g_openApiSpec = ss.str();
     } else {
         std::cerr << "warning: openapi.yaml not found; /openapi.yaml will return 503\n";
+    }
+
+    // openapi.json is pre-converted from openapi.yaml at Docker build time.
+    std::string jsonPath = yamlPath.substr(0, yamlPath.rfind('.')) + ".json";
+    std::ifstream jsonFile(jsonPath);
+    if (jsonFile) {
+        std::ostringstream ss;
+        ss << jsonFile.rdbuf();
+        g_openApiSpecJson = ss.str();
+    } else {
+        std::cerr << "warning: openapi.json not found; /openapi.json will return 503\n";
     }
 
     int port = 8004;
@@ -147,6 +197,8 @@ int main() {
     svr.set_keep_alive_timeout(2);
     svr.Get("/health",         handleHealth);
     svr.Get("/openapi.yaml",   handleOpenApi);
+    svr.Get("/openapi.json",   handleOpenApiJson);
+    svr.Get("/docs",           handleDocs);
     svr.Post("/search/file",   handleSearchFile);
     svr.Post("/search/many",   handleSearchMany);
 
