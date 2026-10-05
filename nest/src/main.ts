@@ -6,6 +6,7 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/error.filter';
 
@@ -15,6 +16,18 @@ async function bootstrap(): Promise<void> {
     new FastifyAdapter(),
     { logger: ['error', 'warn'] },
   );
+
+  const config = new DocumentBuilder()
+    .setTitle('Word Search API')
+    .setDescription(
+      'Filters words from dictionary files by available letters, positional hints, ' +
+        'and word length. NestJS/Fastify implementation — worker_threads pool.',
+    )
+    .setVersion('1.0.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
+
   app.useGlobalFilters(new AllExceptionsFilter());
   // Triggers WorkerPool.onApplicationShutdown on SIGTERM (docker stop).
   app.enableShutdownHooks();

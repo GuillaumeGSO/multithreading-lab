@@ -25,7 +25,16 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="Word Search API",
+    description=(
+        "Filters words from dictionary files by available letters, positional hints, "
+        "and word length. Python implementation — strategy dispatcher (positional index "
+        "⟷ lean scan) backed by FastAPI + Uvicorn."
+    ),
+    version="1.0.0",
+)
 
 
 class HintModel(BaseModel):
@@ -53,12 +62,17 @@ class SearchResponse(BaseModel):
     count: int
 
 
-@app.get("/health")
+@app.get("/health", summary="Liveness check")
 def health():
     return {"status": "ok"}
 
 
-@app.post("/search/file", response_model=SearchResponse)
+@app.post(
+    "/search/file",
+    response_model=SearchResponse,
+    summary="Search words of a fixed length",
+    description="Returns words of exactly `nb_car` characters that can be formed from the available letter pool and satisfy every positional hint.",
+)
 def search_file(req: SearchFileRequest):
     hints = [Hint(h.pos, h.car, h.inverted) for h in req.lst_hint]
     if _PARALLEL:
@@ -80,7 +94,12 @@ def search_file(req: SearchFileRequest):
     return SearchResponse(words=words, count=len(words))
 
 
-@app.post("/search/many", response_model=SearchResponse)
+@app.post(
+    "/search/many",
+    response_model=SearchResponse,
+    summary="Search words across all lengths",
+    description="Returns words for every length from 1 up to len(cars), ordered longest-first.",
+)
 def search_many(req: SearchManyRequest):
     hints = [Hint(h.pos, h.car, h.inverted) for h in req.lst_hint]
     if _PARALLEL:

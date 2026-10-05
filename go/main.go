@@ -15,6 +15,9 @@ import (
 // which restores the original per-endpoint behavior.
 var parallelMode = os.Getenv("SEARCH_MODE") != "baseline"
 
+// openAPISpec holds the contents of openapi.yaml, loaded once at startup.
+var openAPISpec []byte
+
 // hint is the JSON shape of a positional hint in a request body.
 type hint struct {
 	Pos      int     `json:"pos"`
@@ -80,6 +83,18 @@ func handleHealth(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// handleOpenAPISpec serves the repo-level openapi.yaml spec.
+// The file path is controlled by OPENAPI_PATH (default: /app/openapi.yaml).
+func handleOpenAPISpec(w http.ResponseWriter, _ *http.Request) {
+	if openAPISpec == nil {
+		http.Error(w, `{"error":"OpenAPI spec not loaded"}`, http.StatusServiceUnavailable)
+		return
+	}
+	w.Header().Set("Content-Type", "application/yaml")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(openAPISpec)
+}
+
 func handleSearchFile(w http.ResponseWriter, r *http.Request) {
 	var req searchFileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -121,8 +136,19 @@ func handleSearchMany(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	specPath := os.Getenv("OPENAPI_PATH")
+	if specPath == "" {
+		specPath = "/app/openapi.yaml"
+	}
+	var err error
+	openAPISpec, err = os.ReadFile(specPath)
+	if err != nil {
+		log.Printf("warning: could not load openapi.yaml from %s: %v — /openapi.yaml will return 503", specPath, err)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handleHealth)
+	mux.HandleFunc("GET /openapi.yaml", handleOpenAPISpec)
 	mux.HandleFunc("POST /search/file", handleSearchFile)
 	mux.HandleFunc("POST /search/many", handleSearchMany)
 

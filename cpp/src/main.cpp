@@ -4,7 +4,9 @@
 #include <nlohmann/json.hpp>
 
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -44,6 +46,21 @@ static std::vector<Hint> toHints(const json& arr) {
         hints.push_back(std::move(hint));
     }
     return hints;
+}
+
+// g_openApiSpec holds the contents of openapi.yaml, loaded once at startup.
+static std::string g_openApiSpec;
+
+// handleOpenApi serves the repo-level openapi.yaml spec.
+// The file path is controlled by OPENAPI_PATH (default: /app/openapi.yaml).
+static void handleOpenApi(const httplib::Request&, httplib::Response& res) {
+    if (g_openApiSpec.empty()) {
+        res.status = 503;
+        res.set_content("{\"error\":\"OpenAPI spec not loaded\"}", "application/json");
+        return;
+    }
+    res.status = 200;
+    res.set_content(g_openApiSpec, "application/yaml");
 }
 
 static void handleHealth(const httplib::Request&, httplib::Response& res) {
@@ -102,6 +119,16 @@ static void handleSearchMany(const httplib::Request& req,
 }
 
 int main() {
+    const char* specPath = std::getenv("OPENAPI_PATH");
+    std::ifstream specFile(specPath ? specPath : "/app/openapi.yaml");
+    if (specFile) {
+        std::ostringstream ss;
+        ss << specFile.rdbuf();
+        g_openApiSpec = ss.str();
+    } else {
+        std::cerr << "warning: openapi.yaml not found; /openapi.yaml will return 503\n";
+    }
+
     int port = 8004;
     if (const char* p = std::getenv("PORT"))
         port = std::stoi(p);
@@ -118,9 +145,10 @@ int main() {
     // A shorter keep-alive timeout frees idle connections promptly as a backstop.
     svr.new_task_queue = [] { return new httplib::ThreadPool(64); };
     svr.set_keep_alive_timeout(2);
-    svr.Get("/health",       handleHealth);
-    svr.Post("/search/file", handleSearchFile);
-    svr.Post("/search/many", handleSearchMany);
+    svr.Get("/health",         handleHealth);
+    svr.Get("/openapi.yaml",   handleOpenApi);
+    svr.Post("/search/file",   handleSearchFile);
+    svr.Post("/search/many",   handleSearchMany);
 
     std::cout << "listening on 0.0.0.0:" << port << std::endl;
     if (!svr.listen("0.0.0.0", port)) {

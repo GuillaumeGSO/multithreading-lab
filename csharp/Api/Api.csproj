@@ -5,5 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>WordSearch.Api</RootNamespace>
     <AssemblyName>Api</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.*" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
+  </ItemGroup>
 </Project>
