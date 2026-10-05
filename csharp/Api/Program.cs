@@ -30,8 +30,9 @@ var app = builder.Build();
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8005";
 app.Urls.Add($"http://0.0.0.0:{port}");
 
-app.MapOpenApi();
-app.MapScalarApiReference();
+app.MapOpenApi("/openapi.json");
+app.MapGet("/docs", () => Results.Redirect("/docs/v1"));
+app.MapScalarApiReference("/docs", options => options.WithOpenApiRoutePattern("/openapi.json"));
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
    .WithName("Health")

@@ -26,7 +26,7 @@ async function bootstrap(): Promise<void> {
     .setVersion('1.0.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('docs', app, document, { jsonDocumentUrl: '/openapi.json' });
 
   app.useGlobalFilters(new AllExceptionsFilter());
   // Triggers WorkerPool.onApplicationShutdown on SIGTERM (docker stop).
