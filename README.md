@@ -57,7 +57,24 @@ All containers expose the same three endpoints:
 | `POST` | `/search/file` | Search words of a fixed length |
 | `POST` | `/search/many` | Search words across all lengths |
 
-See any implementation's README for request/response schemas.
+See [`openapi.yaml`](openapi.yaml) for the full schema, or browse the interactive UI for any running container (see table below).
+
+## API Documentation (OpenAPI)
+
+The root [`openapi.yaml`](openapi.yaml) is the **single source of truth** for the API contract — schemas, descriptions, and examples are defined there once.
+
+Each implementation exposes its spec through its ecosystem's idiomatic tooling:
+
+| Implementation | Approach | Swagger UI | Spec endpoint |
+|---|---|---|---|
+| Python | FastAPI auto-generates from Pydantic models | [`/docs`](http://localhost:8007/docs) | `/openapi.json` |
+| NestJS | `@nestjs/swagger` generates from class decorators | [`/api`](http://localhost:8006/api) | `/api-json` |
+| Java | springdoc generates from `@Operation`/`@Schema` | [`/swagger-ui.html`](http://localhost:8002/swagger-ui.html) | `/v3/api-docs` |
+| C# | .NET 9 native + Scalar UI | [`/scalar/v1`](http://localhost:8005/scalar/v1) | `/openapi/v1.json` |
+| Go | Serves root `openapi.yaml` directly | — | `/openapi.yaml` |
+| C++ | Serves root `openapi.yaml` directly | — | `/openapi.yaml` |
+
+Go and C++ have no mature native OpenAPI tooling, so they read and serve the root file at startup (path overridable via `OPENAPI_PATH`). Python, NestJS, Java, and C# generate their specs at runtime from code annotations — no spec files are committed.
 
 ## Running containers
 

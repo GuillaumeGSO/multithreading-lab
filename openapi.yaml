@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: Word Search API
+  description: >
+    Filters words from dictionary files by available letters, positional hints,
+    and word length. The same contract is implemented in Python, Go, Java, C++,
+    NestJS, and C# — each using its ecosystem's idiomatic OpenAPI tooling.
+  version: 1.0.0
+
+paths:
+  /health:
+    get:
+      summary: Liveness check
+      operationId: health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /search/file:
+    post:
+      summary: Search words of a fixed length
+      operationId: searchFile
+      description: >
+        Returns words of exactly `nb_car` characters that can be formed from
+        the available letter pool and satisfy every positional hint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchFileRequest"
+      responses:
+        "200":
+          description: Matching words
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+        "400":
+          description: Invalid request (e.g. nb_car is 0 or no letters and no hints)
+
+  /search/many:
+    post:
+      summary: Search words across all lengths
+      operationId: searchMany
+      description: >
+        Returns words for every length from 1 up to len(cars), ordered
+        longest-first. Useful when the exact word length is unknown.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchManyRequest"
+      responses:
+        "200":
+          description: Matching words
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+        "400":
+          description: Invalid request
+
+components:
+  schemas:
+    Hint:
+      type: object
+      required:
+        - pos
+      properties:
+        pos:
+          type: integer
+          description: 1-indexed position of the character constraint in the word.
+          example: 3
+        car:
+          type: string
+          nullable: true
+          description: >
+            Expected character at `pos`. Null or absent means no character
+            constraint (only position matters).
+          example: "e"
+        inverted:
+          type: boolean
+          default: false
+          description: When true, the character must NOT appear at `pos`.
+
+    SearchFileRequest:
+      type: object
+      required:
+        - nb_car
+      properties:
+        lang:
+          type: string
+          default: fr
+          description: Language code — selects the dictionary subfolder under assets/.
+          example: fr
+        nb_car:
+          type: integer
+          description: Exact word length to search for.
+          example: 5
+        lst_car:
+          type: array
+          items:
+            type: string
+          default: []
+          description: >
+            Available letters. Each element is one character. Empty means no
+            letter-pool constraint (only hints filter).
+          example: ["a", "e", "r", "s", "t"]
+        lst_hint:
+          type: array
+          items:
+            $ref: "#/components/schemas/Hint"
+          default: []
+          description: Positional constraints. Applied after the letter-pool filter.
+        strict:
+          type: boolean
+          default: false
+          description: >
+            When true, each letter from `lst_car` may only be used once
+            (Scrabble-style).
+
+    SearchManyRequest:
+      type: object
+      required:
+        - cars
+      properties:
+        lang:
+          type: string
+          default: fr
+          description: Language code — selects the dictionary subfolder under assets/.
+          example: fr
+        cars:
+          type: string
+          description: >
+            Available letters as a string. The maximum word length equals
+            len(cars); all shorter lengths are also scanned.
+          example: "artes"
+        lst_hint:
+          type: array
+          items:
+            $ref: "#/components/schemas/Hint"
+          default: []
+          description: Positional constraints applied across every length scanned.
+
+    SearchResponse:
+      type: object
+      properties:
+        words:
+          type: array
+          items:
+            type: string
+          description: Matching words in scan order (longest-first for /search/many).
+        count:
+          type: integer
+          description: Total number of matching words (equals len(words)).

@@ -18,6 +18,26 @@ The word search logic filters words from dictionary files (`assets/{lang}/{n}.tx
 | `POST` | `/search/file` | Search words of fixed length |
 | `POST` | `/search/many` | Search words across all lengths |
 
+## OpenAPI
+
+`openapi.yaml` at the repo root is the **single source of truth** for the API contract. Never duplicate it.
+
+| Implementation | Tooling | UI endpoint | Spec endpoint |
+|---|---|---|---|
+| Python | FastAPI (Pydantic models + route decorators) | `/docs` | `/openapi.json` |
+| NestJS | `@nestjs/swagger` (class decorators + `@ApiProperty`) | `/api` | `/api-json` |
+| Java | springdoc (`@Operation`, `@Schema`) | `/swagger-ui.html` | `/v3/api-docs` |
+| C# | .NET 9 native + Scalar (`AddOpenApi`, `.WithSummary`) | `/scalar/v1` | `/openapi/v1.json` |
+| Go | Reads + serves `openapi.yaml` at startup | — | `/openapi.yaml` |
+| C++ | Reads + serves `openapi.yaml` at startup | — | `/openapi.yaml` |
+
+**Rules:**
+- Python/NestJS/Java/C# generate specs at runtime from code — no spec files are committed for these.
+- Go and C++ read the root file via `OPENAPI_PATH` env var (default `/app/openapi.yaml`); their Dockerfiles copy `openapi.yaml` into the image.
+- Do **not** add swaggo or any other spec-generating tool to Go — it would create a committed duplicate of `openapi.yaml`.
+- NestJS requires `@fastify/static` as an explicit dependency (peer dep of `@nestjs/swagger` with the Fastify adapter).
+- Version string must be `1.0.0` in all implementations and in `openapi.yaml`.
+
 ## Structure
 
 ```

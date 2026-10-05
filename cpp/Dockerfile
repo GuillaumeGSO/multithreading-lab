@@ -18,6 +18,7 @@ COPY --from=build /build/build/search /app/search
 COPY --from=build /build/build/bench /app/bench
 COPY assets/ /app/assets/
 COPY benchmarks/cases.json /app/cases.json
+COPY openapi.yaml /app/openapi.yaml
 ENV ASSETS_ROOT=/app/assets
 ENV PORT=8004
 EXPOSE 8004
