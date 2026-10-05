@@ -68,13 +68,13 @@ Each implementation exposes its spec through its ecosystem's idiomatic tooling:
 | Implementation | Approach | Swagger UI | Spec endpoint |
 |---|---|---|---|
 | Python | FastAPI auto-generates from Pydantic models | [`/docs`](http://localhost:8007/docs) | `/openapi.json` |
-| NestJS | `@nestjs/swagger` generates from class decorators | [`/api`](http://localhost:8006/api) | `/api-json` |
-| Java | springdoc generates from `@Operation`/`@Schema` | [`/swagger-ui.html`](http://localhost:8002/swagger-ui.html) | `/v3/api-docs` |
-| C# | .NET 9 native + Scalar UI | [`/scalar/v1`](http://localhost:8005/scalar/v1) | `/openapi/v1.json` |
-| Go | Serves root `openapi.yaml` directly | — | `/openapi.yaml` |
-| C++ | Serves root `openapi.yaml` directly | — | `/openapi.yaml` |
+| NestJS | `@nestjs/swagger` generates from class decorators | [`/docs`](http://localhost:8006/docs) | `/openapi.json` |
+| Java | springdoc generates from `@Operation`/`@Schema` | [`/docs`](http://localhost:8002/docs) | `/openapi.json` |
+| C# | .NET 9 native + Scalar UI | [`/docs`](http://localhost:8005/docs) | `/openapi.json` |
+| Go | Reads root `openapi.yaml`, converts to JSON at startup | [`/docs`](http://localhost:8003/docs) | `/openapi.json` |
+| C++ | Reads `openapi.json` pre-converted at build time | [`/docs`](http://localhost:8004/docs) | `/openapi.json` |
 
-Go and C++ have no mature native OpenAPI tooling, so they read and serve the root file at startup (path overridable via `OPENAPI_PATH`). Python, NestJS, Java, and C# generate their specs at runtime from code annotations — no spec files are committed.
+All implementations expose `/docs` (Swagger UI) and `/openapi.json` at the same paths — swapping the backend requires no tooling changes. Python, NestJS, Java, and C# generate their specs at runtime from code annotations; Go and C++ read and serve the root file (path overridable via `OPENAPI_PATH`).
 
 ## Running containers
 
@@ -192,4 +192,74 @@ Regenerate after changing the word lists:
 
 ```bash
 for l in assets/*/; do for f in "$l"*.txt; do printf '%s\t%s\n' "$f" "$(wc -l < "$f")"; done; done
+```
+
+## TODO — OpenAPI hardening
+
+The `openapi.yaml` at the repo root is declared the single source of truth, but nothing currently enforces it. Below are concrete steps to make that claim verifiable.
+
+### 1. Spec linting in CI
+
+Catch style violations, broken `$ref`s, and missing required fields before they merge.
+
+```bash
+npm install -g @stoplight/spectral-cli
+spectral lint openapi.yaml
+```
+
+Integrate as a CI step; fail the build on any error.
+
+### 2. Contract testing against live containers
+
+[Schemathesis](https://schemathesis.readthedocs.io) generates requests automatically from the spec and validates every response against it. Run it against each container to guarantee the implementation matches the contract.
+
+```bash
+pip install schemathesis
+st run openapi.yaml --url http://localhost:8007 --checks all
+```
+
+Add one `st run` step per service in CI, after `docker compose up`.
+
+### 3. Drift detection for code-first implementations
+
+Python, NestJS, Java, and C# generate their spec at runtime from annotations. If an annotation changes, the generated spec silently diverges from `openapi.yaml`. A diff step in CI would catch this:
+
+```bash
+# Fetch the live generated spec and compare against the root canonical spec
+curl -s http://localhost:8007/openapi.json | jq --sort-keys . > generated.json
+python -c "import sys,yaml,json; print(json.dumps(yaml.safe_load(open('openapi.yaml'))))" \
+  | jq --sort-keys . > canonical.json
+diff canonical.json generated.json
+```
+
+Run after each service starts in CI; a non-zero diff fails the build.
+
+### 4. Breaking-change detection on PRs
+
+Prevent accidental breaking changes when `openapi.yaml` evolves.
+
+```bash
+npm install -g @oasdiff/oasdiff
+oasdiff breaking openapi-before.yaml openapi.yaml
+```
+
+In CI: compare the spec on the PR branch against the spec on `master`; fail on any breaking change (removed field, changed type, removed endpoint).
+
+### 5. Generate models from the spec (eliminate hand-written structs)
+
+Go and C++ currently hand-write their request/response structs. These could be generated from `openapi.yaml` and committed as `*.gen.*` files, making drift structurally impossible.
+
+| Language | Tool | Command |
+|---|---|---|
+| Go | [oapi-codegen](https://github.com/oapi-codegen/oapi-codegen) | `oapi-codegen --package api openapi.yaml > api/models.gen.go` |
+| C++ | [openapi-generator](https://openapi-generator.tech) | `openapi-generator-cli generate -i openapi.yaml -g cpp-restsdk -o cpp/gen` |
+| TypeScript client | openapi-generator | `openapi-generator-cli generate -i openapi.yaml -g typescript-fetch -o client/src/api` |
+
+### 6. Mock server for consumer-driven development
+
+Spin up a mock server from the spec so consumers (e.g. a frontend) can develop before any backend is running.
+
+```bash
+npx @stoplight/prism-cli mock openapi.yaml
+# → mock server on http://localhost:4010
 ```
