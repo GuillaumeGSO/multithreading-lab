@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Api": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASSETS_ROOT": "../../assets",
+        "PORT": "8005",
+        "SEARCH_MODE": "parallel",
+        "SPLIT_DEGREE": "2"
+      }
+    }
+  }
+}

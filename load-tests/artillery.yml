@@ -6,6 +6,7 @@ config:
     go:              { target: "http://localhost:8003" }
     cpp:             { target: "http://localhost:8004" }
     nest:            { target: "http://localhost:8006" }
+    csharp:          { target: "http://localhost:8005" }
   # Goal: compare per-request speed across languages, not saturation behavior.
   # A constant low rate every implementation can sustain keeps queues empty, so
   # p50/p95 reflect real processing time rather than timeouts. Sample count comes

@@ -20,13 +20,14 @@ RESULTS_DIR = SCRIPT_DIR / "results"
 OUTPUT = SCRIPT_DIR / "compare-report.html"
 
 # Preferred display order; anything else is appended alphabetically.
-ORDER = ["python", "java", "go", "cpp", "nest"]
+ORDER = ["python", "java", "go", "cpp", "nest", "csharp"]
 COLORS = {
     "python": "#3776ab",
     "java": "#e76f00",
     "go": "#00add8",
     "cpp": "#9b4f96",
     "nest": "#e0234e",
+    "csharp": "#512bd4",
 }
 ENDPOINTS = ["/health", "/search/file", "/search/many"]
 

@@ -76,3 +76,19 @@ services:
           cpus: "2.0"
           memory: 512m
 
+  csharp:
+    build:
+      context: .
+      dockerfile: csharp/Dockerfile
+    # DOTNET_PROCESSOR_COUNT pins the .NET thread pool and GC to the 2-CPU budget
+    # (equivalent to GOMAXPROCS=2 — .NET reads host core count, not the cgroup).
+    environment:
+      DOTNET_PROCESSOR_COUNT: "2"
+    ports:
+      - "8005:8005"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 512m
+

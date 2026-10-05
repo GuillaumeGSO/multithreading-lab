@@ -17,6 +17,7 @@ get_port() {
     go)     echo 8003 ;;
     cpp)    echo 8004 ;;
     nest)   echo 8006 ;;
+    csharp) echo 8005 ;;
   esac
 }
 
@@ -27,6 +28,7 @@ get_container() {
     go)     echo multithreading-lab-go-1 ;;
     cpp)    echo multithreading-lab-cpp-1 ;;
     nest)   echo multithreading-lab-nest-1 ;;
+    csharp) echo multithreading-lab-csharp-1 ;;
   esac
 }
 
@@ -56,7 +58,7 @@ mkdir -p "$RESULTS_DIR"
 
 ran=()
 
-for env in python java go cpp nest; do
+for env in python java go cpp nest csharp; do
   port=$(get_port "$env")
   url="http://localhost:$port"
 

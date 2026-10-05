@@ -70,11 +70,13 @@ run_service() {
         org.springframework.boot.loader.launch.PropertiesLauncher ;;
     nest)
       bench nest nest --entrypoint node nest dist/bench.js ;;
+    csharp)
+      bench csharp csharp --entrypoint dotnet csharp /app/Bench.dll ;;
     *) echo "unknown service: $SELECTED" >&2 ;;
   esac
 }
 
-ALL=(python go cpp java nest)
+ALL=(python go cpp java nest csharp)
 TARGETS=("$@")
 [ "${#TARGETS[@]}" -eq 0 ] && TARGETS=("${ALL[@]}")
 

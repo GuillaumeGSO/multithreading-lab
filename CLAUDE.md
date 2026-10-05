@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-A personal learning project implementing the same word-search logic across Python, Java, Go, and C++ to compare concurrency models and performance under HTTP load. Each language exposes the same REST API in its own Docker container. Artillery load tests (`load-tests/artillery.yml`) are container-agnostic — only `--target` changes per language.
+A personal learning project implementing the same word-search logic across Python, Java, Go, C++, NestJS, and C# to compare concurrency models and performance under HTTP load. Each language exposes the same REST API in its own Docker container. Artillery load tests (`load-tests/artillery.yml`) are container-agnostic — only `--target` changes per language.
 
 ## Core Problem
 
@@ -28,7 +28,8 @@ multithreading-lab/
 ├── python/             # Python — strategy dispatcher (positional index ⟷ lean scan, both derive per-word data on the fly), uvicorn --workers 2
 ├── cpp/                # C++17, cpp-httplib, std::thread fan-out
 ├── nest/               # Node/NestJS, Fastify, worker_threads pool
-├── docker-compose.yml  # Python=8007, Java=8002, Go=8003, C++=8004, Nest=8006
+├── csharp/             # C#/.NET 9, ASP.NET Core Minimal API, Task.WhenAll fan-out
+├── docker-compose.yml  # Python=8007, Java=8002, Go=8003, C++=8004, Nest=8006, C#=8005
 └── CLAUDE.md
 ```
 
@@ -38,6 +39,7 @@ Each directory has its own README covering local dev, Docker, and API details:
 - [`python/README.md`](python/README.md)
 - [`cpp/README.md`](cpp/README.md)
 - [`nest/README.md`](nest/README.md)
+- [`csharp/README.md`](csharp/README.md)
 
 ## Load testing (API/HTTP)
 
@@ -68,7 +70,7 @@ Two concurrency axes, exposed as named modes: **A** = per-length fan-out (`/sear
 output to baseline (chunks/lengths merged in order — guarded by each impl's parallel unit tests).
 
 The same parallel paths are **wired into the live API** via `SEARCH_MODE` and `SPLIT_DEGREE`.
-Go/C++/Java/Nest default to `parallel` (real threads = their best path); `baseline` restores
+Go/C++/Java/Nest/C# default to `parallel` (real threads = their best path); `baseline` restores
 original behavior. **Python is the exception:** its threads are GIL-bound, so it defaults to
 the **index-aware dispatcher** (not `parallel`) — serving each language via its best path keeps
 the HTTP comparison fair, and the dispatcher caches nothing per word so two `uvicorn` workers
@@ -96,13 +98,15 @@ languages mirror these expected results.
 | Go              | Goroutines + `sync.WaitGroup` (per-length fan-out in `/search/many`) |
 | C++             | `std::thread` fan-out per length + `std::mutex` for word cache |
 | Node/NestJS     | `worker_threads` pool — N persistent workers; per-length fan-out in `/search/many` |
+| C#/.NET         | `Task.WhenAll` + `Task.Run` (ThreadPool) — per-length fan-out in `/search/many`, intra-file split in `/search/file`; `SEARCH_MODE=parallel` (default); `DOTNET_PROCESSOR_COUNT=2` pins the thread pool to the 2-CPU budget |
 
 Each implementation additionally exposes an **intra-file split** (axis B) and a **nested** mode
 (see the in-process benchmark section). The split uses each language's native primitive
 (Python `threading` — GIL-bound; Go goroutines; C++ `std::thread`; Java virtual threads; Nest
-worker-pool tasks). `nested` deliberately stacks A+B, producing more concurrent work than cores;
-each runtime caps it differently (C++ a permit pool, Go the `GOMAXPROCS` scheduler, Nest a fixed
-worker pool, Java the virtual-thread carrier pool).
+worker-pool tasks; C# `Task.Run` / ThreadPool). `nested` deliberately stacks A+B, producing more
+concurrent work than cores; each runtime caps it differently (C++ a permit pool, Go the
+`GOMAXPROCS` scheduler, Nest a fixed worker pool, Java the virtual-thread carrier pool, C# the
+ThreadPool with `DOTNET_PROCESSOR_COUNT=2`).
 
 ### Fair 2-CPU budget
 
@@ -110,6 +114,6 @@ Every container runs under a uniform **2-CPU budget** so the cross-language comp
 apples-to-apples. Beyond the `cpus: "2.0"` cgroup limit, each runtime is pinned **explicitly**
 (in `docker-compose.yml`), because several size their parallelism from the *host* core count and
 ignore the cgroup: `GOMAXPROCS=2` (Go — the key one), `CPU_BUDGET=2` (C++), `WORKER_POOL_SIZE=2`
-(Nest), `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2` (Java). Python is already pinned via
-`uvicorn --workers 2` (and threads are GIL-bound). These env vars apply to both `docker compose up`
-(live API) and `docker compose run` (the in-process benchmark).
+(Nest), `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2` (Java), `DOTNET_PROCESSOR_COUNT=2` (C#).
+Python is already pinned via `uvicorn --workers 2` (and threads are GIL-bound). These env vars
+apply to both `docker compose up` (live API) and `docker compose run` (the in-process benchmark).
