@@ -18,26 +18,40 @@ The word search logic filters words from dictionary files (`assets/{lang}/{n}.tx
 | `POST` | `/search/file` | Search words of fixed length |
 | `POST` | `/search/many` | Search words across all lengths |
 
-## OpenAPI
+## OpenAPI (spec-first)
 
-`openapi.yaml` at the repo root is the **single source of truth** for the API contract. Never duplicate it.
+`openapi.yaml` at the repo root is the **single source of truth** for the API contract. Every
+implementation is spec-first: models are **generated** from it and the file is **served
+verbatim** — no implementation generates a spec from code or carries hand-written OpenAPI
+metadata (no `@Schema`/`@ApiProperty`/`.WithSummary`/route `description=`).
 
-| Implementation | Tooling | UI endpoint | Spec endpoint |
+Wire format is camelCase (`wordLength`, `letters`, `hints`, `Hint.position|letter|excluded`,
+`ErrorResponse.error`); each language maps it to its own idiom in generated code.
+
+| Implementation | Generator | Output (committed?) | Regenerate |
 |---|---|---|---|
-| Python | FastAPI (Pydantic models + route decorators) | `/docs` | `/openapi.json` |
-| NestJS | `@nestjs/swagger` (class decorators + `@ApiProperty`) | `/docs` | `/openapi.json` |
-| Java | springdoc (`@Operation`, `@Schema`) | `/docs` | `/openapi.json` |
-| C# | .NET 9 native + Scalar (`AddOpenApi`, `.WithSummary`) | `/docs` → `/docs/v1` | `/openapi.json` |
-| Go | Reads `openapi.yaml`, converts to JSON at startup | `/docs` | `/openapi.json` (also `/openapi.yaml`) |
-| C++ | Reads `openapi.json` converted at build time from `openapi.yaml` | `/docs` | `/openapi.json` (also `/openapi.yaml`) |
+| Python | datamodel-code-generator (`[tool.datamodel-codegen]` in pyproject) | `python/generated/models.py` (no) | `uv run --group codegen datamodel-codegen` |
+| Java | openapi-generator-maven-plugin, `spring`, `interfaceOnly` | `java/target/generated-sources/openapi` (no) | any Maven build |
+| Go | oapi-codegen v2 (models + std-http `ServerInterface`) | `go/api/api.gen.go` (**yes**) | `cd go && go generate ./...` |
+| C++ | in-repo `cpp/codegen/gen_models.py` (needs PyYAML) | `cpp/build/generated/models.gen.h` (no) | any CMake build |
+| NestJS | openapi-typescript (`--default-non-nullable false`) | `nest/src/generated/api.d.ts` (no) | `npm run generate` (auto on build/test) |
+| C# | NSwag.MSBuild (`Net100`), DTOs only | `csharp/Api/obj/Generated/Contracts.g.cs` (no) | any `dotnet build` |
 
 **Rules:**
-- All implementations expose `/docs` (interactive Swagger UI) and `/openapi.json` (machine-readable spec) at the same paths so swapping the backend requires no tooling changes.
-- Python/NestJS/Java/C# generate specs at runtime from code — no spec files are committed for these.
-- Go reads the root `openapi.yaml` via `OPENAPI_PATH` env var (default `/app/openapi.yaml`) and converts to JSON at startup; C++ reads `openapi.json` pre-converted at Docker build time. Both Dockerfiles copy `openapi.yaml` into the image.
-- Do **not** add swaggo or any other spec-generating tool to Go — it would create a committed duplicate of `openapi.yaml`.
-- NestJS requires `@fastify/static` as an explicit dependency (peer dep of `@nestjs/swagger` with the Fastify adapter).
-- Version string must be `1.0.0` in all implementations and in `openapi.yaml`.
+- Change the contract **only** in `openapi.yaml`, then regenerate; never hand-edit generated code.
+  Go's `api.gen.go` must be regenerated and committed with the spec change.
+- Every implementation serves `/openapi.yaml` (verbatim), `/openapi.json` (converted) and a UI
+  at `/docs` (Swagger UI; C# uses Scalar), so swapping the backend requires no tooling changes.
+- Generators read `../openapi.yaml`; Dockerfiles mirror the repo layout (`/build/openapi.yaml` +
+  `/build/<lang>`) so the same relative path works in images. Runtime images get the spec at
+  `/app/openapi.yaml` (`OPENAPI_PATH`).
+- Errors are the contract's `ErrorResponse` (`{"error": "..."}`, HTTP 400); search endpoints
+  return 200 (Nest needs `@HttpCode(200)`).
+- `benchmarks/cases.json` and `load-tests/queries.csv` use the same camelCase names as the wire
+  format (`letters` is an array for file cases, a string for many cases).
+- Version string must be `1.0.0` in `openapi.yaml`.
+- Per-language READMEs and code comments must not reference other languages; cross-language
+  comparison belongs in the root README / this file only.
 
 ## Structure
 
@@ -49,7 +63,7 @@ multithreading-lab/
 ├── python/             # Python — strategy dispatcher (positional index ⟷ lean scan, both derive per-word data on the fly), uvicorn --workers 2
 ├── cpp/                # C++17, cpp-httplib, std::thread fan-out
 ├── nest/               # Node/NestJS, Fastify, worker_threads pool
-├── csharp/             # C#/.NET 9, ASP.NET Core Minimal API, Task.WhenAll fan-out
+├── csharp/             # C#/.NET 10, ASP.NET Core Minimal API, Task.WhenAll fan-out
 ├── docker-compose.yml  # Python=8007, Java=8002, Go=8003, C++=8004, Nest=8006, C#=8005
 └── CLAUDE.md
 ```
@@ -99,7 +113,8 @@ fit the 512 MB budget. See [`benchmarks/README.md`](benchmarks/README.md).
 
 ## Unit tests
 
-Each implementation has a `test_seek_words.py` pytest suite. Run the Python suite with:
+Each implementation has its own unit suite (Python `pytest`, Go `go test`, Java `mvn test`,
+C++ doctest via `ctest`, Nest `jest`, C# `dotnet test`). Run the Python suite with:
 
 ```bash
 cd python && uv run pytest -v

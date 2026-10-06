@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using WordSearch.Api.Models;
 
 namespace WordSearch.Api.Search;
 
@@ -12,29 +11,29 @@ public sealed class IndexedStrategy : ISearchStrategy
         IReadOnlyDictionary<int, IReadOnlyDictionary<char, IReadOnlySet<string>>>> IndexCache = new();
 
     public IReadOnlyList<string> SearchInFile(
-        string lang, int nbCar,
-        IReadOnlyList<string>? lstCar,
-        IReadOnlyList<Hint>? lstHint,
+        string lang, int wordLength,
+        IReadOnlyList<string>? letters,
+        IReadOnlyList<Hint>? hints,
         bool strict)
     {
-        ScanStrategy.ValidateParams(lstCar, lstHint);
-        var entries = WordBase.Load(lang, nbCar);
-        var posIdx = EnsureIndex(lang, nbCar, entries);
+        ScanStrategy.ValidateParams(wordLength, letters, hints);
+        var entries = WordBase.Load(lang, wordLength);
+        var posIdx = EnsureIndex(lang, wordLength, entries);
 
-        bool emptyCars = ScanStrategy.IsEffectivelyEmpty(lstCar);
-        bool emptyHints = ScanStrategy.HasNoCarHints(lstHint);
+        bool emptyLetters = ScanStrategy.IsEffectivelyEmpty(letters);
+        bool emptyHints = ScanStrategy.HasNoLetterHints(hints);
 
         IReadOnlySet<string>? candidates = null;
         if (!emptyHints)
         {
-            var activeHints = (lstHint ?? []).Where(h => !string.IsNullOrEmpty(h.Car)).ToList();
+            var activeHints = (hints ?? []).Where(h => !string.IsNullOrEmpty(h.Letter)).ToList();
 
             foreach (var hint in activeHints)
             {
-                if (hint.Inverted) continue;
-                int pos = hint.Pos;
-                if (pos > nbCar) return Array.Empty<string>();
-                var set = posIdx.TryGetValue(pos, out var cm) && cm.TryGetValue(hint.Car![0], out var ws)
+                if (hint.Excluded) continue;
+                int pos = hint.Position;
+                if (pos > wordLength) return Array.Empty<string>();
+                var set = posIdx.TryGetValue(pos, out var cm) && cm.TryGetValue(hint.Letter![0], out var ws)
                     ? ws : (IReadOnlySet<string>)new HashSet<string>();
                 candidates = candidates == null ? set : (IReadOnlySet<string>)candidates.Intersect(set).ToHashSet();
             }
@@ -45,15 +44,15 @@ public sealed class IndexedStrategy : ISearchStrategy
 
             foreach (var hint in activeHints)
             {
-                if (!hint.Inverted) continue;
-                int pos = hint.Pos;
-                if (pos > nbCar) continue;
-                if (posIdx.TryGetValue(pos, out var cm) && cm.TryGetValue(hint.Car![0], out var excluded))
+                if (!hint.Excluded) continue;
+                int pos = hint.Position;
+                if (pos > wordLength) continue;
+                if (posIdx.TryGetValue(pos, out var cm) && cm.TryGetValue(hint.Letter![0], out var excluded))
                     candidates = (IReadOnlySet<string>)candidates.Except(excluded).ToHashSet();
             }
         }
 
-        var avail = ScanStrategy.BuildAvail(lstCar);
+        var avail = ScanStrategy.BuildAvail(letters);
         var (availSet, availFreq) = ScanStrategy.BuildAvailStructures(avail, strict);
 
         // Yield in original word-list order
@@ -61,7 +60,7 @@ public sealed class IndexedStrategy : ISearchStrategy
         foreach (var entry in entries)
         {
             if (candidates != null && !candidates.Contains(entry.Word)) continue;
-            if (!emptyCars && !ScanStrategy.MatchesContent(entry.Normalized, availSet, availFreq, strict, entry.Freq))
+            if (!emptyLetters && !ScanStrategy.MatchesContent(entry.Normalized, availSet, availFreq, strict, entry.Freq))
                 continue;
             results.Add(entry.Word);
         }
@@ -69,9 +68,9 @@ public sealed class IndexedStrategy : ISearchStrategy
     }
 
     private static IReadOnlyDictionary<int, IReadOnlyDictionary<char, IReadOnlySet<string>>>
-        EnsureIndex(string lang, int nbCar, IReadOnlyList<WordEntry> entries)
+        EnsureIndex(string lang, int wordLength, IReadOnlyList<WordEntry> entries)
     {
-        return IndexCache.GetOrAdd($"{lang}/{nbCar}", _ => BuildIndex(entries));
+        return IndexCache.GetOrAdd($"{lang}/{wordLength}", _ => BuildIndex(entries));
     }
 
     private static IReadOnlyDictionary<int, IReadOnlyDictionary<char, IReadOnlySet<string>>>

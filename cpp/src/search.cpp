@@ -235,8 +235,7 @@ std::string unidecode(const std::string& s) {
 
 static std::mutex cache_mutex;
 // Cache stores shared_ptr so callers get a reference-counted handle (O(1))
-// rather than a full vector copy (O(n)) on every call. Go returns a slice
-// reference; this is the C++ equivalent.
+// rather than a full vector copy (O(n)) on every call.
 static std::unordered_map<std::string,
                            std::shared_ptr<const std::vector<std::string>>>
     word_cache;
@@ -281,7 +280,7 @@ bool noLetters(const std::vector<std::string>& letters) {
 
 bool noHints(const std::vector<Hint>& hints) {
     for (const auto& h : hints)
-        if (h.car && !h.car->empty()) return false;
+        if (h.letter && !h.letter->empty()) return false;
     return true;
 }
 
@@ -330,8 +329,8 @@ bool matchesHints(const std::string& word, const std::vector<Hint>& hints) {
     if (word.empty()) return false;
     if (noHints(hints)) return true;
     for (const auto& h : hints) {
-        if (!h.car || h.car->empty()) continue;
-        // Locate the h.pos-th codepoint (1-indexed) by decoding in place, with no
+        if (!h.letter || h.letter->empty()) continue;
+        // Locate the h.position-th codepoint (1-indexed) by decoding in place, with no
         // allocation. matchesHints runs on every scanned word, so the old
         // utf8Split — a heap vector plus a string per codepoint — dominated the
         // hinted-query cost and starved the server under load. We only need the
@@ -342,17 +341,17 @@ bool matchesHints(const std::string& word, const std::vector<Hint>& hints) {
         while (i < word.size()) {
             size_t start = i;
             decodeCodepoint(word, i);   // advances i past the codepoint
-            if (++idx == h.pos) {
+            if (++idx == h.position) {
                 inRange = true;
-                match = (word.compare(start, i - start, *h.car) == 0);
+                match = (word.compare(start, i - start, *h.letter) == 0);
                 break;
             }
         }
-        if (!inRange) {                 // pos beyond the word's length
-            if (!h.inverted) return false;
+        if (!inRange) {                 // position beyond the word's length
+            if (!h.excluded) return false;
             continue;
         }
-        if (h.inverted) {
+        if (h.excluded) {
             if (match) return false;
         } else {
             if (!match) return false;
@@ -392,32 +391,36 @@ static std::vector<std::string> scanWords(const std::vector<std::string>& words,
 // for the inManyFiles* family. Returns an empty length list when no length can
 // satisfy the hints.
 static std::pair<std::vector<int>, std::vector<std::string>> planLengths(
-    const std::string& cars, const std::vector<Hint>& hints) {
-    auto carsChars = utf8Split(cars);
-    int maxLen = static_cast<int>(carsChars.size());
+    const std::string& letters, const std::vector<Hint>& hints) {
+    auto chars = utf8Split(letters);
+    int maxLen = static_cast<int>(chars.size());
     int minLen = 1;
     for (const auto& h : hints) {
-        if (h.car && !h.car->empty() && !h.inverted && h.pos > minLen)
-            minLen = h.pos;
+        if (h.letter && !h.letter->empty() && !h.excluded && h.position > minLen)
+            minLen = h.position;
     }
     std::vector<int> lengths;
     if (maxLen >= minLen) {
         for (int l = maxLen; l >= minLen; l--) lengths.push_back(l);
     }
-    return {lengths, carsChars};
+    return {lengths, chars};
 }
 
 // manyFanOut runs `scan` for each planned length across the thread budget and
 // reassembles results longest-first.
 static std::vector<std::string> manyFanOut(
-    const std::string& cars, const std::vector<Hint>& hints,
-    const std::function<std::vector<std::string>(int length, const std::vector<std::string>& letters)>& scan) {
-    auto [lengths, letters] = planLengths(cars, hints);
+    const std::string& letters, const std::vector<Hint>& hints,
+    const std::function<std::vector<std::string>(int length, const std::vector<std::string>& pool)>& scan) {
+    // Plain references (not structured bindings) so the lambda below can
+    // capture them under C++17.
+    const auto plan = planLengths(letters, hints);
+    const auto& lengths = plan.first;
+    const auto& pool = plan.second;
     if (lengths.empty()) return {};
 
     std::vector<std::vector<std::string>> partials(lengths.size());
     runParallel(lengths.size(), [&](size_t idx) {
-        partials[idx] = scan(lengths[idx], letters);
+        partials[idx] = scan(lengths[idx], pool);
     });
 
     std::vector<std::string> result;
@@ -491,12 +494,12 @@ std::vector<std::string> inFileSplit(const std::string& lang,
 }
 
 std::vector<std::string> inManyFilesSeq(const std::string& lang,
-                                        const std::string& cars,
+                                        const std::string& letters,
                                         const std::vector<Hint>& hints) {
-    auto [lengths, letters] = planLengths(cars, hints);
+    auto [lengths, pool] = planLengths(letters, hints);
     std::vector<std::string> result;
     for (int length : lengths) {
-        auto w = inFile(lang, length, letters, hints, false);
+        auto w = inFile(lang, length, pool, hints, false);
         result.insert(result.end(),
                       std::make_move_iterator(w.begin()),
                       std::make_move_iterator(w.end()));
@@ -505,18 +508,18 @@ std::vector<std::string> inManyFilesSeq(const std::string& lang,
 }
 
 std::vector<std::string> inManyFiles(const std::string& lang,
-                                     const std::string& cars,
+                                     const std::string& letters,
                                      const std::vector<Hint>& hints) {
-    return manyFanOut(cars, hints, [&](int length, const std::vector<std::string>& letters) {
-        return inFile(lang, length, letters, hints, false);
+    return manyFanOut(letters, hints, [&](int length, const std::vector<std::string>& pool) {
+        return inFile(lang, length, pool, hints, false);
     });
 }
 
 std::vector<std::string> inManyFilesNested(const std::string& lang,
-                                           const std::string& cars,
+                                           const std::string& letters,
                                            const std::vector<Hint>& hints,
                                            int threads) {
-    return manyFanOut(cars, hints, [&](int length, const std::vector<std::string>& letters) {
-        return inFileSplit(lang, length, letters, hints, false, threads);
+    return manyFanOut(letters, hints, [&](int length, const std::vector<std::string>& pool) {
+        return inFileSplit(lang, length, pool, hints, false, threads);
     });
 }

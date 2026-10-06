@@ -1,4 +1,3 @@
-using WordSearch.Api.Models;
 
 namespace WordSearch.Api.Search;
 
@@ -20,42 +19,42 @@ public sealed class ParallelSearchService
 
     // Public entry points used by the API endpoints
     public Task<IReadOnlyList<string>> SearchInFileAsync(
-        string lang, int nbCar, IReadOnlyList<string>? lstCar,
-        IReadOnlyList<Hint>? lstHint, bool strict)
+        string lang, int wordLength, IReadOnlyList<string>? letters,
+        IReadOnlyList<Hint>? hints, bool strict)
     {
         if (_parallel)
-            return FileSplitAsync(lang, nbCar, lstCar, lstHint, strict, _splitDegree);
-        return Task.FromResult(_dispatcher.FileDispatch(lang, nbCar, lstCar, lstHint, strict));
+            return FileSplitAsync(lang, wordLength, letters, hints, strict, _splitDegree);
+        return Task.FromResult(_dispatcher.FileDispatch(lang, wordLength, letters, hints, strict));
     }
 
     public Task<IReadOnlyList<string>> SearchInManyAsync(
-        string lang, string cars, IReadOnlyList<Hint>? lstHint)
+        string lang, string letters, IReadOnlyList<Hint>? hints)
     {
         if (_parallel)
-            return ManyNestedAsync(lang, cars, lstHint, _splitDegree);
-        return Task.FromResult(_dispatcher.ManyBaseline(lang, cars, lstHint));
+            return ManyNestedAsync(lang, letters, hints, _splitDegree);
+        return Task.FromResult(_dispatcher.ManyBaseline(lang, letters, hints));
     }
 
     // Axis B: intra-file split — used by bench and the parallel API path
     public async Task<IReadOnlyList<string>> FileSplitAsync(
-        string lang, int nbCar, IReadOnlyList<string>? lstCar,
-        IReadOnlyList<Hint>? lstHint, bool strict, int threads)
+        string lang, int wordLength, IReadOnlyList<string>? letters,
+        IReadOnlyList<Hint>? hints, bool strict, int threads)
     {
-        ScanStrategy.ValidateParams(lstCar, lstHint);
-        var entries = WordBase.Load(lang, nbCar);
+        ScanStrategy.ValidateParams(wordLength, letters, hints);
+        var entries = WordBase.Load(lang, wordLength);
         int n = Math.Max(1, Math.Min(threads, Math.Max(1, entries.Count)));
         if (n <= 1)
         {
-            var avail = ScanStrategy.BuildAvail(lstCar);
+            var avail = ScanStrategy.BuildAvail(letters);
             var (availSet, availFreq) = ScanStrategy.BuildAvailStructures(avail, strict);
-            return ScanStrategy.ScanRange(entries, 0, entries.Count, lstCar, lstHint, strict,
-                ScanStrategy.IsEffectivelyEmpty(lstCar), ScanStrategy.HasNoCarHints(lstHint),
+            return ScanStrategy.ScanRange(entries, 0, entries.Count, letters, hints, strict,
+                ScanStrategy.IsEffectivelyEmpty(letters), ScanStrategy.HasNoLetterHints(hints),
                 availSet, availFreq);
         }
 
-        bool emptyCars = ScanStrategy.IsEffectivelyEmpty(lstCar);
-        bool emptyHints = ScanStrategy.HasNoCarHints(lstHint);
-        var avail2 = ScanStrategy.BuildAvail(lstCar);
+        bool emptyLetters = ScanStrategy.IsEffectivelyEmpty(letters);
+        bool emptyHints = ScanStrategy.HasNoLetterHints(hints);
+        var avail2 = ScanStrategy.BuildAvail(letters);
         var (availSet2, availFreq2) = ScanStrategy.BuildAvailStructures(avail2, strict);
 
         int chunk = (entries.Count + n - 1) / n;
@@ -66,8 +65,8 @@ public sealed class ParallelSearchService
             int e = Math.Min(s + chunk, entries.Count);
             int s2 = s, e2 = e;
             tasks[i] = Task.Run(() => ScanStrategy.ScanRange(
-                entries, s2, e2, lstCar, lstHint, strict,
-                emptyCars, emptyHints, availSet2, availFreq2));
+                entries, s2, e2, letters, hints, strict,
+                emptyLetters, emptyHints, availSet2, availFreq2));
         }
         var partials = await Task.WhenAll(tasks);
         var result = new List<string>();
@@ -77,16 +76,16 @@ public sealed class ParallelSearchService
 
     // Axis A: per-length fan-out
     public async Task<IReadOnlyList<string>> ManyFanoutAsync(
-        string lang, string cars, IReadOnlyList<Hint>? lstHint)
+        string lang, string letters, IReadOnlyList<Hint>? hints)
     {
-        if (string.IsNullOrEmpty(cars)) throw new ArgumentException("cars cannot be empty");
-        int minLen = SearchDispatcher.MinLength(lstHint);
-        var lengths = Enumerable.Range(minLen, cars.Length - minLen + 1).Reverse().ToArray();
-        var lstCar = cars.Select(c => c.ToString()).ToList();
+        if (string.IsNullOrEmpty(letters)) throw new ArgumentException("letters cannot be empty");
+        int minLen = SearchDispatcher.MinLength(hints);
+        var lengths = Enumerable.Range(minLen, letters.Length - minLen + 1).Reverse().ToArray();
+        var pool = letters.Select(c => c.ToString()).ToList();
         var tasks = lengths.Select(len =>
             Task.Run<IReadOnlyList<string>>(() =>
             {
-                try { return SearchDispatcher.Scan.SearchInFile(lang, len, lstCar, lstHint, false); }
+                try { return SearchDispatcher.Scan.SearchInFile(lang, len, pool, hints, false); }
                 catch (ArgumentException) { return Array.Empty<string>(); }
             })
         ).ToArray();
@@ -98,14 +97,14 @@ public sealed class ParallelSearchService
 
     // Axis A+B: per-length fan-out with intra-file split per length
     public async Task<IReadOnlyList<string>> ManyNestedAsync(
-        string lang, string cars, IReadOnlyList<Hint>? lstHint, int threads)
+        string lang, string letters, IReadOnlyList<Hint>? hints, int threads)
     {
-        if (string.IsNullOrEmpty(cars)) throw new ArgumentException("cars cannot be empty");
-        int minLen = SearchDispatcher.MinLength(lstHint);
-        var lengths = Enumerable.Range(minLen, cars.Length - minLen + 1).Reverse().ToArray();
-        var lstCar = cars.Select(c => c.ToString()).ToList();
+        if (string.IsNullOrEmpty(letters)) throw new ArgumentException("letters cannot be empty");
+        int minLen = SearchDispatcher.MinLength(hints);
+        var lengths = Enumerable.Range(minLen, letters.Length - minLen + 1).Reverse().ToArray();
+        var pool = letters.Select(c => c.ToString()).ToList();
         var tasks = lengths.Select(len =>
-            FileSplitAsync(lang, len, lstCar, lstHint, false, threads)
+            FileSplitAsync(lang, len, pool, hints, false, threads)
         ).ToArray();
         var partials = await Task.WhenAll(tasks);
         var result = new List<string>();

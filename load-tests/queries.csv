@@ -1,501 +1,501 @@
-nb_car,cars,strict,lst_hint
+wordLength,letters,strict,hints
 9,vhczonsdg,false,[]
-10,hwybqdfarez,false,"[{""pos"": 1, ""car"": ""z"", ""inverted"": false}]"
-6,femxvw,false,"[{""pos"": 1, ""car"": ""e"", ""inverted"": false}]"
+10,hwybqdfarez,false,"[{""position"": 1, ""letter"": ""z"", ""excluded"": false}]"
+6,femxvw,false,"[{""position"": 1, ""letter"": ""e"", ""excluded"": false}]"
 10,rseamblqhykd,true,[]
-4,rnldu,false,"[{""pos"": 3, ""car"": ""u"", ""inverted"": false}, {""pos"": 1, ""car"": ""l"", ""inverted"": false}]"
+4,rnldu,false,"[{""position"": 3, ""letter"": ""u"", ""excluded"": false}, {""position"": 1, ""letter"": ""l"", ""excluded"": false}]"
 8,rkintmlav,true,[]
-8,vjixyoesk,true,"[{""pos"": 1, ""car"": ""x"", ""inverted"": true}]"
-4,xemvsc,false,"[{""pos"": 1, ""car"": ""x"", ""inverted"": false}, {""pos"": 3, ""car"": ""x"", ""inverted"": false}]"
-5,ljwpkdey,true,"[{""pos"": 4, ""car"": ""k"", ""inverted"": false}]"
-9,suqwgmxfdeip,false,"[{""pos"": 4, ""car"": ""e"", ""inverted"": false}, {""pos"": 2, ""car"": ""x"", ""inverted"": false}]"
-8,ufdikjbqmh,false,"[{""pos"": 6, ""car"": ""k"", ""inverted"": true}, {""pos"": 5, ""car"": ""h"", ""inverted"": false}]"
-10,nfamceirgp,true,"[{""pos"": 5, ""car"": ""a"", ""inverted"": false}]"
-8,qnargcltjvf,false,"[{""pos"": 7, ""car"": ""q"", ""inverted"": true}]"
+8,vjixyoesk,true,"[{""position"": 1, ""letter"": ""x"", ""excluded"": true}]"
+4,xemvsc,false,"[{""position"": 1, ""letter"": ""x"", ""excluded"": false}, {""position"": 3, ""letter"": ""x"", ""excluded"": false}]"
+5,ljwpkdey,true,"[{""position"": 4, ""letter"": ""k"", ""excluded"": false}]"
+9,suqwgmxfdeip,false,"[{""position"": 4, ""letter"": ""e"", ""excluded"": false}, {""position"": 2, ""letter"": ""x"", ""excluded"": false}]"
+8,ufdikjbqmh,false,"[{""position"": 6, ""letter"": ""k"", ""excluded"": true}, {""position"": 5, ""letter"": ""h"", ""excluded"": false}]"
+10,nfamceirgp,true,"[{""position"": 5, ""letter"": ""a"", ""excluded"": false}]"
+8,qnargcltjvf,false,"[{""position"": 7, ""letter"": ""q"", ""excluded"": true}]"
 6,cvnikbdel,false,[]
-9,gjxirofhkmpd,true,"[{""pos"": 9, ""car"": ""p"", ""inverted"": false}, {""pos"": 4, ""car"": ""o"", ""inverted"": false}]"
-9,fsageryovdb,false,"[{""pos"": 6, ""car"": ""o"", ""inverted"": false}]"
+9,gjxirofhkmpd,true,"[{""position"": 9, ""letter"": ""p"", ""excluded"": false}, {""position"": 4, ""letter"": ""o"", ""excluded"": false}]"
+9,fsageryovdb,false,"[{""position"": 6, ""letter"": ""o"", ""excluded"": false}]"
 9,gxantmkdqe,false,[]
-7,jpclwkna,false,"[{""pos"": 7, ""car"": ""w"", ""inverted"": false}]"
+7,jpclwkna,false,"[{""position"": 7, ""letter"": ""w"", ""excluded"": false}]"
 8,sevqohwdapm,true,[]
-10,bciygatqsw,false,"[{""pos"": 1, ""car"": ""c"", ""inverted"": false}]"
+10,bciygatqsw,false,"[{""position"": 1, ""letter"": ""c"", ""excluded"": false}]"
 5,wqudlbif,true,[]
-5,cjqyeh,false,"[{""pos"": 1, ""car"": ""h"", ""inverted"": false}]"
-10,flztoqukps,false,"[{""pos"": 10, ""car"": ""o"", ""inverted"": false}]"
+5,cjqyeh,false,"[{""position"": 1, ""letter"": ""h"", ""excluded"": false}]"
+10,flztoqukps,false,"[{""position"": 10, ""letter"": ""o"", ""excluded"": false}]"
 5,yxlan,false,[]
 10,qnavztmjhsb,true,[]
-4,xqwge,true,"[{""pos"": 4, ""car"": ""x"", ""inverted"": false}, {""pos"": 3, ""car"": ""g"", ""inverted"": false}]"
+4,xqwge,true,"[{""position"": 4, ""letter"": ""x"", ""excluded"": false}, {""position"": 3, ""letter"": ""g"", ""excluded"": false}]"
 6,ecvmsrg,false,[]
 10,dpwcgofrkemxb,true,[]
-10,sdhlqcbxkpeaw,false,"[{""pos"": 8, ""car"": ""x"", ""inverted"": true}]"
+10,sdhlqcbxkpeaw,false,"[{""position"": 8, ""letter"": ""x"", ""excluded"": true}]"
 4,nlfbsuk,false,[]
-4,uqdhy,true,"[{""pos"": 3, ""car"": ""h"", ""inverted"": false}]"
+4,uqdhy,true,"[{""position"": 3, ""letter"": ""h"", ""excluded"": false}]"
 7,vncakzt,false,[]
-8,qpxzawunb,true,"[{""pos"": 1, ""car"": ""w"", ""inverted"": false}]"
-9,wdqlsmvkbnie,false,"[{""pos"": 9, ""car"": ""v"", ""inverted"": false}, {""pos"": 8, ""car"": ""b"", ""inverted"": true}]"
-4,faknx,true,"[{""pos"": 2, ""car"": ""n"", ""inverted"": false}]"
-5,mwxuafpq,true,"[{""pos"": 5, ""car"": ""a"", ""inverted"": false}]"
+8,qpxzawunb,true,"[{""position"": 1, ""letter"": ""w"", ""excluded"": false}]"
+9,wdqlsmvkbnie,false,"[{""position"": 9, ""letter"": ""v"", ""excluded"": false}, {""position"": 8, ""letter"": ""b"", ""excluded"": true}]"
+4,faknx,true,"[{""position"": 2, ""letter"": ""n"", ""excluded"": false}]"
+5,mwxuafpq,true,"[{""position"": 5, ""letter"": ""a"", ""excluded"": false}]"
 6,jmenhk,false,[]
-5,jogkvz,false,"[{""pos"": 3, ""car"": ""v"", ""inverted"": false}]"
+5,jogkvz,false,"[{""position"": 3, ""letter"": ""v"", ""excluded"": false}]"
 9,lspmwtykhan,false,[]
 7,gatphincl,true,[]
 4,jhskadw,true,[]
 9,ypiuqmfzl,false,[]
-10,jvdtnkrocqbl,false,"[{""pos"": 2, ""car"": ""l"", ""inverted"": true}]"
-9,flqbdentaj,false,"[{""pos"": 9, ""car"": ""a"", ""inverted"": false}]"
-4,pfvjoge,false,"[{""pos"": 3, ""car"": ""p"", ""inverted"": true}]"
-9,abqhmwlfxrg,true,"[{""pos"": 2, ""car"": ""m"", ""inverted"": false}]"
-7,iazsbpvyeo,false,"[{""pos"": 7, ""car"": ""b"", ""inverted"": false}]"
+10,jvdtnkrocqbl,false,"[{""position"": 2, ""letter"": ""l"", ""excluded"": true}]"
+9,flqbdentaj,false,"[{""position"": 9, ""letter"": ""a"", ""excluded"": false}]"
+4,pfvjoge,false,"[{""position"": 3, ""letter"": ""p"", ""excluded"": true}]"
+9,abqhmwlfxrg,true,"[{""position"": 2, ""letter"": ""m"", ""excluded"": false}]"
+7,iazsbpvyeo,false,"[{""position"": 7, ""letter"": ""b"", ""excluded"": false}]"
 4,ltxu,false,[]
-4,phizwyx,false,"[{""pos"": 2, ""car"": ""h"", ""inverted"": true}]"
+4,phizwyx,false,"[{""position"": 2, ""letter"": ""h"", ""excluded"": true}]"
 6,xupnktb,true,[]
 6,zomtnd,false,[]
-5,rntiuobj,false,"[{""pos"": 2, ""car"": ""o"", ""inverted"": false}]"
+5,rntiuobj,false,"[{""position"": 2, ""letter"": ""o"", ""excluded"": false}]"
 9,drzufkaymest,false,[]
-6,txjuzf,false,"[{""pos"": 2, ""car"": ""z"", ""inverted"": false}]"
-10,axstkcwreoyqu,true,"[{""pos"": 5, ""car"": ""r"", ""inverted"": false}]"
+6,txjuzf,false,"[{""position"": 2, ""letter"": ""z"", ""excluded"": false}]"
+10,axstkcwreoyqu,true,"[{""position"": 5, ""letter"": ""r"", ""excluded"": false}]"
 5,bwocftjl,false,[]
 9,lxykcsrdzwfu,false,[]
 8,zgpwknuj,false,[]
 4,lebnks,false,[]
-6,ekoiqugmh,false,"[{""pos"": 1, ""car"": ""g"", ""inverted"": false}]"
+6,ekoiqugmh,false,"[{""position"": 1, ""letter"": ""g"", ""excluded"": false}]"
 10,zwaxtyvonpe,false,[]
 8,nheqvcumtjl,false,[]
-7,bojhecv,false,"[{""pos"": 6, ""car"": ""o"", ""inverted"": false}, {""pos"": 5, ""car"": ""o"", ""inverted"": true}]"
-5,ksuyjm,false,"[{""pos"": 3, ""car"": ""s"", ""inverted"": false}]"
+7,bojhecv,false,"[{""position"": 6, ""letter"": ""o"", ""excluded"": false}, {""position"": 5, ""letter"": ""o"", ""excluded"": true}]"
+5,ksuyjm,false,"[{""position"": 3, ""letter"": ""s"", ""excluded"": false}]"
 10,pneirjcbzvt,false,[]
-9,rbtfmxdgnu,false,"[{""pos"": 7, ""car"": ""m"", ""inverted"": false}]"
+9,rbtfmxdgnu,false,"[{""position"": 7, ""letter"": ""m"", ""excluded"": false}]"
 9,rvzjeulxa,true,[]
-7,qudimlzpty,true,"[{""pos"": 7, ""car"": ""p"", ""inverted"": false}]"
-4,viue,false,"[{""pos"": 3, ""car"": ""u"", ""inverted"": false}]"
+7,qudimlzpty,true,"[{""position"": 7, ""letter"": ""p"", ""excluded"": false}]"
+4,viue,false,"[{""position"": 3, ""letter"": ""u"", ""excluded"": false}]"
 5,exdurytp,false,[]
 6,ouwzks,true,[]
 7,evlpdbui,false,[]
 5,gujeimh,false,[]
-6,mqhldsikf,true,"[{""pos"": 2, ""car"": ""i"", ""inverted"": false}]"
-7,uzhftxdopb,false,"[{""pos"": 5, ""car"": ""o"", ""inverted"": false}]"
+6,mqhldsikf,true,"[{""position"": 2, ""letter"": ""i"", ""excluded"": false}]"
+7,uzhftxdopb,false,"[{""position"": 5, ""letter"": ""o"", ""excluded"": false}]"
 5,arvdbmoq,true,[]
 6,zjivhsm,false,[]
 5,zuiyhwes,false,[]
-6,pokwcysdm,false,"[{""pos"": 1, ""car"": ""s"", ""inverted"": false}]"
+6,pokwcysdm,false,"[{""position"": 1, ""letter"": ""s"", ""excluded"": false}]"
 4,rhxu,false,[]
 4,uqhj,true,[]
 7,ypmjsfed,false,[]
 6,jtvakdbne,true,[]
 4,jcowgyq,false,[]
 8,vkabymropi,true,[]
-8,launhxoep,true,"[{""pos"": 2, ""car"": ""u"", ""inverted"": true}]"
+8,launhxoep,true,"[{""position"": 2, ""letter"": ""u"", ""excluded"": true}]"
 8,nirkuslvcpo,false,[]
 8,kxfsohunye,false,[]
-10,xdsmpqjielzok,false,"[{""pos"": 7, ""car"": ""d"", ""inverted"": false}]"
-8,qtxywrejm,false,"[{""pos"": 7, ""car"": ""x"", ""inverted"": false}]"
-4,lzuynh,false,"[{""pos"": 1, ""car"": ""l"", ""inverted"": true}]"
-8,fdtukzah,true,"[{""pos"": 6, ""car"": ""k"", ""inverted"": false}]"
-9,kvhzadtyijxr,false,"[{""pos"": 5, ""car"": ""r"", ""inverted"": false}, {""pos"": 8, ""car"": ""j"", ""inverted"": false}]"
-6,fhmlcwqik,false,"[{""pos"": 1, ""car"": ""i"", ""inverted"": false}]"
-7,ypotkqfnel,true,"[{""pos"": 5, ""car"": ""e"", ""inverted"": false}]"
-8,qjrtculms,true,"[{""pos"": 8, ""car"": ""u"", ""inverted"": true}]"
-4,vgpa,false,"[{""pos"": 2, ""car"": ""p"", ""inverted"": false}]"
-10,eoprjwiamz,false,"[{""pos"": 3, ""car"": ""w"", ""inverted"": true}]"
-6,efnvag,false,"[{""pos"": 1, ""car"": ""v"", ""inverted"": true}, {""pos"": 4, ""car"": ""a"", ""inverted"": false}]"
-7,pyaqwncdhv,false,"[{""pos"": 7, ""car"": ""d"", ""inverted"": false}]"
-7,wveqczo,false,"[{""pos"": 2, ""car"": ""e"", ""inverted"": false}]"
-6,elwcbpfq,true,"[{""pos"": 1, ""car"": ""f"", ""inverted"": false}]"
-6,bzxhaqtl,true,"[{""pos"": 4, ""car"": ""b"", ""inverted"": true}]"
+10,xdsmpqjielzok,false,"[{""position"": 7, ""letter"": ""d"", ""excluded"": false}]"
+8,qtxywrejm,false,"[{""position"": 7, ""letter"": ""x"", ""excluded"": false}]"
+4,lzuynh,false,"[{""position"": 1, ""letter"": ""l"", ""excluded"": true}]"
+8,fdtukzah,true,"[{""position"": 6, ""letter"": ""k"", ""excluded"": false}]"
+9,kvhzadtyijxr,false,"[{""position"": 5, ""letter"": ""r"", ""excluded"": false}, {""position"": 8, ""letter"": ""j"", ""excluded"": false}]"
+6,fhmlcwqik,false,"[{""position"": 1, ""letter"": ""i"", ""excluded"": false}]"
+7,ypotkqfnel,true,"[{""position"": 5, ""letter"": ""e"", ""excluded"": false}]"
+8,qjrtculms,true,"[{""position"": 8, ""letter"": ""u"", ""excluded"": true}]"
+4,vgpa,false,"[{""position"": 2, ""letter"": ""p"", ""excluded"": false}]"
+10,eoprjwiamz,false,"[{""position"": 3, ""letter"": ""w"", ""excluded"": true}]"
+6,efnvag,false,"[{""position"": 1, ""letter"": ""v"", ""excluded"": true}, {""position"": 4, ""letter"": ""a"", ""excluded"": false}]"
+7,pyaqwncdhv,false,"[{""position"": 7, ""letter"": ""d"", ""excluded"": false}]"
+7,wveqczo,false,"[{""position"": 2, ""letter"": ""e"", ""excluded"": false}]"
+6,elwcbpfq,true,"[{""position"": 1, ""letter"": ""f"", ""excluded"": false}]"
+6,bzxhaqtl,true,"[{""position"": 4, ""letter"": ""b"", ""excluded"": true}]"
 10,kbruxqpzjhf,false,[]
 7,bplwsak,false,[]
-8,weurtzpc,true,"[{""pos"": 5, ""car"": ""w"", ""inverted"": false}]"
-9,xosmdzietgj,false,"[{""pos"": 8, ""car"": ""o"", ""inverted"": true}]"
-4,kusr,false,"[{""pos"": 1, ""car"": ""s"", ""inverted"": false}]"
-9,tcfvbnohkp,false,"[{""pos"": 2, ""car"": ""t"", ""inverted"": false}, {""pos"": 7, ""car"": ""b"", ""inverted"": false}]"
+8,weurtzpc,true,"[{""position"": 5, ""letter"": ""w"", ""excluded"": false}]"
+9,xosmdzietgj,false,"[{""position"": 8, ""letter"": ""o"", ""excluded"": true}]"
+4,kusr,false,"[{""position"": 1, ""letter"": ""s"", ""excluded"": false}]"
+9,tcfvbnohkp,false,"[{""position"": 2, ""letter"": ""t"", ""excluded"": false}, {""position"": 7, ""letter"": ""b"", ""excluded"": false}]"
 6,kiojbn,false,[]
-10,vndupohief,false,"[{""pos"": 5, ""car"": ""o"", ""inverted"": true}]"
+10,vndupohief,false,"[{""position"": 5, ""letter"": ""o"", ""excluded"": true}]"
 7,sxmycoa,false,[]
-9,cdjezlvpyxs,false,"[{""pos"": 4, ""car"": ""z"", ""inverted"": false}, {""pos"": 6, ""car"": ""v"", ""inverted"": false}]"
+9,cdjezlvpyxs,false,"[{""position"": 4, ""letter"": ""z"", ""excluded"": false}, {""position"": 6, ""letter"": ""v"", ""excluded"": false}]"
 9,ehpkflwdjay,false,[]
-10,lsgkfubzmvhj,true,"[{""pos"": 2, ""car"": ""l"", ""inverted"": true}]"
-10,wbjxkmfusgh,true,"[{""pos"": 3, ""car"": ""m"", ""inverted"": false}]"
-5,hdpsbcu,false,"[{""pos"": 3, ""car"": ""s"", ""inverted"": false}]"
-7,ondmwagiu,false,"[{""pos"": 5, ""car"": ""g"", ""inverted"": false}, {""pos"": 7, ""car"": ""d"", ""inverted"": true}]"
+10,lsgkfubzmvhj,true,"[{""position"": 2, ""letter"": ""l"", ""excluded"": true}]"
+10,wbjxkmfusgh,true,"[{""position"": 3, ""letter"": ""m"", ""excluded"": false}]"
+5,hdpsbcu,false,"[{""position"": 3, ""letter"": ""s"", ""excluded"": false}]"
+7,ondmwagiu,false,"[{""position"": 5, ""letter"": ""g"", ""excluded"": false}, {""position"": 7, ""letter"": ""d"", ""excluded"": true}]"
 8,pshqglmuca,false,[]
-5,zbrqtpi,false,"[{""pos"": 3, ""car"": ""b"", ""inverted"": false}, {""pos"": 5, ""car"": ""p"", ""inverted"": false}]"
+5,zbrqtpi,false,"[{""position"": 3, ""letter"": ""b"", ""excluded"": false}, {""position"": 5, ""letter"": ""p"", ""excluded"": false}]"
 8,canwdjtubg,false,[]
 6,bkqjfpu,false,[]
 7,uxdtmwc,false,[]
-9,gbyjidprhf,true,"[{""pos"": 8, ""car"": ""j"", ""inverted"": true}]"
+9,gbyjidprhf,true,"[{""position"": 8, ""letter"": ""j"", ""excluded"": true}]"
 5,moawre,true,[]
-4,hofsy,true,"[{""pos"": 2, ""car"": ""o"", ""inverted"": false}]"
-10,fgluhedrvsp,true,"[{""pos"": 10, ""car"": ""g"", ""inverted"": false}]"
-8,ugryhjqc,false,"[{""pos"": 1, ""car"": ""j"", ""inverted"": false}, {""pos"": 5, ""car"": ""h"", ""inverted"": false}]"
-7,pjuvzak,true,"[{""pos"": 5, ""car"": ""p"", ""inverted"": true}, {""pos"": 7, ""car"": ""j"", ""inverted"": false}]"
+4,hofsy,true,"[{""position"": 2, ""letter"": ""o"", ""excluded"": false}]"
+10,fgluhedrvsp,true,"[{""position"": 10, ""letter"": ""g"", ""excluded"": false}]"
+8,ugryhjqc,false,"[{""position"": 1, ""letter"": ""j"", ""excluded"": false}, {""position"": 5, ""letter"": ""h"", ""excluded"": false}]"
+7,pjuvzak,true,"[{""position"": 5, ""letter"": ""p"", ""excluded"": true}, {""position"": 7, ""letter"": ""j"", ""excluded"": false}]"
 5,qmkyo,false,[]
-10,jmuwoxzibd,false,"[{""pos"": 5, ""car"": ""z"", ""inverted"": false}, {""pos"": 6, ""car"": ""i"", ""inverted"": false}]"
-7,yxjbntifg,false,"[{""pos"": 7, ""car"": ""i"", ""inverted"": false}]"
-9,zkbxhiogrw,false,"[{""pos"": 9, ""car"": ""b"", ""inverted"": false}]"
-6,snifzo,false,"[{""pos"": 2, ""car"": ""n"", ""inverted"": false}, {""pos"": 3, ""car"": ""f"", ""inverted"": false}]"
-7,hvnqmzub,true,"[{""pos"": 6, ""car"": ""z"", ""inverted"": false}]"
+10,jmuwoxzibd,false,"[{""position"": 5, ""letter"": ""z"", ""excluded"": false}, {""position"": 6, ""letter"": ""i"", ""excluded"": false}]"
+7,yxjbntifg,false,"[{""position"": 7, ""letter"": ""i"", ""excluded"": false}]"
+9,zkbxhiogrw,false,"[{""position"": 9, ""letter"": ""b"", ""excluded"": false}]"
+6,snifzo,false,"[{""position"": 2, ""letter"": ""n"", ""excluded"": false}, {""position"": 3, ""letter"": ""f"", ""excluded"": false}]"
+7,hvnqmzub,true,"[{""position"": 6, ""letter"": ""z"", ""excluded"": false}]"
 6,nmcixsh,false,[]
 10,aiqmbjlgtxzyp,false,[]
-8,rcjhsqpbwa,false,"[{""pos"": 4, ""car"": ""q"", ""inverted"": false}]"
-6,dozpkxs,false,"[{""pos"": 3, ""car"": ""p"", ""inverted"": true}, {""pos"": 2, ""car"": ""s"", ""inverted"": true}]"
+8,rcjhsqpbwa,false,"[{""position"": 4, ""letter"": ""q"", ""excluded"": false}]"
+6,dozpkxs,false,"[{""position"": 3, ""letter"": ""p"", ""excluded"": true}, {""position"": 2, ""letter"": ""s"", ""excluded"": true}]"
 6,nxfdtyvi,false,[]
-7,jtdkqiyr,true,"[{""pos"": 5, ""car"": ""k"", ""inverted"": false}, {""pos"": 6, ""car"": ""i"", ""inverted"": false}]"
+7,jtdkqiyr,true,"[{""position"": 5, ""letter"": ""k"", ""excluded"": false}, {""position"": 6, ""letter"": ""i"", ""excluded"": false}]"
 9,sukvnqlgh,false,[]
 10,xshyorltpmn,false,[]
-6,htzminko,false,"[{""pos"": 6, ""car"": ""k"", ""inverted"": true}]"
-8,shdfyoezi,false,"[{""pos"": 3, ""car"": ""d"", ""inverted"": false}]"
-5,aeukf,true,"[{""pos"": 3, ""car"": ""u"", ""inverted"": false}]"
-5,iojrsz,false,"[{""pos"": 2, ""car"": ""i"", ""inverted"": false}]"
-6,cjflisy,true,"[{""pos"": 4, ""car"": ""y"", ""inverted"": false}, {""pos"": 6, ""car"": ""s"", ""inverted"": false}]"
-6,fpabmrx,true,"[{""pos"": 5, ""car"": ""f"", ""inverted"": false}, {""pos"": 6, ""car"": ""m"", ""inverted"": false}]"
-6,euoljkgax,true,"[{""pos"": 5, ""car"": ""x"", ""inverted"": false}]"
-10,svmwjileht,true,"[{""pos"": 6, ""car"": ""h"", ""inverted"": true}]"
-4,locrg,true,"[{""pos"": 1, ""car"": ""g"", ""inverted"": false}]"
-6,borznkfjt,false,"[{""pos"": 1, ""car"": ""j"", ""inverted"": true}]"
-5,hafscr,true,"[{""pos"": 2, ""car"": ""h"", ""inverted"": true}]"
-10,cfzpeomahv,false,"[{""pos"": 5, ""car"": ""v"", ""inverted"": true}]"
-8,ahozugnplb,false,"[{""pos"": 3, ""car"": ""l"", ""inverted"": true}, {""pos"": 2, ""car"": ""h"", ""inverted"": false}]"
-10,xmgecdjyri,false,"[{""pos"": 10, ""car"": ""g"", ""inverted"": false}]"
-5,implhntx,true,"[{""pos"": 3, ""car"": ""h"", ""inverted"": false}, {""pos"": 5, ""car"": ""p"", ""inverted"": false}]"
+6,htzminko,false,"[{""position"": 6, ""letter"": ""k"", ""excluded"": true}]"
+8,shdfyoezi,false,"[{""position"": 3, ""letter"": ""d"", ""excluded"": false}]"
+5,aeukf,true,"[{""position"": 3, ""letter"": ""u"", ""excluded"": false}]"
+5,iojrsz,false,"[{""position"": 2, ""letter"": ""i"", ""excluded"": false}]"
+6,cjflisy,true,"[{""position"": 4, ""letter"": ""y"", ""excluded"": false}, {""position"": 6, ""letter"": ""s"", ""excluded"": false}]"
+6,fpabmrx,true,"[{""position"": 5, ""letter"": ""f"", ""excluded"": false}, {""position"": 6, ""letter"": ""m"", ""excluded"": false}]"
+6,euoljkgax,true,"[{""position"": 5, ""letter"": ""x"", ""excluded"": false}]"
+10,svmwjileht,true,"[{""position"": 6, ""letter"": ""h"", ""excluded"": true}]"
+4,locrg,true,"[{""position"": 1, ""letter"": ""g"", ""excluded"": false}]"
+6,borznkfjt,false,"[{""position"": 1, ""letter"": ""j"", ""excluded"": true}]"
+5,hafscr,true,"[{""position"": 2, ""letter"": ""h"", ""excluded"": true}]"
+10,cfzpeomahv,false,"[{""position"": 5, ""letter"": ""v"", ""excluded"": true}]"
+8,ahozugnplb,false,"[{""position"": 3, ""letter"": ""l"", ""excluded"": true}, {""position"": 2, ""letter"": ""h"", ""excluded"": false}]"
+10,xmgecdjyri,false,"[{""position"": 10, ""letter"": ""g"", ""excluded"": false}]"
+5,implhntx,true,"[{""position"": 3, ""letter"": ""h"", ""excluded"": false}, {""position"": 5, ""letter"": ""p"", ""excluded"": false}]"
 7,suofcnamj,true,[]
 9,vkbapohtd,true,[]
 7,qebucha,true,[]
 4,ildv,false,[]
 10,cyirsegxnhlba,false,[]
-10,esgphiarbfjn,false,"[{""pos"": 7, ""car"": ""n"", ""inverted"": true}]"
-10,ozybltdmkw,false,"[{""pos"": 7, ""car"": ""w"", ""inverted"": false}]"
+10,esgphiarbfjn,false,"[{""position"": 7, ""letter"": ""n"", ""excluded"": true}]"
+10,ozybltdmkw,false,"[{""position"": 7, ""letter"": ""w"", ""excluded"": false}]"
 6,vcowrx,false,[]
 7,sgtfcayxkr,false,[]
-4,dinjqs,false,"[{""pos"": 1, ""car"": ""s"", ""inverted"": false}]"
+4,dinjqs,false,"[{""position"": 1, ""letter"": ""s"", ""excluded"": false}]"
 5,ktehvqa,true,[]
 8,hpvxtcnzew,false,[]
-8,jkbrmiot,false,"[{""pos"": 6, ""car"": ""b"", ""inverted"": false}]"
+8,jkbrmiot,false,"[{""position"": 6, ""letter"": ""b"", ""excluded"": false}]"
 5,miehcvaq,false,[]
 10,gejyxnihdkcr,false,[]
 9,eutizmxgoq,false,[]
 5,ohuvjsa,true,[]
-4,ksgi,false,"[{""pos"": 3, ""car"": ""i"", ""inverted"": true}, {""pos"": 2, ""car"": ""i"", ""inverted"": false}]"
+4,ksgi,false,"[{""position"": 3, ""letter"": ""i"", ""excluded"": true}, {""position"": 2, ""letter"": ""i"", ""excluded"": false}]"
 9,uvmpcaztejwq,false,[]
-10,yosczxafviuph,false,"[{""pos"": 10, ""car"": ""h"", ""inverted"": false}]"
+10,yosczxafviuph,false,"[{""position"": 10, ""letter"": ""h"", ""excluded"": false}]"
 6,gxwvaeqf,true,[]
 6,umlykat,false,[]
-10,lkomfishvjct,false,"[{""pos"": 2, ""car"": ""f"", ""inverted"": false}]"
+10,lkomfishvjct,false,"[{""position"": 2, ""letter"": ""f"", ""excluded"": false}]"
 6,phwoqgf,false,[]
 10,twlqghmisn,false,[]
 8,lpuykajne,false,[]
-8,ruysdvwpiek,true,"[{""pos"": 7, ""car"": ""k"", ""inverted"": false}]"
+8,ruysdvwpiek,true,"[{""position"": 7, ""letter"": ""k"", ""excluded"": false}]"
 8,vmupbjcloy,true,[]
-7,edifotga,false,"[{""pos"": 5, ""car"": ""a"", ""inverted"": false}]"
-6,aguixzeh,false,"[{""pos"": 3, ""car"": ""a"", ""inverted"": false}, {""pos"": 2, ""car"": ""i"", ""inverted"": false}]"
-4,pnjikr,true,"[{""pos"": 1, ""car"": ""k"", ""inverted"": false}]"
-4,lvznjbu,false,"[{""pos"": 2, ""car"": ""n"", ""inverted"": false}]"
+7,edifotga,false,"[{""position"": 5, ""letter"": ""a"", ""excluded"": false}]"
+6,aguixzeh,false,"[{""position"": 3, ""letter"": ""a"", ""excluded"": false}, {""position"": 2, ""letter"": ""i"", ""excluded"": false}]"
+4,pnjikr,true,"[{""position"": 1, ""letter"": ""k"", ""excluded"": false}]"
+4,lvznjbu,false,"[{""position"": 2, ""letter"": ""n"", ""excluded"": false}]"
 7,selywmgu,true,[]
 7,tqhbxaprg,false,[]
-9,kpdminyfb,false,"[{""pos"": 7, ""car"": ""b"", ""inverted"": true}]"
+9,kpdminyfb,false,"[{""position"": 7, ""letter"": ""b"", ""excluded"": true}]"
 5,dbrwo,true,[]
 7,wngikmy,false,[]
-5,decka,false,"[{""pos"": 2, ""car"": ""a"", ""inverted"": false}, {""pos"": 3, ""car"": ""d"", ""inverted"": false}]"
-9,zruvwbhqf,false,"[{""pos"": 6, ""car"": ""u"", ""inverted"": false}]"
+5,decka,false,"[{""position"": 2, ""letter"": ""a"", ""excluded"": false}, {""position"": 3, ""letter"": ""d"", ""excluded"": false}]"
+9,zruvwbhqf,false,"[{""position"": 6, ""letter"": ""u"", ""excluded"": false}]"
 7,dqwvgbokcl,false,[]
 9,dslqmxiny,false,[]
-8,tjzamcdlk,true,"[{""pos"": 6, ""car"": ""j"", ""inverted"": false}]"
+8,tjzamcdlk,true,"[{""position"": 6, ""letter"": ""j"", ""excluded"": false}]"
 7,uitmgxfl,false,[]
-7,dickxshotu,true,"[{""pos"": 1, ""car"": ""c"", ""inverted"": false}]"
-9,zkwrnfxtpoj,true,"[{""pos"": 5, ""car"": ""f"", ""inverted"": false}]"
+7,dickxshotu,true,"[{""position"": 1, ""letter"": ""c"", ""excluded"": false}]"
+9,zkwrnfxtpoj,true,"[{""position"": 5, ""letter"": ""f"", ""excluded"": false}]"
 8,rewczkdyp,false,[]
 6,xhbrqli,false,[]
 6,oatlmxuy,false,[]
 8,rqzgfumnky,true,[]
-4,uqplmc,false,"[{""pos"": 1, ""car"": ""u"", ""inverted"": false}]"
+4,uqplmc,false,"[{""position"": 1, ""letter"": ""u"", ""excluded"": false}]"
 4,omqz,true,[]
 6,twhkyupd,false,[]
-10,lenswmatfdh,false,"[{""pos"": 6, ""car"": ""t"", ""inverted"": false}]"
-4,yiexcjr,false,"[{""pos"": 4, ""car"": ""y"", ""inverted"": false}]"
+10,lenswmatfdh,false,"[{""position"": 6, ""letter"": ""t"", ""excluded"": false}]"
+4,yiexcjr,false,"[{""position"": 4, ""letter"": ""y"", ""excluded"": false}]"
 10,jkdhmelpnoqza,false,[]
-5,martxi,false,"[{""pos"": 1, ""car"": ""r"", ""inverted"": false}]"
-4,gajszk,false,"[{""pos"": 2, ""car"": ""g"", ""inverted"": true}]"
+5,martxi,false,"[{""position"": 1, ""letter"": ""r"", ""excluded"": false}]"
+4,gajszk,false,"[{""position"": 2, ""letter"": ""g"", ""excluded"": true}]"
 4,dlyeq,false,[]
-8,pshcenlwro,false,"[{""pos"": 5, ""car"": ""o"", ""inverted"": true}]"
+8,pshcenlwro,false,"[{""position"": 5, ""letter"": ""o"", ""excluded"": true}]"
 6,nriatu,false,[]
-9,gpncrusky,false,"[{""pos"": 1, ""car"": ""u"", ""inverted"": false}]"
+9,gpncrusky,false,"[{""position"": 1, ""letter"": ""u"", ""excluded"": false}]"
 5,bwqyou,false,[]
-10,twinbrqjvfxso,false,"[{""pos"": 4, ""car"": ""v"", ""inverted"": false}]"
-9,atypnlvqdg,false,"[{""pos"": 2, ""car"": ""t"", ""inverted"": false}]"
+10,twinbrqjvfxso,false,"[{""position"": 4, ""letter"": ""v"", ""excluded"": false}]"
+9,atypnlvqdg,false,"[{""position"": 2, ""letter"": ""t"", ""excluded"": false}]"
 5,jxabmedf,false,[]
 10,dcjkvmebralh,false,[]
-7,gsiufbvx,true,"[{""pos"": 3, ""car"": ""b"", ""inverted"": false}]"
+7,gsiufbvx,true,"[{""position"": 3, ""letter"": ""b"", ""excluded"": false}]"
 7,zamxqvf,true,[]
 8,tcjrokzuq,false,[]
 4,ldtu,true,[]
-6,trfepmklh,false,"[{""pos"": 4, ""car"": ""f"", ""inverted"": true}]"
+6,trfepmklh,false,"[{""position"": 4, ""letter"": ""f"", ""excluded"": true}]"
 7,qdzakjp,false,[]
 10,siylgatvjoxk,false,[]
-9,kjzyodfbwhx,false,"[{""pos"": 4, ""car"": ""j"", ""inverted"": false}, {""pos"": 2, ""car"": ""y"", ""inverted"": false}]"
+9,kjzyodfbwhx,false,"[{""position"": 4, ""letter"": ""j"", ""excluded"": false}, {""position"": 2, ""letter"": ""y"", ""excluded"": false}]"
 10,cltezdqbwuk,true,[]
 7,govajefpdz,false,[]
 8,cistnokul,false,[]
 4,pijt,false,[]
-6,lsneom,false,"[{""pos"": 6, ""car"": ""s"", ""inverted"": false}]"
+6,lsneom,false,"[{""position"": 6, ""letter"": ""s"", ""excluded"": false}]"
 10,swnebluofyv,true,[]
-5,algpqdz,true,"[{""pos"": 5, ""car"": ""d"", ""inverted"": false}]"
-8,tkjnaedsru,false,"[{""pos"": 3, ""car"": ""r"", ""inverted"": false}]"
+5,algpqdz,true,"[{""position"": 5, ""letter"": ""d"", ""excluded"": false}]"
+8,tkjnaedsru,false,"[{""position"": 3, ""letter"": ""r"", ""excluded"": false}]"
 5,emnxqy,false,[]
 5,vnzyuxtp,true,[]
 9,comkzawfyx,true,[]
 6,pdvectjrf,true,[]
-6,ciuqzjadt,false,"[{""pos"": 4, ""car"": ""i"", ""inverted"": false}]"
+6,ciuqzjadt,false,"[{""position"": 4, ""letter"": ""i"", ""excluded"": false}]"
 6,hqvjbpcwa,false,[]
-7,ehyorgnk,true,"[{""pos"": 7, ""car"": ""y"", ""inverted"": true}]"
+7,ehyorgnk,true,"[{""position"": 7, ""letter"": ""y"", ""excluded"": true}]"
 8,jiybevgazw,false,[]
-6,xetpbkz,true,"[{""pos"": 5, ""car"": ""b"", ""inverted"": true}]"
-4,qgpbec,false,"[{""pos"": 2, ""car"": ""p"", ""inverted"": true}]"
+6,xetpbkz,true,"[{""position"": 5, ""letter"": ""b"", ""excluded"": true}]"
+4,qgpbec,false,"[{""position"": 2, ""letter"": ""p"", ""excluded"": true}]"
 10,abolrieyct,false,[]
 6,bvkzdo,false,[]
 7,ekawtgzhlo,true,[]
-4,pdjqti,false,"[{""pos"": 3, ""car"": ""t"", ""inverted"": false}]"
-10,vhedkflwnr,false,"[{""pos"": 10, ""car"": ""w"", ""inverted"": false}]"
-10,rozynxumqws,false,"[{""pos"": 4, ""car"": ""y"", ""inverted"": false}]"
+4,pdjqti,false,"[{""position"": 3, ""letter"": ""t"", ""excluded"": false}]"
+10,vhedkflwnr,false,"[{""position"": 10, ""letter"": ""w"", ""excluded"": false}]"
+10,rozynxumqws,false,"[{""position"": 4, ""letter"": ""y"", ""excluded"": false}]"
 8,dkhrfwoq,false,[]
-7,yvjbkie,false,"[{""pos"": 5, ""car"": ""j"", ""inverted"": false}]"
-8,bujapsexqrt,true,"[{""pos"": 8, ""car"": ""p"", ""inverted"": false}, {""pos"": 7, ""car"": ""r"", ""inverted"": false}]"
-4,kytse,true,"[{""pos"": 4, ""car"": ""s"", ""inverted"": false}]"
-7,lbmiucjwhf,false,"[{""pos"": 7, ""car"": ""m"", ""inverted"": false}]"
-8,gkojsaeq,true,"[{""pos"": 8, ""car"": ""a"", ""inverted"": false}]"
+7,yvjbkie,false,"[{""position"": 5, ""letter"": ""j"", ""excluded"": false}]"
+8,bujapsexqrt,true,"[{""position"": 8, ""letter"": ""p"", ""excluded"": false}, {""position"": 7, ""letter"": ""r"", ""excluded"": false}]"
+4,kytse,true,"[{""position"": 4, ""letter"": ""s"", ""excluded"": false}]"
+7,lbmiucjwhf,false,"[{""position"": 7, ""letter"": ""m"", ""excluded"": false}]"
+8,gkojsaeq,true,"[{""position"": 8, ""letter"": ""a"", ""excluded"": false}]"
 4,apsniy,false,[]
-7,qzyjbudaow,false,"[{""pos"": 7, ""car"": ""y"", ""inverted"": false}]"
+7,qzyjbudaow,false,"[{""position"": 7, ""letter"": ""y"", ""excluded"": false}]"
 8,hpilwkrt,false,[]
-7,obfxarph,true,"[{""pos"": 5, ""car"": ""a"", ""inverted"": true}]"
+7,obfxarph,true,"[{""position"": 5, ""letter"": ""a"", ""excluded"": true}]"
 6,ljtscaq,false,[]
-5,abwfm,true,"[{""pos"": 4, ""car"": ""w"", ""inverted"": false}, {""pos"": 5, ""car"": ""a"", ""inverted"": true}]"
-8,xujgecwnkqi,false,"[{""pos"": 5, ""car"": ""c"", ""inverted"": false}]"
-6,ltwzyuxd,false,"[{""pos"": 4, ""car"": ""d"", ""inverted"": true}]"
-9,ogmckfqrwa,false,"[{""pos"": 2, ""car"": ""f"", ""inverted"": true}]"
-4,nirpjkb,true,"[{""pos"": 4, ""car"": ""n"", ""inverted"": true}]"
+5,abwfm,true,"[{""position"": 4, ""letter"": ""w"", ""excluded"": false}, {""position"": 5, ""letter"": ""a"", ""excluded"": true}]"
+8,xujgecwnkqi,false,"[{""position"": 5, ""letter"": ""c"", ""excluded"": false}]"
+6,ltwzyuxd,false,"[{""position"": 4, ""letter"": ""d"", ""excluded"": true}]"
+9,ogmckfqrwa,false,"[{""position"": 2, ""letter"": ""f"", ""excluded"": true}]"
+4,nirpjkb,true,"[{""position"": 4, ""letter"": ""n"", ""excluded"": true}]"
 5,etvrhg,false,[]
 8,onteyplhgbx,true,[]
 6,qfytgep,true,[]
 7,bkryfeh,true,[]
-9,mrsontchvbau,true,"[{""pos"": 3, ""car"": ""h"", ""inverted"": false}]"
-4,ctviw,false,"[{""pos"": 4, ""car"": ""t"", ""inverted"": false}]"
-8,qsplayjg,false,"[{""pos"": 8, ""car"": ""p"", ""inverted"": false}, {""pos"": 7, ""car"": ""j"", ""inverted"": false}]"
+9,mrsontchvbau,true,"[{""position"": 3, ""letter"": ""h"", ""excluded"": false}]"
+4,ctviw,false,"[{""position"": 4, ""letter"": ""t"", ""excluded"": false}]"
+8,qsplayjg,false,"[{""position"": 8, ""letter"": ""p"", ""excluded"": false}, {""position"": 7, ""letter"": ""j"", ""excluded"": false}]"
 9,mgchetdubpv,false,[]
 10,avhjldnkgt,false,[]
 7,jfcpyem,true,[]
 7,ewaoyzx,false,[]
 10,tkvdrnuobl,false,[]
-6,luwhrcm,false,"[{""pos"": 2, ""car"": ""l"", ""inverted"": true}]"
-10,jsnbfiyxowgc,true,"[{""pos"": 10, ""car"": ""g"", ""inverted"": true}]"
-7,yfstbkpi,false,"[{""pos"": 6, ""car"": ""i"", ""inverted"": false}, {""pos"": 4, ""car"": ""s"", ""inverted"": true}]"
+6,luwhrcm,false,"[{""position"": 2, ""letter"": ""l"", ""excluded"": true}]"
+10,jsnbfiyxowgc,true,"[{""position"": 10, ""letter"": ""g"", ""excluded"": true}]"
+7,yfstbkpi,false,"[{""position"": 6, ""letter"": ""i"", ""excluded"": false}, {""position"": 4, ""letter"": ""s"", ""excluded"": true}]"
 5,rqpbjmec,true,[]
-6,phgzukcs,false,"[{""pos"": 4, ""car"": ""s"", ""inverted"": false}, {""pos"": 5, ""car"": ""g"", ""inverted"": false}]"
+6,phgzukcs,false,"[{""position"": 4, ""letter"": ""s"", ""excluded"": false}, {""position"": 5, ""letter"": ""g"", ""excluded"": false}]"
 8,vnudlfxqajh,false,[]
 8,ixcjzogw,false,[]
 10,zdcvrfmhegny,false,[]
-6,imdclbkg,false,"[{""pos"": 1, ""car"": ""c"", ""inverted"": false}]"
-9,awfzbjqcer,true,"[{""pos"": 8, ""car"": ""b"", ""inverted"": false}, {""pos"": 7, ""car"": ""j"", ""inverted"": false}]"
+6,imdclbkg,false,"[{""position"": 1, ""letter"": ""c"", ""excluded"": false}]"
+9,awfzbjqcer,true,"[{""position"": 8, ""letter"": ""b"", ""excluded"": false}, {""position"": 7, ""letter"": ""j"", ""excluded"": false}]"
 5,xewcgzr,false,[]
 5,ukizhvla,false,[]
 10,ltjrimbahxcof,false,[]
-7,jbzqwroa,false,"[{""pos"": 3, ""car"": ""q"", ""inverted"": false}]"
+7,jbzqwroa,false,"[{""position"": 3, ""letter"": ""q"", ""excluded"": false}]"
 4,ounihj,false,[]
-6,duftyb,false,"[{""pos"": 1, ""car"": ""f"", ""inverted"": false}, {""pos"": 2, ""car"": ""d"", ""inverted"": false}]"
+6,duftyb,false,"[{""position"": 1, ""letter"": ""f"", ""excluded"": false}, {""position"": 2, ""letter"": ""d"", ""excluded"": false}]"
 8,hnstjoflreq,false,[]
-7,tiwnbdocxy,false,"[{""pos"": 5, ""car"": ""w"", ""inverted"": false}]"
-6,ewpdxuhi,false,"[{""pos"": 6, ""car"": ""p"", ""inverted"": true}]"
+7,tiwnbdocxy,false,"[{""position"": 5, ""letter"": ""w"", ""excluded"": false}]"
+6,ewpdxuhi,false,"[{""position"": 6, ""letter"": ""p"", ""excluded"": true}]"
 8,rvtueaqb,true,[]
 5,odyvlu,true,[]
-5,hgoplzd,false,"[{""pos"": 5, ""car"": ""p"", ""inverted"": false}, {""pos"": 1, ""car"": ""h"", ""inverted"": true}]"
+5,hgoplzd,false,"[{""position"": 5, ""letter"": ""p"", ""excluded"": false}, {""position"": 1, ""letter"": ""h"", ""excluded"": true}]"
 5,yzglku,false,[]
 7,ioyxmraqu,false,[]
 5,exfkmzu,true,[]
-6,wpogyn,false,"[{""pos"": 6, ""car"": ""y"", ""inverted"": false}]"
-4,bnaqit,false,"[{""pos"": 4, ""car"": ""n"", ""inverted"": false}, {""pos"": 1, ""car"": ""a"", ""inverted"": true}]"
+6,wpogyn,false,"[{""position"": 6, ""letter"": ""y"", ""excluded"": false}]"
+4,bnaqit,false,"[{""position"": 4, ""letter"": ""n"", ""excluded"": false}, {""position"": 1, ""letter"": ""a"", ""excluded"": true}]"
 10,qvwuinahkso,false,[]
 7,ownatjph,false,[]
-4,koxwlq,false,"[{""pos"": 3, ""car"": ""o"", ""inverted"": true}]"
-5,wzelumtn,false,"[{""pos"": 2, ""car"": ""z"", ""inverted"": false}, {""pos"": 1, ""car"": ""l"", ""inverted"": false}]"
-5,jhceovq,true,"[{""pos"": 4, ""car"": ""e"", ""inverted"": false}]"
-7,mdljahny,true,"[{""pos"": 2, ""car"": ""d"", ""inverted"": false}]"
+4,koxwlq,false,"[{""position"": 3, ""letter"": ""o"", ""excluded"": true}]"
+5,wzelumtn,false,"[{""position"": 2, ""letter"": ""z"", ""excluded"": false}, {""position"": 1, ""letter"": ""l"", ""excluded"": false}]"
+5,jhceovq,true,"[{""position"": 4, ""letter"": ""e"", ""excluded"": false}]"
+7,mdljahny,true,"[{""position"": 2, ""letter"": ""d"", ""excluded"": false}]"
 4,imxphf,true,[]
 4,xydo,false,[]
-9,svuxmwchqbz,false,"[{""pos"": 3, ""car"": ""w"", ""inverted"": true}, {""pos"": 6, ""car"": ""z"", ""inverted"": false}]"
+9,svuxmwchqbz,false,"[{""position"": 3, ""letter"": ""w"", ""excluded"": true}, {""position"": 6, ""letter"": ""z"", ""excluded"": false}]"
 6,djstik,true,[]
 4,frinv,false,[]
 9,rebghckvz,true,[]
-5,qoaseuc,false,"[{""pos"": 5, ""car"": ""e"", ""inverted"": true}, {""pos"": 2, ""car"": ""a"", ""inverted"": false}]"
-6,djawyxmhr,false,"[{""pos"": 4, ""car"": ""d"", ""inverted"": false}]"
+5,qoaseuc,false,"[{""position"": 5, ""letter"": ""e"", ""excluded"": true}, {""position"": 2, ""letter"": ""a"", ""excluded"": false}]"
+6,djawyxmhr,false,"[{""position"": 4, ""letter"": ""d"", ""excluded"": false}]"
 4,oicqzxl,false,[]
 5,sarwkg,false,[]
-5,zryqpatk,false,"[{""pos"": 2, ""car"": ""q"", ""inverted"": true}]"
-5,hfnkce,false,"[{""pos"": 1, ""car"": ""f"", ""inverted"": false}]"
+5,zryqpatk,false,"[{""position"": 2, ""letter"": ""q"", ""excluded"": true}]"
+5,hfnkce,false,"[{""position"": 1, ""letter"": ""f"", ""excluded"": false}]"
 7,oiphtugak,false,[]
-9,biawovtlur,false,"[{""pos"": 8, ""car"": ""i"", ""inverted"": false}, {""pos"": 5, ""car"": ""r"", ""inverted"": true}]"
+9,biawovtlur,false,"[{""position"": 8, ""letter"": ""i"", ""excluded"": false}, {""position"": 5, ""letter"": ""r"", ""excluded"": true}]"
 5,wxnre,false,[]
-6,lhxmeqakg,true,"[{""pos"": 2, ""car"": ""h"", ""inverted"": false}]"
+6,lhxmeqakg,true,"[{""position"": 2, ""letter"": ""h"", ""excluded"": false}]"
 5,dfrqoxz,false,[]
-5,xntiepsk,false,"[{""pos"": 2, ""car"": ""x"", ""inverted"": false}]"
-10,diyurqgwotahn,false,"[{""pos"": 1, ""car"": ""h"", ""inverted"": false}]"
+5,xntiepsk,false,"[{""position"": 2, ""letter"": ""x"", ""excluded"": false}]"
+10,diyurqgwotahn,false,"[{""position"": 1, ""letter"": ""h"", ""excluded"": false}]"
 9,uprqzmjthi,true,[]
 8,etgkwshbqn,false,[]
-4,sxba,false,"[{""pos"": 4, ""car"": ""s"", ""inverted"": false}]"
-8,ftdrvmjo,false,"[{""pos"": 7, ""car"": ""f"", ""inverted"": false}]"
+4,sxba,false,"[{""position"": 4, ""letter"": ""s"", ""excluded"": false}]"
+8,ftdrvmjo,false,"[{""position"": 7, ""letter"": ""f"", ""excluded"": false}]"
 4,liyxsm,false,[]
 8,zevfrjlqxu,false,[]
 6,grsolx,true,[]
 8,wnjghxzmfa,false,[]
 7,qyvkozeuf,false,[]
-10,raiqxcgwst,false,"[{""pos"": 9, ""car"": ""q"", ""inverted"": true}]"
-6,nqgbevi,false,"[{""pos"": 5, ""car"": ""i"", ""inverted"": false}, {""pos"": 4, ""car"": ""e"", ""inverted"": false}]"
+10,raiqxcgwst,false,"[{""position"": 9, ""letter"": ""q"", ""excluded"": true}]"
+6,nqgbevi,false,"[{""position"": 5, ""letter"": ""i"", ""excluded"": false}, {""position"": 4, ""letter"": ""e"", ""excluded"": false}]"
 4,xtojbm,true,[]
-6,nxriflcq,false,"[{""pos"": 6, ""car"": ""f"", ""inverted"": true}, {""pos"": 4, ""car"": ""q"", ""inverted"": false}]"
+6,nxriflcq,false,"[{""position"": 6, ""letter"": ""f"", ""excluded"": true}, {""position"": 4, ""letter"": ""q"", ""excluded"": false}]"
 9,riadlmfngz,true,[]
 7,fcezpkng,false,[]
 5,vgyobd,false,[]
 4,yghpi,false,[]
-9,fxemgkcyslt,true,"[{""pos"": 5, ""car"": ""s"", ""inverted"": false}]"
+9,fxemgkcyslt,true,"[{""position"": 5, ""letter"": ""s"", ""excluded"": false}]"
 6,pactnrwjg,false,[]
 10,abwhriklucofm,true,[]
 4,gihfz,false,[]
 6,mdeqkh,true,[]
-5,mogqth,false,"[{""pos"": 5, ""car"": ""m"", ""inverted"": false}]"
-4,fucl,true,"[{""pos"": 3, ""car"": ""f"", ""inverted"": true}]"
+5,mogqth,false,"[{""position"": 5, ""letter"": ""m"", ""excluded"": false}]"
+4,fucl,true,"[{""position"": 3, ""letter"": ""f"", ""excluded"": true}]"
 4,itdp,false,[]
 4,ynug,false,[]
 9,ejbkazlqxdfn,false,[]
-8,nozlfcwab,true,"[{""pos"": 7, ""car"": ""l"", ""inverted"": false}, {""pos"": 4, ""car"": ""n"", ""inverted"": false}]"
-4,yront,false,"[{""pos"": 4, ""car"": ""y"", ""inverted"": false}]"
+8,nozlfcwab,true,"[{""position"": 7, ""letter"": ""l"", ""excluded"": false}, {""position"": 4, ""letter"": ""n"", ""excluded"": false}]"
+4,yront,false,"[{""position"": 4, ""letter"": ""y"", ""excluded"": false}]"
 5,wbvku,true,[]
 10,rmvteijblk,false,[]
 8,xzmughco,false,[]
-6,qnkdafs,false,"[{""pos"": 6, ""car"": ""a"", ""inverted"": false}]"
+6,qnkdafs,false,"[{""position"": 6, ""letter"": ""a"", ""excluded"": false}]"
 6,sufjkzteb,false,[]
-6,lhjbunz,false,"[{""pos"": 5, ""car"": ""j"", ""inverted"": false}]"
-9,pcjwsuvkdlin,false,"[{""pos"": 8, ""car"": ""c"", ""inverted"": true}]"
-9,bthlsjuqe,false,"[{""pos"": 1, ""car"": ""j"", ""inverted"": false}]"
-7,ldcjpfvu,false,"[{""pos"": 2, ""car"": ""j"", ""inverted"": false}]"
-7,zrothuakgj,false,"[{""pos"": 3, ""car"": ""g"", ""inverted"": false}]"
-7,dojrtixb,false,"[{""pos"": 4, ""car"": ""x"", ""inverted"": false}]"
-6,xritwleaf,true,"[{""pos"": 5, ""car"": ""f"", ""inverted"": true}]"
-7,tqdioyk,false,"[{""pos"": 4, ""car"": ""y"", ""inverted"": false}]"
-4,xukt,true,"[{""pos"": 1, ""car"": ""t"", ""inverted"": false}]"
-9,jhpvrkuyfxg,true,"[{""pos"": 4, ""car"": ""u"", ""inverted"": false}]"
-9,sdzfwcerl,true,"[{""pos"": 2, ""car"": ""f"", ""inverted"": false}, {""pos"": 7, ""car"": ""c"", ""inverted"": false}]"
-7,xbpngyho,false,"[{""pos"": 2, ""car"": ""y"", ""inverted"": true}]"
+6,lhjbunz,false,"[{""position"": 5, ""letter"": ""j"", ""excluded"": false}]"
+9,pcjwsuvkdlin,false,"[{""position"": 8, ""letter"": ""c"", ""excluded"": true}]"
+9,bthlsjuqe,false,"[{""position"": 1, ""letter"": ""j"", ""excluded"": false}]"
+7,ldcjpfvu,false,"[{""position"": 2, ""letter"": ""j"", ""excluded"": false}]"
+7,zrothuakgj,false,"[{""position"": 3, ""letter"": ""g"", ""excluded"": false}]"
+7,dojrtixb,false,"[{""position"": 4, ""letter"": ""x"", ""excluded"": false}]"
+6,xritwleaf,true,"[{""position"": 5, ""letter"": ""f"", ""excluded"": true}]"
+7,tqdioyk,false,"[{""position"": 4, ""letter"": ""y"", ""excluded"": false}]"
+4,xukt,true,"[{""position"": 1, ""letter"": ""t"", ""excluded"": false}]"
+9,jhpvrkuyfxg,true,"[{""position"": 4, ""letter"": ""u"", ""excluded"": false}]"
+9,sdzfwcerl,true,"[{""position"": 2, ""letter"": ""f"", ""excluded"": false}, {""position"": 7, ""letter"": ""c"", ""excluded"": false}]"
+7,xbpngyho,false,"[{""position"": 2, ""letter"": ""y"", ""excluded"": true}]"
 5,eusgl,false,[]
 10,ybxqvoeiradw,false,[]
 10,ztylpbahxfwg,false,[]
-6,lsxudt,true,"[{""pos"": 5, ""car"": ""l"", ""inverted"": false}]"
-6,rvtlqwu,false,"[{""pos"": 3, ""car"": ""q"", ""inverted"": true}, {""pos"": 2, ""car"": ""r"", ""inverted"": false}]"
-5,vwtuz,false,"[{""pos"": 1, ""car"": ""w"", ""inverted"": false}]"
+6,lsxudt,true,"[{""position"": 5, ""letter"": ""l"", ""excluded"": false}]"
+6,rvtlqwu,false,"[{""position"": 3, ""letter"": ""q"", ""excluded"": true}, {""position"": 2, ""letter"": ""r"", ""excluded"": false}]"
+5,vwtuz,false,"[{""position"": 1, ""letter"": ""w"", ""excluded"": false}]"
 5,cnmliekw,false,[]
 7,vibkhaj,false,[]
 7,qewhcvzx,false,[]
 7,vsybewkrzx,false,[]
 4,esqc,false,[]
-8,uopkatdfmbn,false,"[{""pos"": 8, ""car"": ""k"", ""inverted"": false}]"
+8,uopkatdfmbn,false,"[{""position"": 8, ""letter"": ""k"", ""excluded"": false}]"
 4,neac,false,[]
-6,xcfivkgap,false,"[{""pos"": 2, ""car"": ""v"", ""inverted"": false}, {""pos"": 3, ""car"": ""k"", ""inverted"": false}]"
+6,xcfivkgap,false,"[{""position"": 2, ""letter"": ""v"", ""excluded"": false}, {""position"": 3, ""letter"": ""k"", ""excluded"": false}]"
 7,pixbktzwf,false,[]
-4,nijbr,true,"[{""pos"": 2, ""car"": ""b"", ""inverted"": false}, {""pos"": 1, ""car"": ""j"", ""inverted"": false}]"
-8,lwgxeyfird,false,"[{""pos"": 6, ""car"": ""i"", ""inverted"": false}]"
+4,nijbr,true,"[{""position"": 2, ""letter"": ""b"", ""excluded"": false}, {""position"": 1, ""letter"": ""j"", ""excluded"": false}]"
+8,lwgxeyfird,false,"[{""position"": 6, ""letter"": ""i"", ""excluded"": false}]"
 7,cahpfsuknz,false,[]
-6,eoxkyn,false,"[{""pos"": 4, ""car"": ""y"", ""inverted"": false}, {""pos"": 1, ""car"": ""e"", ""inverted"": true}]"
-8,lseqtcdv,true,"[{""pos"": 4, ""car"": ""e"", ""inverted"": false}]"
+6,eoxkyn,false,"[{""position"": 4, ""letter"": ""y"", ""excluded"": false}, {""position"": 1, ""letter"": ""e"", ""excluded"": true}]"
+8,lseqtcdv,true,"[{""position"": 4, ""letter"": ""e"", ""excluded"": false}]"
 9,omshyceixg,true,[]
-9,uqlmjzrciwpf,true,"[{""pos"": 5, ""car"": ""r"", ""inverted"": true}]"
-10,uikybwreandmx,false,"[{""pos"": 6, ""car"": ""x"", ""inverted"": false}]"
+9,uqlmjzrciwpf,true,"[{""position"": 5, ""letter"": ""r"", ""excluded"": true}]"
+10,uikybwreandmx,false,"[{""position"": 6, ""letter"": ""x"", ""excluded"": false}]"
 10,hvnobgdzfec,true,[]
 9,cldyowzatfx,false,[]
 6,ndehkycs,false,[]
-8,rjixyzgdv,false,"[{""pos"": 1, ""car"": ""x"", ""inverted"": false}]"
-10,lwczjgypno,false,"[{""pos"": 1, ""car"": ""n"", ""inverted"": false}]"
+8,rjixyzgdv,false,"[{""position"": 1, ""letter"": ""x"", ""excluded"": false}]"
+10,lwczjgypno,false,"[{""position"": 1, ""letter"": ""n"", ""excluded"": false}]"
 7,fpitrcqalz,false,[]
-9,eyhubzmtpv,false,"[{""pos"": 8, ""car"": ""b"", ""inverted"": false}, {""pos"": 9, ""car"": ""b"", ""inverted"": false}]"
+9,eyhubzmtpv,false,"[{""position"": 8, ""letter"": ""b"", ""excluded"": false}, {""position"": 9, ""letter"": ""b"", ""excluded"": false}]"
 5,nwlersv,false,[]
-4,oszq,true,"[{""pos"": 1, ""car"": ""z"", ""inverted"": false}]"
-6,hiwdsvx,true,"[{""pos"": 3, ""car"": ""h"", ""inverted"": false}]"
-10,mxjznfhbrigs,false,"[{""pos"": 4, ""car"": ""h"", ""inverted"": true}]"
+4,oszq,true,"[{""position"": 1, ""letter"": ""z"", ""excluded"": false}]"
+6,hiwdsvx,true,"[{""position"": 3, ""letter"": ""h"", ""excluded"": false}]"
+10,mxjznfhbrigs,false,"[{""position"": 4, ""letter"": ""h"", ""excluded"": true}]"
 4,nhdkem,false,[]
 9,ncmkjfoslhp,false,[]
 6,owhknrgb,false,[]
-10,pexnwgfosz,false,"[{""pos"": 4, ""car"": ""o"", ""inverted"": false}, {""pos"": 2, ""car"": ""n"", ""inverted"": false}]"
-7,aceqsyjop,false,"[{""pos"": 2, ""car"": ""o"", ""inverted"": false}]"
+10,pexnwgfosz,false,"[{""position"": 4, ""letter"": ""o"", ""excluded"": false}, {""position"": 2, ""letter"": ""n"", ""excluded"": false}]"
+7,aceqsyjop,false,"[{""position"": 2, ""letter"": ""o"", ""excluded"": false}]"
 10,vdxrlqhpcai,false,[]
 10,snxlhefztcyj,false,[]
 8,pqtdxgjwey,true,[]
-6,jahdnvpwc,false,"[{""pos"": 6, ""car"": ""w"", ""inverted"": false}]"
-10,ebpnyrhwzqsac,false,"[{""pos"": 2, ""car"": ""a"", ""inverted"": false}]"
-4,sfvteqz,false,"[{""pos"": 1, ""car"": ""t"", ""inverted"": true}]"
+6,jahdnvpwc,false,"[{""position"": 6, ""letter"": ""w"", ""excluded"": false}]"
+10,ebpnyrhwzqsac,false,"[{""position"": 2, ""letter"": ""a"", ""excluded"": false}]"
+4,sfvteqz,false,"[{""position"": 1, ""letter"": ""t"", ""excluded"": true}]"
 8,ejlywkngb,true,[]
-10,fotheabplxiy,false,"[{""pos"": 1, ""car"": ""l"", ""inverted"": false}]"
+10,fotheabplxiy,false,"[{""position"": 1, ""letter"": ""l"", ""excluded"": false}]"
 6,svljzqdi,false,[]
-7,rvelqjp,false,"[{""pos"": 5, ""car"": ""r"", ""inverted"": false}]"
-10,qfmzhkgbxvodi,true,"[{""pos"": 7, ""car"": ""z"", ""inverted"": false}]"
-10,szfjivpxadob,false,"[{""pos"": 7, ""car"": ""v"", ""inverted"": false}, {""pos"": 2, ""car"": ""x"", ""inverted"": false}]"
+7,rvelqjp,false,"[{""position"": 5, ""letter"": ""r"", ""excluded"": false}]"
+10,qfmzhkgbxvodi,true,"[{""position"": 7, ""letter"": ""z"", ""excluded"": false}]"
+10,szfjivpxadob,false,"[{""position"": 7, ""letter"": ""v"", ""excluded"": false}, {""position"": 2, ""letter"": ""x"", ""excluded"": false}]"
 4,nepshmb,true,[]
 7,fxwbzlius,false,[]
-10,kobzlevydq,false,"[{""pos"": 5, ""car"": ""d"", ""inverted"": false}, {""pos"": 6, ""car"": ""q"", ""inverted"": false}]"
-5,mobaule,true,"[{""pos"": 3, ""car"": ""l"", ""inverted"": true}, {""pos"": 1, ""car"": ""u"", ""inverted"": false}]"
+10,kobzlevydq,false,"[{""position"": 5, ""letter"": ""d"", ""excluded"": false}, {""position"": 6, ""letter"": ""q"", ""excluded"": false}]"
+5,mobaule,true,"[{""position"": 3, ""letter"": ""l"", ""excluded"": true}, {""position"": 1, ""letter"": ""u"", ""excluded"": false}]"
 4,juzh,true,[]
 5,xsjrazl,false,[]
-7,eonkcxvij,false,"[{""pos"": 6, ""car"": ""o"", ""inverted"": false}]"
-7,lahtqofcx,false,"[{""pos"": 1, ""car"": ""q"", ""inverted"": true}]"
+7,eonkcxvij,false,"[{""position"": 6, ""letter"": ""o"", ""excluded"": false}]"
+7,lahtqofcx,false,"[{""position"": 1, ""letter"": ""q"", ""excluded"": true}]"
 6,usnlowmbq,false,[]
-7,zporhqv,false,"[{""pos"": 6, ""car"": ""o"", ""inverted"": true}]"
-7,iouyzjv,false,"[{""pos"": 7, ""car"": ""o"", ""inverted"": false}, {""pos"": 2, ""car"": ""j"", ""inverted"": false}]"
-4,fedrv,false,"[{""pos"": 3, ""car"": ""v"", ""inverted"": false}]"
-9,gcefrhiuyw,false,"[{""pos"": 8, ""car"": ""e"", ""inverted"": false}]"
+7,zporhqv,false,"[{""position"": 6, ""letter"": ""o"", ""excluded"": true}]"
+7,iouyzjv,false,"[{""position"": 7, ""letter"": ""o"", ""excluded"": false}, {""position"": 2, ""letter"": ""j"", ""excluded"": false}]"
+4,fedrv,false,"[{""position"": 3, ""letter"": ""v"", ""excluded"": false}]"
+9,gcefrhiuyw,false,"[{""position"": 8, ""letter"": ""e"", ""excluded"": false}]"
 6,ltbngqxo,false,[]
-8,visgymxobna,false,"[{""pos"": 4, ""car"": ""n"", ""inverted"": false}, {""pos"": 3, ""car"": ""a"", ""inverted"": false}]"
+8,visgymxobna,false,"[{""position"": 4, ""letter"": ""n"", ""excluded"": false}, {""position"": 3, ""letter"": ""a"", ""excluded"": false}]"
 4,qfwe,true,[]
 8,qtdejvmalyh,false,[]
 6,djegut,false,[]
-5,xavoqykm,false,"[{""pos"": 1, ""car"": ""m"", ""inverted"": false}]"
+5,xavoqykm,false,"[{""position"": 1, ""letter"": ""m"", ""excluded"": false}]"
 10,akqhngvrtzflw,false,[]
 4,vigujh,true,[]
 9,vxuczponbl,false,[]
-9,ozbcagxqkfh,false,"[{""pos"": 5, ""car"": ""a"", ""inverted"": true}, {""pos"": 4, ""car"": ""o"", ""inverted"": false}]"
-9,kimhfjdsnb,false,"[{""pos"": 3, ""car"": ""s"", ""inverted"": false}]"
-7,gwqenrmc,false,"[{""pos"": 4, ""car"": ""g"", ""inverted"": false}]"
-6,ejswvgcmt,false,"[{""pos"": 6, ""car"": ""g"", ""inverted"": false}]"
-8,hjydubonaic,false,"[{""pos"": 3, ""car"": ""i"", ""inverted"": false}]"
+9,ozbcagxqkfh,false,"[{""position"": 5, ""letter"": ""a"", ""excluded"": true}, {""position"": 4, ""letter"": ""o"", ""excluded"": false}]"
+9,kimhfjdsnb,false,"[{""position"": 3, ""letter"": ""s"", ""excluded"": false}]"
+7,gwqenrmc,false,"[{""position"": 4, ""letter"": ""g"", ""excluded"": false}]"
+6,ejswvgcmt,false,"[{""position"": 6, ""letter"": ""g"", ""excluded"": false}]"
+8,hjydubonaic,false,"[{""position"": 3, ""letter"": ""i"", ""excluded"": false}]"
 4,nohkalm,true,[]
-8,vftxpodnlea,false,"[{""pos"": 2, ""car"": ""e"", ""inverted"": false}, {""pos"": 1, ""car"": ""n"", ""inverted"": false}]"
+8,vftxpodnlea,false,"[{""position"": 2, ""letter"": ""e"", ""excluded"": false}, {""position"": 1, ""letter"": ""n"", ""excluded"": false}]"
 9,refycztns,true,[]
-9,nsukpadmj,false,"[{""pos"": 5, ""car"": ""m"", ""inverted"": false}]"
-9,nbaghscdfvi,false,"[{""pos"": 9, ""car"": ""s"", ""inverted"": false}]"
+9,nsukpadmj,false,"[{""position"": 5, ""letter"": ""m"", ""excluded"": false}]"
+9,nbaghscdfvi,false,"[{""position"": 9, ""letter"": ""s"", ""excluded"": false}]"
 7,tjnvzwdqal,false,[]
 4,pmengsf,false,[]
 5,jiwdz,false,[]
-7,ahzxfbdcs,false,"[{""pos"": 5, ""car"": ""f"", ""inverted"": false}]"
-4,dypog,false,"[{""pos"": 1, ""car"": ""p"", ""inverted"": false}]"
-5,etmavi,false,"[{""pos"": 3, ""car"": ""a"", ""inverted"": false}]"
-8,rnzhbifslvc,false,"[{""pos"": 8, ""car"": ""b"", ""inverted"": true}]"
-5,mblnxi,false,"[{""pos"": 4, ""car"": ""b"", ""inverted"": false}]"
-8,mfokhpzuyq,false,"[{""pos"": 5, ""car"": ""h"", ""inverted"": false}]"
-4,owxkz,false,"[{""pos"": 2, ""car"": ""z"", ""inverted"": false}]"
+7,ahzxfbdcs,false,"[{""position"": 5, ""letter"": ""f"", ""excluded"": false}]"
+4,dypog,false,"[{""position"": 1, ""letter"": ""p"", ""excluded"": false}]"
+5,etmavi,false,"[{""position"": 3, ""letter"": ""a"", ""excluded"": false}]"
+8,rnzhbifslvc,false,"[{""position"": 8, ""letter"": ""b"", ""excluded"": true}]"
+5,mblnxi,false,"[{""position"": 4, ""letter"": ""b"", ""excluded"": false}]"
+8,mfokhpzuyq,false,"[{""position"": 5, ""letter"": ""h"", ""excluded"": false}]"
+4,owxkz,false,"[{""position"": 2, ""letter"": ""z"", ""excluded"": false}]"
 4,pbdkhue,true,[]
 7,qskiylfw,false,[]
 5,ylicsabw,true,[]
 8,livzyexg,false,[]
-6,nzovqsah,false,"[{""pos"": 3, ""car"": ""a"", ""inverted"": false}]"
+6,nzovqsah,false,"[{""position"": 3, ""letter"": ""a"", ""excluded"": false}]"
 7,pqatirmb,false,[]
 7,yjlfvok,false,[]
 6,msgtlehy,false,[]
-9,ryfswagiupnb,false,"[{""pos"": 8, ""car"": ""a"", ""inverted"": true}]"
+9,ryfswagiupnb,false,"[{""position"": 8, ""letter"": ""a"", ""excluded"": true}]"
 10,vlekpmdafyrxo,false,[]
-8,cvkehspzy,false,"[{""pos"": 1, ""car"": ""y"", ""inverted"": false}]"
-5,wlhxai,true,"[{""pos"": 3, ""car"": ""l"", ""inverted"": false}]"
+8,cvkehspzy,false,"[{""position"": 1, ""letter"": ""y"", ""excluded"": false}]"
+5,wlhxai,true,"[{""position"": 3, ""letter"": ""l"", ""excluded"": false}]"
 8,icvgetyz,true,[]
 6,wceops,false,[]
-9,tzgojkyaepnq,false,"[{""pos"": 6, ""car"": ""z"", ""inverted"": true}]"
-9,ogszixnqdbcy,false,"[{""pos"": 8, ""car"": ""b"", ""inverted"": false}]"
-4,lfdupgi,false,"[{""pos"": 3, ""car"": ""i"", ""inverted"": false}, {""pos"": 2, ""car"": ""p"", ""inverted"": false}]"
-8,eygluzthxn,false,"[{""pos"": 6, ""car"": ""g"", ""inverted"": false}]"
+9,tzgojkyaepnq,false,"[{""position"": 6, ""letter"": ""z"", ""excluded"": true}]"
+9,ogszixnqdbcy,false,"[{""position"": 8, ""letter"": ""b"", ""excluded"": false}]"
+4,lfdupgi,false,"[{""position"": 3, ""letter"": ""i"", ""excluded"": false}, {""position"": 2, ""letter"": ""p"", ""excluded"": false}]"
+8,eygluzthxn,false,"[{""position"": 6, ""letter"": ""g"", ""excluded"": false}]"
 6,metriz,false,[]
 9,jfhynwsmlep,false,[]
-8,jeogirlac,true,"[{""pos"": 8, ""car"": ""c"", ""inverted"": false}, {""pos"": 4, ""car"": ""r"", ""inverted"": false}]"
-9,uohlxdnpjy,true,"[{""pos"": 5, ""car"": ""u"", ""inverted"": false}]"
-7,aduyhfjesm,false,"[{""pos"": 6, ""car"": ""y"", ""inverted"": false}]"
+8,jeogirlac,true,"[{""position"": 8, ""letter"": ""c"", ""excluded"": false}, {""position"": 4, ""letter"": ""r"", ""excluded"": false}]"
+9,uohlxdnpjy,true,"[{""position"": 5, ""letter"": ""u"", ""excluded"": false}]"
+7,aduyhfjesm,false,"[{""position"": 6, ""letter"": ""y"", ""excluded"": false}]"
 8,hkjgvtloa,true,[]
-5,mpornkd,false,"[{""pos"": 2, ""car"": ""k"", ""inverted"": false}]"
+5,mpornkd,false,"[{""position"": 2, ""letter"": ""k"", ""excluded"": false}]"

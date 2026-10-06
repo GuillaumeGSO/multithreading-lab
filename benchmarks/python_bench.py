@@ -51,7 +51,7 @@ LANGUAGE = os.environ.get("BENCH_LANGUAGE", "python")
 CONCURRENCY = int(os.environ.get("CONCURRENCY", "16"))
 THROUGHPUT_OPS = int(os.environ.get("THROUGHPUT_OPS", "200"))
 TP_LANG = "fr"
-TP_NB_CAR = 11
+TP_WORD_LENGTH = 11
 TP_LETTERS = list("abcdefghijklmnopqrstuvwxyz")
 TP_HINTS = [Hint(1, "x", False)]
 TP_STRICT = False
@@ -62,7 +62,7 @@ def log(*args):
 
 
 def to_hints(raw):
-    return [Hint(h["pos"], h.get("car"), h.get("inverted", False)) for h in raw]
+    return [Hint(h["position"], h.get("letter"), h.get("excluded", False)) for h in raw]
 
 
 def time_mode(fn):
@@ -82,22 +82,22 @@ def time_mode(fn):
 def build_modes(case):
     """Return {mode_name: callable} for a case."""
     lang = case.get("lang", "fr")
-    hints = to_hints(case.get("lst_hint", []))
+    hints = to_hints(case.get("hints", []))
     if case["kind"] == "file":
-        nb_car = case["nb_car"]
-        lst_car = case.get("lst_car", [])
+        word_length = case["wordLength"]
+        letters = case.get("letters", [])
         strict = case.get("strict", False)
         return {
             "baseline": lambda: list(search_in_file(
-                lang=lang, nb_car=nb_car, lst_car=lst_car, lst_hint=hints, strict=strict)),
+                lang=lang, word_length=word_length, letters=letters, hints=hints, strict=strict)),
             "split": lambda: search_in_file_parallel(
-                lang=lang, nb_car=nb_car, lst_car=lst_car, lst_hint=hints, strict=strict),
+                lang=lang, word_length=word_length, letters=letters, hints=hints, strict=strict),
         }
-    cars = case.get("cars", "")
+    letters = case.get("letters", "")
     return {
-        "baseline": lambda: list(search_in_many_files(lang=lang, cars=cars, lst_hint=hints)),
-        "fanout": lambda: search_in_many_parallel(lang=lang, cars=cars, lst_hint=hints, threads=1),
-        "nested": lambda: search_in_many_parallel(lang=lang, cars=cars, lst_hint=hints),
+        "baseline": lambda: list(search_in_many_files(lang=lang, letters=letters, hints=hints)),
+        "fanout": lambda: search_in_many_parallel(lang=lang, letters=letters, hints=hints, threads=1),
+        "nested": lambda: search_in_many_parallel(lang=lang, letters=letters, hints=hints),
     }
 
 
@@ -106,8 +106,8 @@ def run_throughput():
     aggregate ops/sec and median per-op latency under load."""
     def op(_):
         start = time.perf_counter()
-        r = list(search_in_file(lang=TP_LANG, nb_car=TP_NB_CAR, lst_car=TP_LETTERS,
-                                lst_hint=TP_HINTS, strict=TP_STRICT))
+        r = list(search_in_file(lang=TP_LANG, word_length=TP_WORD_LENGTH, letters=TP_LETTERS,
+                                hints=TP_HINTS, strict=TP_STRICT))
         return (time.perf_counter() - start) * 1000.0, len(r)
 
     op(None)  # warmup (populate word cache)
@@ -121,7 +121,7 @@ def run_throughput():
     elapsed_ms = (time.perf_counter() - start) * 1000.0
     latencies.sort()
     return {
-        "workload": f"file nb_car={TP_NB_CAR} pool=26 hint=1:x (baseline scan per op)",
+        "workload": f"file wordLength={TP_WORD_LENGTH} pool=26 hint=1:x (baseline scan per op)",
         "concurrency": CONCURRENCY,
         "ops": THROUGHPUT_OPS,
         "elapsed_ms": elapsed_ms,

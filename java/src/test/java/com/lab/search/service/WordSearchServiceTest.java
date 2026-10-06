@@ -1,7 +1,5 @@
 package com.lab.search.service;
 
-import com.lab.search.model.Hint;
-import com.lab.search.model.SearchResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -27,11 +25,11 @@ class WordSearchServiceTest {
     @Test void listAllNull() { assertTrue(WordSearchService.isEffectivelyEmpty(Arrays.asList(null, null))); }
     @Test void listHasValues() { assertFalse(WordSearchService.isEffectivelyEmpty(List.of("a", "b"))); }
 
-    // --- hasNoCarHints ---
+    // --- hasNoLetterHints ---
 
-    @Test void hintListEmpty() { assertTrue(WordSearchService.hasNoCarHints(List.of())); }
-    @Test void hintListNoCar() { assertTrue(WordSearchService.hasNoCarHints(List.of(new Hint(1, null, false), new Hint(2, null, false)))); }
-    @Test void hintListHasCar() { assertFalse(WordSearchService.hasNoCarHints(List.of(new Hint(1, "a", false)))); }
+    @Test void hintListEmpty() { assertTrue(WordSearchService.hasNoLetterHints(List.of())); }
+    @Test void hintListNoLetter() { assertTrue(WordSearchService.hasNoLetterHints(List.of(new Hint(1, null, false), new Hint(2, null, false)))); }
+    @Test void hintListHasLetter() { assertFalse(WordSearchService.hasNoLetterHints(List.of(new Hint(1, "a", false)))); }
 
     // --- matchesContent ---
 
@@ -55,23 +53,23 @@ class WordSearchServiceTest {
     @Test void hintNoHints() { assertTrue(WordSearchService.matchesHints("bonjour", List.of())); }
     @Test void hintMatch() { assertTrue(WordSearchService.matchesHints("salut", List.of(new Hint(1, "s", false)))); }
     @Test void hintNoMatch() { assertFalse(WordSearchService.matchesHints("salut", List.of(new Hint(1, "a", false)))); }
-    @Test void hintInvertedMatchExcludes() {
-        // "salut" has 's' at pos 1 → inverted hint rejects it
+    @Test void hintExcludedMatchRejects() {
+        // "salut" has 's' at pos 1 → excluded hint rejects it
         assertFalse(WordSearchService.matchesHints("salut", List.of(new Hint(1, "s", true))));
     }
-    @Test void hintInvertedNoMatchIncludes() {
-        // "salut" does not have 'a' at pos 1 → inverted hint passes
+    @Test void hintExcludedNoMatchAccepts() {
+        // "salut" does not have 'a' at pos 1 → excluded hint passes
         assertTrue(WordSearchService.matchesHints("salut", List.of(new Hint(1, "a", true))));
     }
     @Test void hintPositionOutOfRangeNormalExcludes() {
         // word length 3, hint at pos 4 → can never be satisfied
         assertFalse(WordSearchService.matchesHints("mot", List.of(new Hint(4, "a", false))));
     }
-    @Test void hintPositionOutOfRangeInvertedIncludes() {
-        // word length 3, inverted hint at pos 4 → trivially satisfied
+    @Test void hintPositionOutOfRangeExcludedIncludes() {
+        // word length 3, excluded hint at pos 4 → trivially satisfied
         assertTrue(WordSearchService.matchesHints("mot", List.of(new Hint(4, "a", true))));
     }
-    @Test void hintCarNullIgnored() {
+    @Test void hintLetterNullIgnored() {
         assertTrue(WordSearchService.matchesHints("bonjour", List.of(new Hint(1, null, false))));
     }
     @Test void hintMultipleAllMatch() {
@@ -83,55 +81,55 @@ class WordSearchServiceTest {
 
     // --- searchInFile (integration — uses real assets) ---
 
-    @Test void searchFileRaisesEmptyCarsAndHints() {
+    @Test void searchFileRaisesEmptyLettersAndHints() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.searchInFile("fr", 5, List.of(), List.of(), false));
     }
     @Test void searchFileMissingFileReturnsEmpty() {
-        // nb_car=99 → no such file → UncheckedIOException caught inside → empty
+        // wordLength=99 → no such file → UncheckedIOException caught inside → empty
         assertThrows(Exception.class,
                 () -> service.searchInFile("fr", 99, List.of("a", "b", "c"), List.of(), false));
     }
     @Test void searchFileByContent() {
-        SearchResponse r = service.searchInFile("fr", 5, List.of("e","l","i","s","a"), List.of(), true);
-        assertEquals(8, r.count());
-        assertTrue(r.words().contains("ailes"));
+        List<String> r = service.searchInFile("fr", 5, List.of("e","l","i","s","a"), List.of(), true);
+        assertEquals(8, r.size());
+        assertTrue(r.contains("ailes"));
     }
     @Test void searchFileByHint() {
-        SearchResponse r = service.searchInFile("fr", 5, List.of(),
+        List<String> r = service.searchInFile("fr", 5, List.of(),
                 List.of(new Hint(1, "s", false), new Hint(3, "a", false), new Hint(5, "e", false)), false);
-        assertEquals(8, r.count());
-        assertTrue(r.words().contains("slave"));
+        assertEquals(8, r.size());
+        assertTrue(r.contains("slave"));
     }
     @Test void searchFileContentAndHint() {
-        SearchResponse r = service.searchInFile("fr", 5, List.of("e","l","i","s","a"),
+        List<String> r = service.searchInFile("fr", 5, List.of("e","l","i","s","a"),
                 List.of(new Hint(1, "l", false), new Hint(5, "s", false)), false);
-        assertEquals(11, r.count());
+        assertEquals(11, r.size());
     }
 
     // --- searchInManyFiles (integration — uses real assets) ---
 
     @Test void searchManyAllLengths() {
-        SearchResponse r = service.searchInManyFiles("fr", "guillaume", List.of());
-        assertEquals(494, r.count());
+        List<String> r = service.searchInManyFiles("fr", "guillaume", List.of());
+        assertEquals(494, r.size());
     }
     @Test void searchManySkipsShortWordsWithNormalHint() {
         // Hint at pos 4 → words shorter than 4 letters must be excluded
-        SearchResponse r = service.searchInManyFiles("fr", "guillaume",
+        List<String> r = service.searchInManyFiles("fr", "guillaume",
                 List.of(new Hint(4, "a", false)));
-        assertTrue(r.words().stream().allMatch(w -> w.length() >= 4));
+        assertTrue(r.stream().allMatch(w -> w.length() >= 4));
     }
-    @Test void searchManyInvertedHintIncludesShortWords() {
-        // Inverted hint at pos 4 → words shorter than 4 letters are still included
-        SearchResponse r = service.searchInManyFiles("fr", "guillaume",
+    @Test void searchManyExcludedHintIncludesShortWords() {
+        // Excluded hint at pos 4 → words shorter than 4 letters are still included
+        List<String> r = service.searchInManyFiles("fr", "guillaume",
                 List.of(new Hint(4, "z", true)));
-        assertTrue(r.words().stream().anyMatch(w -> w.length() < 4));
+        assertTrue(r.stream().anyMatch(w -> w.length() < 4));
     }
 
     // --- parallel variants must match the baseline byte-for-byte (same order) ---
 
     @Test void fileSplitMatchesBaselineForAllDegrees() {
-        record Case(int len, List<String> cars, List<Hint> hints, boolean strict) {}
+        record Case(int len, List<String> letters, List<Hint> hints, boolean strict) {}
         List<Case> cases = List.of(
                 new Case(5, List.of("e","l","i","s","a"), List.of(), true),
                 new Case(5, List.of("e","l","i","s","a"), List.of(), false),
@@ -139,9 +137,9 @@ class WordSearchServiceTest {
                 new Case(5, List.of("e","l","i","s","a"), List.of(new Hint(1,"l",false), new Hint(5,"s",false)), false)
         );
         for (Case c : cases) {
-            List<String> want = service.fileBaseline("fr", c.len(), c.cars(), c.hints(), c.strict());
+            List<String> want = service.fileBaseline("fr", c.len(), c.letters(), c.hints(), c.strict());
             for (int threads : new int[]{1, 2, 3, 5}) {
-                assertEquals(want, service.fileSplit("fr", c.len(), c.cars(), c.hints(), c.strict(), threads),
+                assertEquals(want, service.fileSplit("fr", c.len(), c.letters(), c.hints(), c.strict(), threads),
                         "fileSplit(threads=" + threads + ") must equal fileBaseline");
             }
         }
@@ -172,15 +170,15 @@ class WordSearchServiceTest {
 
     @Test void indexedMatchesScanForContentAndHint() {
         List<Hint> hints = List.of(new Hint(1, "l", false), new Hint(5, "s", false));
-        List<String> cars = List.of("e","l","i","s","a");
-        assertEquals(service.fileBaseline("fr", 5, cars, hints, false),
-                     service.fileIndexed ("fr", 5, cars, hints, false));
+        List<String> letters = List.of("e","l","i","s","a");
+        assertEquals(service.fileBaseline("fr", 5, letters, hints, false),
+                     service.fileIndexed ("fr", 5, letters, hints, false));
     }
 
     @Test void indexedMatchesScanForLettersOnly() {
-        List<String> cars = List.of("e","l","i","s","a");
-        assertEquals(service.fileBaseline("fr", 5, cars, List.of(), true),
-                     service.fileIndexed ("fr", 5, cars, List.of(), true));
+        List<String> letters = List.of("e","l","i","s","a");
+        assertEquals(service.fileBaseline("fr", 5, letters, List.of(), true),
+                     service.fileIndexed ("fr", 5, letters, List.of(), true));
     }
 
     // --- fileDispatch routing ---
@@ -193,9 +191,9 @@ class WordSearchServiceTest {
 
     @Test void fileDispatchUsesScanWhenNoPin() {
         List<Hint> hints = List.of(new Hint(1, "x", true));
-        List<String> cars = List.of("e","l","i","s","a");
-        assertEquals(service.fileBaseline("fr", 5, cars, hints, false),
-                     service.fileDispatch("fr", 5, cars, hints, false));
+        List<String> letters = List.of("e","l","i","s","a");
+        assertEquals(service.fileBaseline("fr", 5, letters, hints, false),
+                     service.fileDispatch("fr", 5, letters, hints, false));
     }
 
     // --- IndexedStrategy edge cases ---

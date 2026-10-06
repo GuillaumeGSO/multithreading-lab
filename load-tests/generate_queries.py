@@ -21,8 +21,8 @@ def random_letters(n):
 
 rows = []
 for _ in range(500):
-    nb_car = random.randint(4, 10)
-    n_available = nb_car + random.randint(0, 3)
+    word_length = random.randint(4, 10)
+    n_available = word_length + random.randint(0, 3)
     letters = random_letters(n_available)
     strict = random.random() < 0.3
 
@@ -30,25 +30,25 @@ for _ in range(500):
     hints = []
     positions_used = set()
     for _ in range(n_hints):
-        pos = random.randint(1, nb_car)
+        pos = random.randint(1, word_length)
         if pos in positions_used:
             continue
         positions_used.add(pos)
         hints.append({
-            "pos": pos,
-            "car": random.choice(letters),
-            "inverted": random.random() < 0.2,
+            "position": pos,
+            "letter": random.choice(letters),
+            "excluded": random.random() < 0.2,
         })
 
     rows.append({
-        'nb_car': nb_car,
-        'cars': ''.join(letters),
+        'wordLength': word_length,
+        'letters': ''.join(letters),
         'strict': str(strict).lower(),
-        'lst_hint': json.dumps(hints),
+        'hints': json.dumps(hints),
     })
 
 with open('queries.csv', 'w', newline='') as f:
-    writer = csv.DictWriter(f, fieldnames=['nb_car', 'cars', 'strict', 'lst_hint'])
+    writer = csv.DictWriter(f, fieldnames=['wordLength', 'letters', 'strict', 'hints'])
     writer.writeheader()
     writer.writerows(rows)
 

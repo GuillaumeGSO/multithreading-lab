@@ -13,12 +13,12 @@ Virtual threads are used at two independent levels:
 
 ### Algorithm dispatch (baseline mode)
 
-`SEARCH_MODE=baseline` also selects the search algorithm per request, mirroring the Python dispatcher:
+`SEARCH_MODE=baseline` also selects the search algorithm per request:
 
-- **`IndexedStrategy`** — builds a positional inverted index (`pos → char → Set<word>`) per `(lang, nb_car)` on first use. For queries with at least one pinned hint (non-inverted, non-null `car`), it seeds a tight candidate set by intersecting index buckets — O(result) instead of O(vocabulary). Wins 3–38× over scan when pinned hints are present.
+- **`IndexedStrategy`** — builds a positional inverted index (`position → letter → Set<word>`) per `(lang, wordLength)` on first use. For queries with at least one pinned hint (non-excluded, non-null `letter`), it seeds a tight candidate set by intersecting index buckets — O(result) instead of O(vocabulary). Wins 3–38× over scan when pinned hints are present.
 - **`ScanStrategy`** — iterates the full word list on every query. Wins 1.4–2.4× when no pinned hints are present (no index overhead, zero caching).
 
-The dispatch rule: `IndexedStrategy` is chosen when any `Hint` has `car != null && !inverted`; `ScanStrategy` otherwise. `/search/many` always uses scan (building an index per length would be wasteful).
+The dispatch rule: `IndexedStrategy` is chosen when any `Hint` has `letter != null && !excluded`; `ScanStrategy` otherwise. `/search/many` always uses scan (building an index per length would be wasteful).
 
 ### Parallel modes & in-process benchmark
 
@@ -47,20 +47,52 @@ java/
 │   ├── main/java/com/lab/search/
 │   │   ├── SearchApplication.java
 │   │   ├── BenchmarkRunner.java
-│   │   ├── controller/SearchController.java
-│   │   ├── service/
-│   │   │   ├── WordSearchService.java
-│   │   │   └── strategy/
-│   │   │       ├── SearchStrategy.java   # interface
-│   │   │       ├── ScanStrategy.java     # flat scan (stateless)
-│   │   │       └── IndexedStrategy.java  # positional index (self-cached)
-│   │   └── model/               # Hint, SearchFileRequest, SearchManyRequest, SearchResponse
+│   │   ├── controller/
+│   │   │   ├── SearchController.java     # implements the generated HealthApi + SearchApi
+│   │   │   └── OpenApiController.java    # serves openapi.yaml/.json and the /docs page
+│   │   └── service/
+│   │       ├── Hint.java                 # the algorithm's hint record
+│   │       ├── WordSearchService.java
+│   │       └── strategy/
+│   │           ├── SearchStrategy.java   # interface
+│   │           ├── ScanStrategy.java     # flat scan (stateless)
+│   │           └── IndexedStrategy.java  # positional index (self-cached)
 │   └── test/java/com/lab/search/
 │       └── service/WordSearchServiceTest.java
 ├── src/main/resources/application.properties
+├── target/generated-sources/openapi/   # GENERATED at build time (never committed)
 ├── Dockerfile
 └── pom.xml
 ```
+
+## API contract (spec-first)
+
+The repository's [`openapi.yaml`](../openapi.yaml) is the only definition of the API;
+no OpenAPI annotation is written by hand.
+
+- **Interfaces and models** — the
+  [openapi-generator](https://openapi-generator.tech) Maven plugin (`spring` generator,
+  7.25.0) runs in the `generate-sources` phase and writes `com.lab.search.api.HealthApi`,
+  `com.lab.search.api.SearchApi` and the `com.lab.search.api.model.*` classes to
+  `target/generated-sources/openapi`. Spec descriptions become Javadoc.
+  `SearchController` implements both interfaces, so routes, HTTP methods, request bodies
+  and response types are all taken from the contract. The controller maps the
+  generated `Hint` model onto the algorithm's own `service.Hint` record.
+- **Generator options** (`pom.xml`): `interfaceOnly`, `useSpringBoot4`, `useJakartaEe`,
+  `useTags`, no bean validation, no nullable wrapper, no documentation annotations —
+  the generated code depends only on Spring Web, Jackson annotations and
+  `jakarta.validation-api` (for `@NotNull` markers).
+- **Spec and docs** — `maven-resources-plugin` copies `openapi.yaml` onto the classpath.
+  `OpenApiController` serves it unchanged at `/openapi.yaml`, converts it to JSON at
+  `/openapi.json`, and serves a Swagger UI page at `/docs`. The UI assets come from the
+  `swagger-ui` webjar, so `/docs` works offline.
+- **Errors** — `IllegalArgumentException` and unreadable bodies answer `400` with the
+  generated `ErrorResponse`.
+
+Nothing generated is committed: any Maven build (`mvn compile`, `mvn test`,
+`mvn package`) regenerates from `../openapi.yaml`, so a spec change takes effect on the
+next build. The pom reads the spec from one directory up, so build from inside the
+repository (the Dockerfile mirrors that layout).
 
 ## Local development
 
@@ -70,7 +102,7 @@ Requires Java 25+ and Maven 3.9+.
 # From repo root — run the API locally
 ASSETS_ROOT=assets mvn -f java/pom.xml spring-boot:run
 
-# The API starts on http://localhost:8002
+# The API starts on http://localhost:8002 (Swagger UI at /docs)
 ```
 
 ## Docker
@@ -90,15 +122,18 @@ in-memory word lists.
 
 ## Unit tests
 
-41 tests mirroring the Python pytest suite — unit tests for content/hint matching, integration tests against the real asset files, equivalence tests asserting the parallel modes (`fileSplit`, `manyNested`) return byte-identical results to the baseline, and strategy tests verifying that `IndexedStrategy` returns byte-identical output to `ScanStrategy` and that `fileDispatch` routes correctly.
+41 tests — unit tests for content/hint matching, integration tests against the real asset files, equivalence tests asserting the parallel modes (`fileSplit`, `manyNested`) return byte-identical results to the baseline, and strategy tests verifying that `IndexedStrategy` returns byte-identical output to `ScanStrategy` and that `fileDispatch` routes correctly.
 
 ```bash
-# Run from the java/ directory (Maven sets the working directory there)
+# From the repo root (the build needs ../openapi.yaml, so mount the whole repo)
 docker run --rm -v $(pwd):/workspace -w /workspace/java \
   maven:3.9-eclipse-temurin-25 mvn test
 ```
 
 ## API
+
+The contract is the repository's [`openapi.yaml`](../openapi.yaml); browse it at
+`/docs` (Swagger UI) or fetch it from `/openapi.json` / `/openapi.yaml`.
 
 ### `GET /health`
 
@@ -108,44 +143,44 @@ docker run --rm -v $(pwd):/workspace -w /workspace/java \
 
 ### `POST /search/file`
 
-Search words of a fixed length using available letters and/or positional hints.
+Words of exactly `wordLength` characters built from `letters` and/or matching the
+positional `hints`.
 
 ```json
 // Request
 {
   "lang": "fr",
-  "nb_car": 5,
-  "lst_car": ["e","l","i","s","a"],
-  "lst_hint": [
-    {"pos": 1, "car": "s", "inverted": false}
+  "wordLength": 5,
+  "letters": ["e","l","i","s","a"],
+  "hints": [
+    {"position": 1, "letter": "s", "excluded": false}
   ],
   "strict": false
 }
 
 // Response
-{"words": ["ailes", "alise", ...], "count": 8}
+{"words": ["saisi", "salai", "salas", ...], "count": 20}
 ```
 
 ### `POST /search/many`
 
-Search words across all lengths up to `len(cars)`, results ordered longest-first.
+Words of every length up to the number of `letters`, ordered longest-first.
 
 ```json
 // Request
-{"lang": "fr", "cars": "guillaume", "lst_hint": []}
+{"lang": "fr", "letters": "guillaume", "hints": []}
 
 // Response
-{"words": [...], "count": 494}
+{"words": ["aiguillai", "aiguillee", ...], "count": 494}
 ```
 
 ### Errors
 
-A request with neither `lst_car` nor `lst_hint` returns `400` as an
-RFC 9457 `application/problem+json` body:
+An invalid request (malformed JSON, `wordLength` of 0, or neither `letters` nor
+`hints`) answers `400` with the contract's `ErrorResponse`:
 
 ```json
-{"type": "about:blank", "title": "Bad Request", "status": 400,
- "detail": "Either lst_car or lst_hint must be provided"}
+{"error": "letters and hints cannot both be empty"}
 ```
 
 ## Environment variables

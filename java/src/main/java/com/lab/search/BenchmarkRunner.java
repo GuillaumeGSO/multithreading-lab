@@ -1,6 +1,6 @@
 package com.lab.search;
 
-import com.lab.search.model.Hint;
+import com.lab.search.service.Hint;
 import com.lab.search.service.WordSearchService;
 
 import java.nio.file.Files;
@@ -46,8 +46,8 @@ public final class BenchmarkRunner {
         List<Hint> hints = new ArrayList<>();
         if (arr != null) {
             for (JsonNode h : arr) {
-                String car = h.hasNonNull("car") ? h.get("car").asText() : null;
-                hints.add(new Hint(h.path("pos").asInt(), car, h.path("inverted").asBoolean(false)));
+                String letter = h.hasNonNull("letter") ? h.get("letter").asText() : null;
+                hints.add(new Hint(h.path("position").asInt(), letter, h.path("excluded").asBoolean(false)));
             }
         }
         return hints;
@@ -78,12 +78,12 @@ public final class BenchmarkRunner {
         int concurrency = envInt("CONCURRENCY", 16);
         int ops = envInt("THROUGHPUT_OPS", 200);
         String lang = "fr";
-        int nbCar = 11;
+        int wordLength = 11;
         List<String> letters = new ArrayList<>();
         for (char c = 'a'; c <= 'z'; c++) letters.add(String.valueOf(c));
         List<Hint> hints = List.of(new Hint(1, "x", false));
 
-        service.fileBaseline(lang, nbCar, letters, hints, false); // warmup
+        service.fileBaseline(lang, wordLength, letters, hints, false); // warmup
 
         double[] latencies = new double[ops];
         AtomicInteger count = new AtomicInteger();
@@ -94,7 +94,7 @@ public final class BenchmarkRunner {
             final int idx = i;
             futures.add(ex.submit(() -> {
                 long t = System.nanoTime();
-                List<String> r = service.fileBaseline(lang, nbCar, letters, hints, false);
+                List<String> r = service.fileBaseline(lang, wordLength, letters, hints, false);
                 latencies[idx] = (System.nanoTime() - t) / 1_000_000.0;
                 count.set(r.size());
             }));
@@ -105,7 +105,7 @@ public final class BenchmarkRunner {
         Arrays.sort(latencies);
 
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("workload", "file nb_car=11 pool=26 hint=1:x (baseline scan per op)");
+        m.put("workload", "file wordLength=11 pool=26 hint=1:x (baseline scan per op)");
         m.put("concurrency", concurrency);
         m.put("ops", ops);
         m.put("elapsed_ms", elapsed);
@@ -130,24 +130,24 @@ public final class BenchmarkRunner {
             String kind = c.path("kind").asText("file");
             String lang = c.path("lang").asText("fr");
             if (lang.isEmpty()) lang = "fr";
-            List<Hint> hints = toHints(c.get("lst_hint"));
+            List<Hint> hints = toHints(c.get("hints"));
 
             Map<String, Supplier<List<String>>> modes = new LinkedHashMap<>();
             if (kind.equals("file")) {
-                int nbCar = c.path("nb_car").asInt();
-                List<String> lstCar = new ArrayList<>();
-                if (c.has("lst_car")) c.get("lst_car").forEach(n -> lstCar.add(n.asText()));
+                int wordLength = c.path("wordLength").asInt();
+                List<String> letters = new ArrayList<>();
+                if (c.has("letters")) c.get("letters").forEach(n -> letters.add(n.asText()));
                 boolean strict = c.path("strict").asBoolean(false);
                 final String fl = lang;
-                modes.put("baseline", () -> service.fileBaseline(fl, nbCar, lstCar, hints, strict));
-                modes.put("indexed", () -> service.fileIndexed(fl, nbCar, lstCar, hints, strict));
-                modes.put("split", () -> service.fileSplit(fl, nbCar, lstCar, hints, strict, degree));
+                modes.put("baseline", () -> service.fileBaseline(fl, wordLength, letters, hints, strict));
+                modes.put("indexed", () -> service.fileIndexed(fl, wordLength, letters, hints, strict));
+                modes.put("split", () -> service.fileSplit(fl, wordLength, letters, hints, strict, degree));
             } else {
-                String cars = c.path("cars").asText();
+                String letters = c.path("letters").asText();
                 final String fl = lang;
-                modes.put("baseline", () -> service.manyBaseline(fl, cars, hints));
-                modes.put("fanout", () -> service.manyFanout(fl, cars, hints));
-                modes.put("nested", () -> service.manyNested(fl, cars, hints, degree));
+                modes.put("baseline", () -> service.manyBaseline(fl, letters, hints));
+                modes.put("fanout", () -> service.manyFanout(fl, letters, hints));
+                modes.put("nested", () -> service.manyNested(fl, letters, hints, degree));
             }
 
             Map<String, Object> modeJson = new LinkedHashMap<>();

@@ -1,6 +1,6 @@
 package com.lab.search.service.strategy;
 
-import com.lab.search.model.Hint;
+import com.lab.search.service.Hint;
 import java.util.List;
 
 public interface SearchStrategy {
@@ -10,9 +10,9 @@ public interface SearchStrategy {
      * Search a single word-length file. Returns words in word-list order.
      * words is already loaded by WordSearchService — strategies never touch the filesystem.
      */
-    List<String> searchInFile(String lang, int nbCar,
+    List<String> searchInFile(String lang, int wordLength,
                               List<String> words,
-                              List<String> lstCar, List<Hint> lstHint,
+                              List<String> letters, List<Hint> hints,
                               boolean strict,
-                              boolean emptyCars, boolean emptyHints);
+                              boolean emptyLetters, boolean emptyHints);
 }

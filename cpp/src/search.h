@@ -4,13 +4,13 @@
 #include <string>
 #include <vector>
 
-// Hint is a positional constraint on a word. pos is 1-indexed. car is the
-// expected character; nullopt or empty car imposes no constraint. When inverted
-// is true the character must NOT appear at pos.
+// Hint is a positional constraint on a word. position is 1-indexed. letter is
+// the expected character; nullopt or an empty letter imposes no constraint. When
+// excluded is true the letter must NOT appear at position.
 struct Hint {
-    int pos;
-    std::optional<std::string> car;
-    bool inverted;
+    int position = 0;
+    std::optional<std::string> letter;
+    bool excluded = false;
 };
 
 // utf8Split splits a UTF-8 string into a vector of individual codepoint
@@ -18,8 +18,7 @@ struct Hint {
 std::vector<std::string> utf8Split(const std::string& s);
 
 // unidecode converts a UTF-8 string to ASCII by mapping accented characters to
-// their base equivalents (French subset). Mirrors go-unidecode behaviour for
-// the French word lists.
+// their base equivalents (the French subset needed by the word lists).
 std::string unidecode(const std::string& s);
 
 // cpuBudget returns the cores this process may actually use: the cgroup v2 CPU
@@ -43,7 +42,7 @@ bool matchesHints(const std::string& word, const std::vector<Hint>& hints);
 // loadWords returns a shared_ptr to the cached word list for (lang, length),
 // reading from assets/{lang}/{length}.txt on first call. Thread-safe via an
 // internal mutex. Returning shared_ptr avoids copying the full word list on
-// every call — the Go equivalent returns a slice reference (O(1)).
+// every call (O(1) handle instead of an O(n) copy).
 // A missing file yields an empty vector.
 std::shared_ptr<const std::vector<std::string>> loadWords(const std::string& lang, int length);
 
@@ -56,12 +55,12 @@ std::vector<std::string> inFile(const std::string& lang,
                                 const std::vector<Hint>& hints,
                                 bool strict);
 
-// inManyFiles returns words across all lengths from len(cars) down to the
+// inManyFiles returns words across all lengths from len(letters) down to the
 // minimum length implied by hints, ordered longest-first. Lengths are scanned
 // in parallel up to the global CPU budget (axis A — per-length fan-out, the
 // concurrency model under test); excess lengths fold onto the caller.
 std::vector<std::string> inManyFiles(const std::string& lang,
-                                     const std::string& cars,
+                                     const std::string& letters,
                                      const std::vector<Hint>& hints);
 
 // splitDegree is the number of contiguous chunks a single file is scanned in
@@ -81,7 +80,7 @@ std::vector<std::string> inFileSplit(const std::string& lang,
 
 // inManyFilesSeq scans every length sequentially (baseline — no concurrency).
 std::vector<std::string> inManyFilesSeq(const std::string& lang,
-                                        const std::string& cars,
+                                        const std::string& letters,
                                         const std::vector<Hint>& hints);
 
 // inManyFilesNested fans out per length (axis A) AND splits each length's file
@@ -89,6 +88,6 @@ std::vector<std::string> inManyFilesSeq(const std::string& lang,
 // budget, so nesting can't oversubscribe: once permits run out the inner split
 // folds onto its caller. Output is identical to inManyFiles.
 std::vector<std::string> inManyFilesNested(const std::string& lang,
-                                           const std::string& cars,
+                                           const std::string& letters,
                                            const std::vector<Hint>& hints,
                                            int threads);

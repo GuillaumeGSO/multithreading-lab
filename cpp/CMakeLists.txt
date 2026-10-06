@@ -29,8 +29,41 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(doctest)
 
+# API models — generated from the repository's openapi.yaml into the build tree
+# (never committed). Regenerated whenever the spec or the generator changes.
+# Requires Python 3 with PyYAML (the `python3` on PATH is preferred; override
+# with -DPython3_EXECUTABLE=/path/to/python3).
+set(Python3_FIND_UNVERSIONED_NAMES FIRST)
+set(Python3_FIND_FRAMEWORK LAST)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+execute_process(COMMAND ${Python3_EXECUTABLE} -c "import yaml"
+                RESULT_VARIABLE PYYAML_MISSING OUTPUT_QUIET ERROR_QUIET)
+if(PYYAML_MISSING)
+  message(FATAL_ERROR "PyYAML is required to generate the API models: "
+                      "${Python3_EXECUTABLE} -m pip install pyyaml")
+endif()
+set(OPENAPI_SPEC ${CMAKE_CURRENT_SOURCE_DIR}/../openapi.yaml CACHE FILEPATH "API contract")
+set(MODELS_HEADER ${CMAKE_CURRENT_BINARY_DIR}/generated/models.gen.h)
+add_custom_command(
+  OUTPUT  ${MODELS_HEADER}
+  COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/gen_models.py ${OPENAPI_SPEC} ${MODELS_HEADER}
+  DEPENDS ${OPENAPI_SPEC} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/gen_models.py
+  COMMENT "Generating API models from openapi.yaml"
+)
+# The same contract as JSON, served at /openapi.json.
+set(SPEC_JSON ${CMAKE_CURRENT_BINARY_DIR}/openapi.json)
+add_custom_command(
+  OUTPUT  ${SPEC_JSON}
+  COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/spec_to_json.py ${OPENAPI_SPEC} ${SPEC_JSON}
+  DEPENDS ${OPENAPI_SPEC} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/spec_to_json.py
+  COMMENT "Converting openapi.yaml to openapi.json"
+)
+add_custom_target(api_models DEPENDS ${MODELS_HEADER} ${SPEC_JSON})
+
 # Main server executable
 add_executable(search src/main.cpp src/search.cpp)
+add_dependencies(search api_models)
+target_include_directories(search PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(search PRIVATE httplib::httplib nlohmann_json::nlohmann_json)
 if(UNIX)
   target_link_libraries(search PRIVATE pthread)

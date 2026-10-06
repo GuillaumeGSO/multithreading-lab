@@ -3,8 +3,8 @@
     "name": "file len=4 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [
+    "wordLength": 4,
+    "letters": [
       "a",
       "g",
       "p",
@@ -12,15 +12,15 @@
       "u",
       "v"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=4 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [
+    "wordLength": 4,
+    "letters": [
       "a",
       "g",
       "p",
@@ -28,26 +28,26 @@
       "u",
       "v"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 3,
-        "car": "v",
-        "inverted": false
+        "position": 3,
+        "letter": "v",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "p",
-        "inverted": false
+        "position": 1,
+        "letter": "p",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=4 inverted",
+    "name": "file len=4 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [
+    "wordLength": 4,
+    "letters": [
       "a",
       "g",
       "p",
@@ -55,16 +55,16 @@
       "u",
       "v"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "o",
-        "inverted": true
+        "position": 2,
+        "letter": "o",
+        "excluded": true
       },
       {
-        "pos": 3,
-        "car": "k",
-        "inverted": true
+        "position": 3,
+        "letter": "k",
+        "excluded": true
       }
     ],
     "strict": false
@@ -73,8 +73,8 @@
     "name": "file len=4 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [
+    "wordLength": 4,
+    "letters": [
       "a",
       "g",
       "p",
@@ -82,16 +82,16 @@
       "u",
       "v"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 3,
-        "car": "v",
-        "inverted": false
+        "position": 3,
+        "letter": "v",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "g",
-        "inverted": true
+        "position": 1,
+        "letter": "g",
+        "excluded": true
       }
     ],
     "strict": false
@@ -100,8 +100,8 @@
     "name": "file len=5 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [
+    "wordLength": 5,
+    "letters": [
       "i",
       "n",
       "p",
@@ -110,15 +110,15 @@
       "t",
       "w"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=5 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [
+    "wordLength": 5,
+    "letters": [
       "i",
       "n",
       "p",
@@ -127,26 +127,26 @@
       "t",
       "w"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 1,
-        "car": "i",
-        "inverted": false
+        "position": 1,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 5,
-        "car": "s",
-        "inverted": false
+        "position": 5,
+        "letter": "s",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=5 inverted",
+    "name": "file len=5 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [
+    "wordLength": 5,
+    "letters": [
       "i",
       "n",
       "p",
@@ -155,16 +155,16 @@
       "t",
       "w"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "c",
-        "inverted": true
+        "position": 2,
+        "letter": "c",
+        "excluded": true
       },
       {
-        "pos": 3,
-        "car": "h",
-        "inverted": true
+        "position": 3,
+        "letter": "h",
+        "excluded": true
       }
     ],
     "strict": false
@@ -173,8 +173,8 @@
     "name": "file len=5 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [
+    "wordLength": 5,
+    "letters": [
       "i",
       "n",
       "p",
@@ -183,16 +183,16 @@
       "t",
       "w"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 1,
-        "car": "i",
-        "inverted": false
+        "position": 1,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "j",
-        "inverted": true
+        "position": 4,
+        "letter": "j",
+        "excluded": true
       }
     ],
     "strict": false
@@ -201,8 +201,8 @@
     "name": "file len=6 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [
+    "wordLength": 6,
+    "letters": [
       "a",
       "c",
       "e",
@@ -212,15 +212,15 @@
       "s",
       "u"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=6 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [
+    "wordLength": 6,
+    "letters": [
       "a",
       "c",
       "e",
@@ -230,26 +230,26 @@
       "s",
       "u"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 6,
-        "car": "k",
-        "inverted": false
+        "position": 6,
+        "letter": "k",
+        "excluded": false
       },
       {
-        "pos": 3,
-        "car": "p",
-        "inverted": false
+        "position": 3,
+        "letter": "p",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=6 inverted",
+    "name": "file len=6 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [
+    "wordLength": 6,
+    "letters": [
       "a",
       "c",
       "e",
@@ -259,16 +259,16 @@
       "s",
       "u"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 1,
-        "car": "b",
-        "inverted": true
+        "position": 1,
+        "letter": "b",
+        "excluded": true
       },
       {
-        "pos": 2,
-        "car": "k",
-        "inverted": true
+        "position": 2,
+        "letter": "k",
+        "excluded": true
       }
     ],
     "strict": false
@@ -277,8 +277,8 @@
     "name": "file len=6 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [
+    "wordLength": 6,
+    "letters": [
       "a",
       "c",
       "e",
@@ -288,16 +288,16 @@
       "s",
       "u"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 4,
-        "car": "e",
-        "inverted": false
+        "position": 4,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 3,
-        "car": "c",
-        "inverted": true
+        "position": 3,
+        "letter": "c",
+        "excluded": true
       }
     ],
     "strict": false
@@ -306,8 +306,8 @@
     "name": "file len=7 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [
+    "wordLength": 7,
+    "letters": [
       "a",
       "b",
       "c",
@@ -319,15 +319,15 @@
       "t",
       "u"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=7 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [
+    "wordLength": 7,
+    "letters": [
       "a",
       "b",
       "c",
@@ -339,26 +339,26 @@
       "t",
       "u"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "e",
-        "inverted": false
+        "position": 2,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 5,
-        "car": "t",
-        "inverted": false
+        "position": 5,
+        "letter": "t",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=7 inverted",
+    "name": "file len=7 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [
+    "wordLength": 7,
+    "letters": [
       "a",
       "b",
       "c",
@@ -370,16 +370,16 @@
       "t",
       "u"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 4,
-        "car": "z",
-        "inverted": true
+        "position": 4,
+        "letter": "z",
+        "excluded": true
       },
       {
-        "pos": 1,
-        "car": "b",
-        "inverted": true
+        "position": 1,
+        "letter": "b",
+        "excluded": true
       }
     ],
     "strict": false
@@ -388,8 +388,8 @@
     "name": "file len=7 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [
+    "wordLength": 7,
+    "letters": [
       "a",
       "b",
       "c",
@@ -401,16 +401,16 @@
       "t",
       "u"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 7,
-        "car": "i",
-        "inverted": false
+        "position": 7,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "f",
-        "inverted": true
+        "position": 1,
+        "letter": "f",
+        "excluded": true
       }
     ],
     "strict": false
@@ -419,8 +419,8 @@
     "name": "file len=8 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [
+    "wordLength": 8,
+    "letters": [
       "a",
       "d",
       "e",
@@ -432,15 +432,15 @@
       "u",
       "z"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=8 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [
+    "wordLength": 8,
+    "letters": [
       "a",
       "d",
       "e",
@@ -452,26 +452,26 @@
       "u",
       "z"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 3,
-        "car": "m",
-        "inverted": false
+        "position": 3,
+        "letter": "m",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "a",
-        "inverted": false
+        "position": 4,
+        "letter": "a",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=8 inverted",
+    "name": "file len=8 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [
+    "wordLength": 8,
+    "letters": [
       "a",
       "d",
       "e",
@@ -483,16 +483,16 @@
       "u",
       "z"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 1,
-        "car": "y",
-        "inverted": true
+        "position": 1,
+        "letter": "y",
+        "excluded": true
       },
       {
-        "pos": 6,
-        "car": "i",
-        "inverted": true
+        "position": 6,
+        "letter": "i",
+        "excluded": true
       }
     ],
     "strict": false
@@ -501,8 +501,8 @@
     "name": "file len=8 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [
+    "wordLength": 8,
+    "letters": [
       "a",
       "d",
       "e",
@@ -514,16 +514,16 @@
       "u",
       "z"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 3,
-        "car": "m",
-        "inverted": false
+        "position": 3,
+        "letter": "m",
+        "excluded": false
       },
       {
-        "pos": 5,
-        "car": "d",
-        "inverted": true
+        "position": 5,
+        "letter": "d",
+        "excluded": true
       }
     ],
     "strict": false
@@ -532,8 +532,8 @@
     "name": "file len=9 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [
+    "wordLength": 9,
+    "letters": [
       "a",
       "c",
       "e",
@@ -545,15 +545,15 @@
       "r",
       "s"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=9 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [
+    "wordLength": 9,
+    "letters": [
       "a",
       "c",
       "e",
@@ -565,26 +565,26 @@
       "r",
       "s"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 4,
-        "car": "l",
-        "inverted": false
+        "position": 4,
+        "letter": "l",
+        "excluded": false
       },
       {
-        "pos": 2,
-        "car": "i",
-        "inverted": false
+        "position": 2,
+        "letter": "i",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=9 inverted",
+    "name": "file len=9 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [
+    "wordLength": 9,
+    "letters": [
       "a",
       "c",
       "e",
@@ -596,16 +596,16 @@
       "r",
       "s"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "c",
-        "inverted": true
+        "position": 2,
+        "letter": "c",
+        "excluded": true
       },
       {
-        "pos": 8,
-        "car": "z",
-        "inverted": true
+        "position": 8,
+        "letter": "z",
+        "excluded": true
       }
     ],
     "strict": false
@@ -614,8 +614,8 @@
     "name": "file len=9 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [
+    "wordLength": 9,
+    "letters": [
       "a",
       "c",
       "e",
@@ -627,16 +627,16 @@
       "r",
       "s"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 9,
-        "car": "s",
-        "inverted": false
+        "position": 9,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 3,
-        "car": "e",
-        "inverted": true
+        "position": 3,
+        "letter": "e",
+        "excluded": true
       }
     ],
     "strict": false
@@ -645,8 +645,8 @@
     "name": "file len=10 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [
+    "wordLength": 10,
+    "letters": [
       "a",
       "c",
       "d",
@@ -657,15 +657,15 @@
       "s",
       "v"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=10 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [
+    "wordLength": 10,
+    "letters": [
       "a",
       "c",
       "d",
@@ -676,26 +676,26 @@
       "s",
       "v"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "e",
-        "inverted": false
+        "position": 2,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 6,
-        "car": "e",
-        "inverted": false
+        "position": 6,
+        "letter": "e",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=10 inverted",
+    "name": "file len=10 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [
+    "wordLength": 10,
+    "letters": [
       "a",
       "c",
       "d",
@@ -706,16 +706,16 @@
       "s",
       "v"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 1,
-        "car": "h",
-        "inverted": true
+        "position": 1,
+        "letter": "h",
+        "excluded": true
       },
       {
-        "pos": 9,
-        "car": "t",
-        "inverted": true
+        "position": 9,
+        "letter": "t",
+        "excluded": true
       }
     ],
     "strict": false
@@ -724,8 +724,8 @@
     "name": "file len=10 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [
+    "wordLength": 10,
+    "letters": [
       "a",
       "c",
       "d",
@@ -736,16 +736,16 @@
       "s",
       "v"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 4,
-        "car": "i",
-        "inverted": false
+        "position": 4,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "c",
-        "inverted": true
+        "position": 1,
+        "letter": "c",
+        "excluded": true
       }
     ],
     "strict": false
@@ -754,8 +754,8 @@
     "name": "file len=11 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [
+    "wordLength": 11,
+    "letters": [
       "c",
       "d",
       "e",
@@ -769,15 +769,15 @@
       "v",
       "w"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=11 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [
+    "wordLength": 11,
+    "letters": [
       "c",
       "d",
       "e",
@@ -791,26 +791,26 @@
       "v",
       "w"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 7,
-        "car": "v",
-        "inverted": false
+        "position": 7,
+        "letter": "v",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "c",
-        "inverted": false
+        "position": 4,
+        "letter": "c",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=11 inverted",
+    "name": "file len=11 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [
+    "wordLength": 11,
+    "letters": [
       "c",
       "d",
       "e",
@@ -824,16 +824,16 @@
       "v",
       "w"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "w",
-        "inverted": true
+        "position": 2,
+        "letter": "w",
+        "excluded": true
       },
       {
-        "pos": 11,
-        "car": "n",
-        "inverted": true
+        "position": 11,
+        "letter": "n",
+        "excluded": true
       }
     ],
     "strict": false
@@ -842,8 +842,8 @@
     "name": "file len=11 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [
+    "wordLength": 11,
+    "letters": [
       "c",
       "d",
       "e",
@@ -857,16 +857,16 @@
       "v",
       "w"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 6,
-        "car": "e",
-        "inverted": false
+        "position": 6,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 7,
-        "car": "n",
-        "inverted": true
+        "position": 7,
+        "letter": "n",
+        "excluded": true
       }
     ],
     "strict": false
@@ -875,8 +875,8 @@
     "name": "file len=12 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [
+    "wordLength": 12,
+    "letters": [
       "a",
       "b",
       "d",
@@ -889,15 +889,15 @@
       "t",
       "u"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=12 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [
+    "wordLength": 12,
+    "letters": [
       "a",
       "b",
       "d",
@@ -910,26 +910,26 @@
       "t",
       "u"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "e",
-        "inverted": false
+        "position": 2,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 8,
-        "car": "a",
-        "inverted": false
+        "position": 8,
+        "letter": "a",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=12 inverted",
+    "name": "file len=12 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [
+    "wordLength": 12,
+    "letters": [
       "a",
       "b",
       "d",
@@ -942,16 +942,16 @@
       "t",
       "u"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 9,
-        "car": "b",
-        "inverted": true
+        "position": 9,
+        "letter": "b",
+        "excluded": true
       },
       {
-        "pos": 2,
-        "car": "v",
-        "inverted": true
+        "position": 2,
+        "letter": "v",
+        "excluded": true
       }
     ],
     "strict": false
@@ -960,8 +960,8 @@
     "name": "file len=12 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [
+    "wordLength": 12,
+    "letters": [
       "a",
       "b",
       "d",
@@ -974,16 +974,16 @@
       "t",
       "u"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 9,
-        "car": "i",
-        "inverted": false
+        "position": 9,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "c",
-        "inverted": true
+        "position": 1,
+        "letter": "c",
+        "excluded": true
       }
     ],
     "strict": false
@@ -992,8 +992,8 @@
     "name": "file len=13 none",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [
+    "wordLength": 13,
+    "letters": [
       "a",
       "e",
       "g",
@@ -1009,15 +1009,15 @@
       "w",
       "y"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=13 normal",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [
+    "wordLength": 13,
+    "letters": [
       "a",
       "e",
       "g",
@@ -1033,26 +1033,26 @@
       "w",
       "y"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 13,
-        "car": "s",
-        "inverted": false
+        "position": 13,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 8,
-        "car": "s",
-        "inverted": false
+        "position": 8,
+        "letter": "s",
+        "excluded": false
       }
     ],
     "strict": false
   },
   {
-    "name": "file len=13 inverted",
+    "name": "file len=13 excluded",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [
+    "wordLength": 13,
+    "letters": [
       "a",
       "e",
       "g",
@@ -1068,16 +1068,16 @@
       "w",
       "y"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 5,
-        "car": "x",
-        "inverted": true
+        "position": 5,
+        "letter": "x",
+        "excluded": true
       },
       {
-        "pos": 7,
-        "car": "y",
-        "inverted": true
+        "position": 7,
+        "letter": "y",
+        "excluded": true
       }
     ],
     "strict": false
@@ -1086,8 +1086,8 @@
     "name": "file len=13 mixed",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [
+    "wordLength": 13,
+    "letters": [
       "a",
       "e",
       "g",
@@ -1103,16 +1103,16 @@
       "w",
       "y"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 13,
-        "car": "s",
-        "inverted": false
+        "position": 13,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 9,
-        "car": "w",
-        "inverted": true
+        "position": 9,
+        "letter": "w",
+        "excluded": true
       }
     ],
     "strict": false
@@ -1121,42 +1121,42 @@
     "name": "many rack=7 none",
     "kind": "many",
     "lang": "fr",
-    "cars": "aoctsuv",
-    "lst_hint": []
+    "letters": "aoctsuv",
+    "hints": []
   },
   {
     "name": "many rack=7 normal",
     "kind": "many",
     "lang": "fr",
-    "cars": "aoctsuv",
-    "lst_hint": [
+    "letters": "aoctsuv",
+    "hints": [
       {
-        "pos": 4,
-        "car": "o",
-        "inverted": false
+        "position": 4,
+        "letter": "o",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "s",
-        "inverted": false
+        "position": 1,
+        "letter": "s",
+        "excluded": false
       }
     ]
   },
   {
-    "name": "many rack=7 inverted",
+    "name": "many rack=7 excluded",
     "kind": "many",
     "lang": "fr",
-    "cars": "aoctsuv",
-    "lst_hint": [
+    "letters": "aoctsuv",
+    "hints": [
       {
-        "pos": 5,
-        "car": "s",
-        "inverted": true
+        "position": 5,
+        "letter": "s",
+        "excluded": true
       },
       {
-        "pos": 2,
-        "car": "t",
-        "inverted": true
+        "position": 2,
+        "letter": "t",
+        "excluded": true
       }
     ]
   },
@@ -1164,17 +1164,17 @@
     "name": "many rack=7 mixed",
     "kind": "many",
     "lang": "fr",
-    "cars": "aoctsuv",
-    "lst_hint": [
+    "letters": "aoctsuv",
+    "hints": [
       {
-        "pos": 1,
-        "car": "s",
-        "inverted": false
+        "position": 1,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 5,
-        "car": "c",
-        "inverted": true
+        "position": 5,
+        "letter": "c",
+        "excluded": true
       }
     ]
   },
@@ -1182,42 +1182,42 @@
     "name": "many rack=8 none",
     "kind": "many",
     "lang": "fr",
-    "cars": "enitardp",
-    "lst_hint": []
+    "letters": "enitardp",
+    "hints": []
   },
   {
     "name": "many rack=8 normal",
     "kind": "many",
     "lang": "fr",
-    "cars": "enitardp",
-    "lst_hint": [
+    "letters": "enitardp",
+    "hints": [
       {
-        "pos": 5,
-        "car": "r",
-        "inverted": false
+        "position": 5,
+        "letter": "r",
+        "excluded": false
       },
       {
-        "pos": 2,
-        "car": "e",
-        "inverted": false
+        "position": 2,
+        "letter": "e",
+        "excluded": false
       }
     ]
   },
   {
-    "name": "many rack=8 inverted",
+    "name": "many rack=8 excluded",
     "kind": "many",
     "lang": "fr",
-    "cars": "enitardp",
-    "lst_hint": [
+    "letters": "enitardp",
+    "hints": [
       {
-        "pos": 6,
-        "car": "i",
-        "inverted": true
+        "position": 6,
+        "letter": "i",
+        "excluded": true
       },
       {
-        "pos": 1,
-        "car": "l",
-        "inverted": true
+        "position": 1,
+        "letter": "l",
+        "excluded": true
       }
     ]
   },
@@ -1225,17 +1225,17 @@
     "name": "many rack=8 mixed",
     "kind": "many",
     "lang": "fr",
-    "cars": "enitardp",
-    "lst_hint": [
+    "letters": "enitardp",
+    "hints": [
       {
-        "pos": 5,
-        "car": "r",
-        "inverted": false
+        "position": 5,
+        "letter": "r",
+        "excluded": false
       },
       {
-        "pos": 2,
-        "car": "p",
-        "inverted": true
+        "position": 2,
+        "letter": "p",
+        "excluded": true
       }
     ]
   },
@@ -1243,42 +1243,42 @@
     "name": "many rack=9 none",
     "kind": "many",
     "lang": "fr",
-    "cars": "trapexnid",
-    "lst_hint": []
+    "letters": "trapexnid",
+    "hints": []
   },
   {
     "name": "many rack=9 normal",
     "kind": "many",
     "lang": "fr",
-    "cars": "trapexnid",
-    "lst_hint": [
+    "letters": "trapexnid",
+    "hints": [
       {
-        "pos": 5,
-        "car": "i",
-        "inverted": false
+        "position": 5,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "p",
-        "inverted": false
+        "position": 1,
+        "letter": "p",
+        "excluded": false
       }
     ]
   },
   {
-    "name": "many rack=9 inverted",
+    "name": "many rack=9 excluded",
     "kind": "many",
     "lang": "fr",
-    "cars": "trapexnid",
-    "lst_hint": [
+    "letters": "trapexnid",
+    "hints": [
       {
-        "pos": 1,
-        "car": "z",
-        "inverted": true
+        "position": 1,
+        "letter": "z",
+        "excluded": true
       },
       {
-        "pos": 6,
-        "car": "e",
-        "inverted": true
+        "position": 6,
+        "letter": "e",
+        "excluded": true
       }
     ]
   },
@@ -1286,17 +1286,17 @@
     "name": "many rack=9 mixed",
     "kind": "many",
     "lang": "fr",
-    "cars": "trapexnid",
-    "lst_hint": [
+    "letters": "trapexnid",
+    "hints": [
       {
-        "pos": 5,
-        "car": "i",
-        "inverted": false
+        "position": 5,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 3,
-        "car": "y",
-        "inverted": true
+        "position": 3,
+        "letter": "y",
+        "excluded": true
       }
     ]
   },
@@ -1304,8 +1304,8 @@
     "name": "file len=4 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [
+    "wordLength": 4,
+    "letters": [
       "a",
       "b",
       "c",
@@ -1323,15 +1323,15 @@
       "w",
       "z"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=5 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [
+    "wordLength": 5,
+    "letters": [
       "c",
       "d",
       "e",
@@ -1349,15 +1349,15 @@
       "y",
       "z"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=6 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [
+    "wordLength": 6,
+    "letters": [
       "a",
       "c",
       "d",
@@ -1375,15 +1375,15 @@
       "u",
       "y"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=7 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [
+    "wordLength": 7,
+    "letters": [
       "a",
       "b",
       "c",
@@ -1401,15 +1401,15 @@
       "x",
       "z"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=8 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [
+    "wordLength": 8,
+    "letters": [
       "a",
       "b",
       "c",
@@ -1427,15 +1427,15 @@
       "w",
       "z"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=9 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [
+    "wordLength": 9,
+    "letters": [
       "a",
       "b",
       "e",
@@ -1453,15 +1453,15 @@
       "u",
       "v"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=10 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [
+    "wordLength": 10,
+    "letters": [
       "a",
       "c",
       "f",
@@ -1479,15 +1479,15 @@
       "y",
       "z"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=11 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [
+    "wordLength": 11,
+    "letters": [
       "a",
       "b",
       "d",
@@ -1505,15 +1505,15 @@
       "x",
       "z"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=12 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [
+    "wordLength": 12,
+    "letters": [
       "a",
       "b",
       "c",
@@ -1531,15 +1531,15 @@
       "t",
       "u"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=13 none-wide",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [
+    "wordLength": 13,
+    "letters": [
       "a",
       "e",
       "i",
@@ -1557,15 +1557,15 @@
       "x",
       "y"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": false
   },
   {
     "name": "file len=4 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [
+    "wordLength": 4,
+    "letters": [
       "o",
       "s",
       "a",
@@ -1574,15 +1574,15 @@
       "k",
       "e"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=4 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [
+    "wordLength": 4,
+    "letters": [
       "o",
       "s",
       "a",
@@ -1591,26 +1591,26 @@
       "k",
       "e"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "a",
-        "inverted": false
+        "position": 2,
+        "letter": "a",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "e",
-        "inverted": false
+        "position": 4,
+        "letter": "e",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=4 inverted strict",
+    "name": "file len=4 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [
+    "wordLength": 4,
+    "letters": [
       "o",
       "s",
       "a",
@@ -1619,16 +1619,16 @@
       "k",
       "e"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 4,
-        "car": "x",
-        "inverted": true
+        "position": 4,
+        "letter": "x",
+        "excluded": true
       },
       {
-        "pos": 3,
-        "car": "a",
-        "inverted": true
+        "position": 3,
+        "letter": "a",
+        "excluded": true
       }
     ],
     "strict": true
@@ -1637,8 +1637,8 @@
     "name": "file len=4 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [
+    "wordLength": 4,
+    "letters": [
       "o",
       "s",
       "a",
@@ -1647,16 +1647,16 @@
       "k",
       "e"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 4,
-        "car": "e",
-        "inverted": false
+        "position": 4,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 2,
-        "car": "b",
-        "inverted": true
+        "position": 2,
+        "letter": "b",
+        "excluded": true
       }
     ],
     "strict": true
@@ -1665,8 +1665,8 @@
     "name": "file len=5 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [
+    "wordLength": 5,
+    "letters": [
       "i",
       "o",
       "u",
@@ -1676,15 +1676,15 @@
       "r",
       "m"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=5 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [
+    "wordLength": 5,
+    "letters": [
       "i",
       "o",
       "u",
@@ -1694,26 +1694,26 @@
       "r",
       "m"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "o",
-        "inverted": false
+        "position": 2,
+        "letter": "o",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "i",
-        "inverted": false
+        "position": 4,
+        "letter": "i",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=5 inverted strict",
+    "name": "file len=5 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [
+    "wordLength": 5,
+    "letters": [
       "i",
       "o",
       "u",
@@ -1723,16 +1723,16 @@
       "r",
       "m"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "i",
-        "inverted": true
+        "position": 2,
+        "letter": "i",
+        "excluded": true
       },
       {
-        "pos": 1,
-        "car": "n",
-        "inverted": true
+        "position": 1,
+        "letter": "n",
+        "excluded": true
       }
     ],
     "strict": true
@@ -1741,8 +1741,8 @@
     "name": "file len=5 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [
+    "wordLength": 5,
+    "letters": [
       "i",
       "o",
       "u",
@@ -1752,16 +1752,16 @@
       "r",
       "m"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 3,
-        "car": "u",
-        "inverted": false
+        "position": 3,
+        "letter": "u",
+        "excluded": false
       },
       {
-        "pos": 2,
-        "car": "p",
-        "inverted": true
+        "position": 2,
+        "letter": "p",
+        "excluded": true
       }
     ],
     "strict": true
@@ -1770,8 +1770,8 @@
     "name": "file len=6 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [
+    "wordLength": 6,
+    "letters": [
       "s",
       "e",
       "d",
@@ -1782,15 +1782,15 @@
       "c",
       "f"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=6 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [
+    "wordLength": 6,
+    "letters": [
       "s",
       "e",
       "d",
@@ -1801,26 +1801,26 @@
       "c",
       "f"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 4,
-        "car": "h",
-        "inverted": false
+        "position": 4,
+        "letter": "h",
+        "excluded": false
       },
       {
-        "pos": 3,
-        "car": "c",
-        "inverted": false
+        "position": 3,
+        "letter": "c",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=6 inverted strict",
+    "name": "file len=6 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [
+    "wordLength": 6,
+    "letters": [
       "s",
       "e",
       "d",
@@ -1831,16 +1831,16 @@
       "c",
       "f"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 3,
-        "car": "u",
-        "inverted": true
+        "position": 3,
+        "letter": "u",
+        "excluded": true
       },
       {
-        "pos": 2,
-        "car": "u",
-        "inverted": true
+        "position": 2,
+        "letter": "u",
+        "excluded": true
       }
     ],
     "strict": true
@@ -1849,8 +1849,8 @@
     "name": "file len=6 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [
+    "wordLength": 6,
+    "letters": [
       "s",
       "e",
       "d",
@@ -1861,16 +1861,16 @@
       "c",
       "f"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 6,
-        "car": "s",
-        "inverted": false
+        "position": 6,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "z",
-        "inverted": true
+        "position": 1,
+        "letter": "z",
+        "excluded": true
       }
     ],
     "strict": true
@@ -1879,8 +1879,8 @@
     "name": "file len=7 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [
+    "wordLength": 7,
+    "letters": [
       "o",
       "o",
       "i",
@@ -1892,15 +1892,15 @@
       "q",
       "d"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=7 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [
+    "wordLength": 7,
+    "letters": [
       "o",
       "o",
       "i",
@@ -1912,26 +1912,26 @@
       "q",
       "d"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 7,
-        "car": "e",
-        "inverted": false
+        "position": 7,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "o",
-        "inverted": false
+        "position": 4,
+        "letter": "o",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=7 inverted strict",
+    "name": "file len=7 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [
+    "wordLength": 7,
+    "letters": [
       "o",
       "o",
       "i",
@@ -1943,16 +1943,16 @@
       "q",
       "d"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 1,
-        "car": "m",
-        "inverted": true
+        "position": 1,
+        "letter": "m",
+        "excluded": true
       },
       {
-        "pos": 4,
-        "car": "v",
-        "inverted": true
+        "position": 4,
+        "letter": "v",
+        "excluded": true
       }
     ],
     "strict": true
@@ -1961,8 +1961,8 @@
     "name": "file len=7 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [
+    "wordLength": 7,
+    "letters": [
       "o",
       "o",
       "i",
@@ -1974,16 +1974,16 @@
       "q",
       "d"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 7,
-        "car": "e",
-        "inverted": false
+        "position": 7,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "x",
-        "inverted": true
+        "position": 4,
+        "letter": "x",
+        "excluded": true
       }
     ],
     "strict": true
@@ -1992,8 +1992,8 @@
     "name": "file len=8 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [
+    "wordLength": 8,
+    "letters": [
       "l",
       "f",
       "q",
@@ -2006,15 +2006,15 @@
       "z",
       "s"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=8 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [
+    "wordLength": 8,
+    "letters": [
       "l",
       "f",
       "q",
@@ -2027,26 +2027,26 @@
       "z",
       "s"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 6,
-        "car": "o",
-        "inverted": false
+        "position": 6,
+        "letter": "o",
+        "excluded": false
       },
       {
-        "pos": 7,
-        "car": "n",
-        "inverted": false
+        "position": 7,
+        "letter": "n",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=8 inverted strict",
+    "name": "file len=8 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [
+    "wordLength": 8,
+    "letters": [
       "l",
       "f",
       "q",
@@ -2059,16 +2059,16 @@
       "z",
       "s"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 5,
-        "car": "i",
-        "inverted": true
+        "position": 5,
+        "letter": "i",
+        "excluded": true
       },
       {
-        "pos": 3,
-        "car": "u",
-        "inverted": true
+        "position": 3,
+        "letter": "u",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2077,8 +2077,8 @@
     "name": "file len=8 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [
+    "wordLength": 8,
+    "letters": [
       "l",
       "f",
       "q",
@@ -2091,16 +2091,16 @@
       "z",
       "s"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 5,
-        "car": "l",
-        "inverted": false
+        "position": 5,
+        "letter": "l",
+        "excluded": false
       },
       {
-        "pos": 8,
-        "car": "a",
-        "inverted": true
+        "position": 8,
+        "letter": "a",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2109,8 +2109,8 @@
     "name": "file len=9 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [
+    "wordLength": 9,
+    "letters": [
       "p",
       "e",
       "t",
@@ -2124,15 +2124,15 @@
       "z",
       "e"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=9 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [
+    "wordLength": 9,
+    "letters": [
       "p",
       "e",
       "t",
@@ -2146,26 +2146,26 @@
       "z",
       "e"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 6,
-        "car": "r",
-        "inverted": false
+        "position": 6,
+        "letter": "r",
+        "excluded": false
       },
       {
-        "pos": 8,
-        "car": "i",
-        "inverted": false
+        "position": 8,
+        "letter": "i",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=9 inverted strict",
+    "name": "file len=9 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [
+    "wordLength": 9,
+    "letters": [
       "p",
       "e",
       "t",
@@ -2179,16 +2179,16 @@
       "z",
       "e"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 5,
-        "car": "j",
-        "inverted": true
+        "position": 5,
+        "letter": "j",
+        "excluded": true
       },
       {
-        "pos": 9,
-        "car": "h",
-        "inverted": true
+        "position": 9,
+        "letter": "h",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2197,8 +2197,8 @@
     "name": "file len=9 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [
+    "wordLength": 9,
+    "letters": [
       "p",
       "e",
       "t",
@@ -2212,16 +2212,16 @@
       "z",
       "e"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "e",
-        "inverted": false
+        "position": 2,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "l",
-        "inverted": true
+        "position": 4,
+        "letter": "l",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2230,8 +2230,8 @@
     "name": "file len=10 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [
+    "wordLength": 10,
+    "letters": [
       "t",
       "r",
       "e",
@@ -2246,15 +2246,15 @@
       "c",
       "r"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=10 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [
+    "wordLength": 10,
+    "letters": [
       "t",
       "r",
       "e",
@@ -2269,26 +2269,26 @@
       "c",
       "r"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "h",
-        "inverted": false
+        "position": 2,
+        "letter": "h",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "c",
-        "inverted": false
+        "position": 1,
+        "letter": "c",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=10 inverted strict",
+    "name": "file len=10 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [
+    "wordLength": 10,
+    "letters": [
       "t",
       "r",
       "e",
@@ -2303,16 +2303,16 @@
       "c",
       "r"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 10,
-        "car": "p",
-        "inverted": true
+        "position": 10,
+        "letter": "p",
+        "excluded": true
       },
       {
-        "pos": 5,
-        "car": "p",
-        "inverted": true
+        "position": 5,
+        "letter": "p",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2321,8 +2321,8 @@
     "name": "file len=10 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [
+    "wordLength": 10,
+    "letters": [
       "t",
       "r",
       "e",
@@ -2337,16 +2337,16 @@
       "c",
       "r"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 8,
-        "car": "i",
-        "inverted": false
+        "position": 8,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 6,
-        "car": "g",
-        "inverted": true
+        "position": 6,
+        "letter": "g",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2355,8 +2355,8 @@
     "name": "file len=11 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [
+    "wordLength": 11,
+    "letters": [
       "g",
       "a",
       "u",
@@ -2372,15 +2372,15 @@
       "k",
       "a"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=11 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [
+    "wordLength": 11,
+    "letters": [
       "g",
       "a",
       "u",
@@ -2396,26 +2396,26 @@
       "k",
       "a"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 10,
-        "car": "g",
-        "inverted": false
+        "position": 10,
+        "letter": "g",
+        "excluded": false
       },
       {
-        "pos": 2,
-        "car": "u",
-        "inverted": false
+        "position": 2,
+        "letter": "u",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=11 inverted strict",
+    "name": "file len=11 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [
+    "wordLength": 11,
+    "letters": [
       "g",
       "a",
       "u",
@@ -2431,16 +2431,16 @@
       "k",
       "a"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 4,
-        "car": "i",
-        "inverted": true
+        "position": 4,
+        "letter": "i",
+        "excluded": true
       },
       {
-        "pos": 11,
-        "car": "w",
-        "inverted": true
+        "position": 11,
+        "letter": "w",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2449,8 +2449,8 @@
     "name": "file len=11 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [
+    "wordLength": 11,
+    "letters": [
       "g",
       "a",
       "u",
@@ -2466,16 +2466,16 @@
       "k",
       "a"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "u",
-        "inverted": false
+        "position": 2,
+        "letter": "u",
+        "excluded": false
       },
       {
-        "pos": 3,
-        "car": "h",
-        "inverted": true
+        "position": 3,
+        "letter": "h",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2484,8 +2484,8 @@
     "name": "file len=12 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [
+    "wordLength": 12,
+    "letters": [
       "i",
       "s",
       "d",
@@ -2502,15 +2502,15 @@
       "s",
       "q"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=12 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [
+    "wordLength": 12,
+    "letters": [
       "i",
       "s",
       "d",
@@ -2527,26 +2527,26 @@
       "s",
       "q"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 1,
-        "car": "d",
-        "inverted": false
+        "position": 1,
+        "letter": "d",
+        "excluded": false
       },
       {
-        "pos": 3,
-        "car": "s",
-        "inverted": false
+        "position": 3,
+        "letter": "s",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=12 inverted strict",
+    "name": "file len=12 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [
+    "wordLength": 12,
+    "letters": [
       "i",
       "s",
       "d",
@@ -2563,16 +2563,16 @@
       "s",
       "q"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 5,
-        "car": "y",
-        "inverted": true
+        "position": 5,
+        "letter": "y",
+        "excluded": true
       },
       {
-        "pos": 10,
-        "car": "t",
-        "inverted": true
+        "position": 10,
+        "letter": "t",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2581,8 +2581,8 @@
     "name": "file len=12 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [
+    "wordLength": 12,
+    "letters": [
       "i",
       "s",
       "d",
@@ -2599,16 +2599,16 @@
       "s",
       "q"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 5,
-        "car": "s",
-        "inverted": false
+        "position": 5,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 8,
-        "car": "d",
-        "inverted": true
+        "position": 8,
+        "letter": "d",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2617,8 +2617,8 @@
     "name": "file len=13 none strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [
+    "wordLength": 13,
+    "letters": [
       "t",
       "e",
       "t",
@@ -2636,15 +2636,15 @@
       "s",
       "n"
     ],
-    "lst_hint": [],
+    "hints": [],
     "strict": true
   },
   {
     "name": "file len=13 normal strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [
+    "wordLength": 13,
+    "letters": [
       "t",
       "e",
       "t",
@@ -2662,26 +2662,26 @@
       "s",
       "n"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 11,
-        "car": "s",
-        "inverted": false
+        "position": 11,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 8,
-        "car": "n",
-        "inverted": false
+        "position": 8,
+        "letter": "n",
+        "excluded": false
       }
     ],
     "strict": true
   },
   {
-    "name": "file len=13 inverted strict",
+    "name": "file len=13 excluded strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [
+    "wordLength": 13,
+    "letters": [
       "t",
       "e",
       "t",
@@ -2699,16 +2699,16 @@
       "s",
       "n"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 2,
-        "car": "m",
-        "inverted": true
+        "position": 2,
+        "letter": "m",
+        "excluded": true
       },
       {
-        "pos": 8,
-        "car": "o",
-        "inverted": true
+        "position": 8,
+        "letter": "o",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2717,8 +2717,8 @@
     "name": "file len=13 mixed strict",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [
+    "wordLength": 13,
+    "letters": [
       "t",
       "e",
       "t",
@@ -2736,16 +2736,16 @@
       "s",
       "n"
     ],
-    "lst_hint": [
+    "hints": [
       {
-        "pos": 6,
-        "car": "t",
-        "inverted": false
+        "position": 6,
+        "letter": "t",
+        "excluded": false
       },
       {
-        "pos": 13,
-        "car": "w",
-        "inverted": true
+        "position": 13,
+        "letter": "w",
+        "excluded": true
       }
     ],
     "strict": true
@@ -2754,18 +2754,18 @@
     "name": "file len=4 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 4,
+    "letters": [],
+    "hints": [
       {
-        "pos": 2,
-        "car": "o",
-        "inverted": false
+        "position": 2,
+        "letter": "o",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "s",
-        "inverted": false
+        "position": 4,
+        "letter": "s",
+        "excluded": false
       }
     ],
     "strict": false
@@ -2774,18 +2774,18 @@
     "name": "file len=4 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 4,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 4,
+    "letters": [],
+    "hints": [
       {
-        "pos": 4,
-        "car": "s",
-        "inverted": false
+        "position": 4,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 3,
-        "car": "p",
-        "inverted": true
+        "position": 3,
+        "letter": "p",
+        "excluded": true
       }
     ],
     "strict": false
@@ -2794,18 +2794,18 @@
     "name": "file len=5 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 5,
+    "letters": [],
+    "hints": [
       {
-        "pos": 4,
-        "car": "u",
-        "inverted": false
+        "position": 4,
+        "letter": "u",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "g",
-        "inverted": false
+        "position": 1,
+        "letter": "g",
+        "excluded": false
       }
     ],
     "strict": false
@@ -2814,18 +2814,18 @@
     "name": "file len=5 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 5,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 5,
+    "letters": [],
+    "hints": [
       {
-        "pos": 4,
-        "car": "u",
-        "inverted": false
+        "position": 4,
+        "letter": "u",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "l",
-        "inverted": true
+        "position": 1,
+        "letter": "l",
+        "excluded": true
       }
     ],
     "strict": false
@@ -2834,18 +2834,18 @@
     "name": "file len=6 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 6,
+    "letters": [],
+    "hints": [
       {
-        "pos": 3,
-        "car": "r",
-        "inverted": false
+        "position": 3,
+        "letter": "r",
+        "excluded": false
       },
       {
-        "pos": 1,
-        "car": "e",
-        "inverted": false
+        "position": 1,
+        "letter": "e",
+        "excluded": false
       }
     ],
     "strict": false
@@ -2854,18 +2854,18 @@
     "name": "file len=6 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 6,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 6,
+    "letters": [],
+    "hints": [
       {
-        "pos": 4,
-        "car": "a",
-        "inverted": false
+        "position": 4,
+        "letter": "a",
+        "excluded": false
       },
       {
-        "pos": 5,
-        "car": "a",
-        "inverted": true
+        "position": 5,
+        "letter": "a",
+        "excluded": true
       }
     ],
     "strict": false
@@ -2874,18 +2874,18 @@
     "name": "file len=7 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 7,
+    "letters": [],
+    "hints": [
       {
-        "pos": 7,
-        "car": "i",
-        "inverted": false
+        "position": 7,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 5,
-        "car": "s",
-        "inverted": false
+        "position": 5,
+        "letter": "s",
+        "excluded": false
       }
     ],
     "strict": false
@@ -2894,18 +2894,18 @@
     "name": "file len=7 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 7,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 7,
+    "letters": [],
+    "hints": [
       {
-        "pos": 4,
-        "car": "i",
-        "inverted": false
+        "position": 4,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 7,
-        "car": "b",
-        "inverted": true
+        "position": 7,
+        "letter": "b",
+        "excluded": true
       }
     ],
     "strict": false
@@ -2914,18 +2914,18 @@
     "name": "file len=8 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 8,
+    "letters": [],
+    "hints": [
       {
-        "pos": 6,
-        "car": "a",
-        "inverted": false
+        "position": 6,
+        "letter": "a",
+        "excluded": false
       },
       {
-        "pos": 5,
-        "car": "s",
-        "inverted": false
+        "position": 5,
+        "letter": "s",
+        "excluded": false
       }
     ],
     "strict": false
@@ -2934,18 +2934,18 @@
     "name": "file len=8 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 8,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 8,
+    "letters": [],
+    "hints": [
       {
-        "pos": 8,
-        "car": "s",
-        "inverted": false
+        "position": 8,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 6,
-        "car": "p",
-        "inverted": true
+        "position": 6,
+        "letter": "p",
+        "excluded": true
       }
     ],
     "strict": false
@@ -2954,18 +2954,18 @@
     "name": "file len=9 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 9,
+    "letters": [],
+    "hints": [
       {
-        "pos": 4,
-        "car": "a",
-        "inverted": false
+        "position": 4,
+        "letter": "a",
+        "excluded": false
       },
       {
-        "pos": 5,
-        "car": "r",
-        "inverted": false
+        "position": 5,
+        "letter": "r",
+        "excluded": false
       }
     ],
     "strict": false
@@ -2974,18 +2974,18 @@
     "name": "file len=9 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 9,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 9,
+    "letters": [],
+    "hints": [
       {
-        "pos": 9,
-        "car": "t",
-        "inverted": false
+        "position": 9,
+        "letter": "t",
+        "excluded": false
       },
       {
-        "pos": 3,
-        "car": "j",
-        "inverted": true
+        "position": 3,
+        "letter": "j",
+        "excluded": true
       }
     ],
     "strict": false
@@ -2994,18 +2994,18 @@
     "name": "file len=10 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 10,
+    "letters": [],
+    "hints": [
       {
-        "pos": 8,
-        "car": "e",
-        "inverted": false
+        "position": 8,
+        "letter": "e",
+        "excluded": false
       },
       {
-        "pos": 2,
-        "car": "n",
-        "inverted": false
+        "position": 2,
+        "letter": "n",
+        "excluded": false
       }
     ],
     "strict": false
@@ -3014,18 +3014,18 @@
     "name": "file len=10 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 10,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 10,
+    "letters": [],
+    "hints": [
       {
-        "pos": 1,
-        "car": "i",
-        "inverted": false
+        "position": 1,
+        "letter": "i",
+        "excluded": false
       },
       {
-        "pos": 4,
-        "car": "x",
-        "inverted": true
+        "position": 4,
+        "letter": "x",
+        "excluded": true
       }
     ],
     "strict": false
@@ -3034,18 +3034,18 @@
     "name": "file len=11 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 11,
+    "letters": [],
+    "hints": [
       {
-        "pos": 5,
-        "car": "u",
-        "inverted": false
+        "position": 5,
+        "letter": "u",
+        "excluded": false
       },
       {
-        "pos": 9,
-        "car": "m",
-        "inverted": false
+        "position": 9,
+        "letter": "m",
+        "excluded": false
       }
     ],
     "strict": false
@@ -3054,18 +3054,18 @@
     "name": "file len=11 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 11,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 11,
+    "letters": [],
+    "hints": [
       {
-        "pos": 1,
-        "car": "d",
-        "inverted": false
+        "position": 1,
+        "letter": "d",
+        "excluded": false
       },
       {
-        "pos": 9,
-        "car": "o",
-        "inverted": true
+        "position": 9,
+        "letter": "o",
+        "excluded": true
       }
     ],
     "strict": false
@@ -3074,18 +3074,18 @@
     "name": "file len=12 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 12,
+    "letters": [],
+    "hints": [
       {
-        "pos": 4,
-        "car": "c",
-        "inverted": false
+        "position": 4,
+        "letter": "c",
+        "excluded": false
       },
       {
-        "pos": 2,
-        "car": "o",
-        "inverted": false
+        "position": 2,
+        "letter": "o",
+        "excluded": false
       }
     ],
     "strict": false
@@ -3094,18 +3094,18 @@
     "name": "file len=12 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 12,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 12,
+    "letters": [],
+    "hints": [
       {
-        "pos": 8,
-        "car": "n",
-        "inverted": false
+        "position": 8,
+        "letter": "n",
+        "excluded": false
       },
       {
-        "pos": 2,
-        "car": "v",
-        "inverted": true
+        "position": 2,
+        "letter": "v",
+        "excluded": true
       }
     ],
     "strict": false
@@ -3114,18 +3114,18 @@
     "name": "file len=13 normal nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 13,
+    "letters": [],
+    "hints": [
       {
-        "pos": 8,
-        "car": "s",
-        "inverted": false
+        "position": 8,
+        "letter": "s",
+        "excluded": false
       },
       {
-        "pos": 12,
-        "car": "i",
-        "inverted": false
+        "position": 12,
+        "letter": "i",
+        "excluded": false
       }
     ],
     "strict": false
@@ -3134,18 +3134,18 @@
     "name": "file len=13 mixed nopool",
     "kind": "file",
     "lang": "fr",
-    "nb_car": 13,
-    "lst_car": [],
-    "lst_hint": [
+    "wordLength": 13,
+    "letters": [],
+    "hints": [
       {
-        "pos": 5,
-        "car": "y",
-        "inverted": false
+        "position": 5,
+        "letter": "y",
+        "excluded": false
       },
       {
-        "pos": 9,
-        "car": "x",
-        "inverted": true
+        "position": 9,
+        "letter": "x",
+        "excluded": true
       }
     ],
     "strict": false

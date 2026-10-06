@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text;
-using WordSearch.Api.Models;
 
 namespace WordSearch.Api.Search;
 
@@ -13,7 +12,7 @@ public static class WordBase
 
     private static readonly string AssetsRoot =
         Environment.GetEnvironmentVariable("ASSETS_ROOT")
-        ?? Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "assets");
+        ?? Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "assets");
 
     public static IReadOnlyList<WordEntry> Load(string lang, int length) =>
         Cache.GetOrAdd($"{lang}/{length}", _ => Build(lang, length));

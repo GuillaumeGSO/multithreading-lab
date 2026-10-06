@@ -1,14 +1,42 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>WordSearch.Api</RootNamespace>
     <AssemblyName>Api</AssemblyName>
+    <!-- XML docs carry the spec's descriptions from the generated contracts into
+         IntelliSense; hand-written members are not required to be documented. -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
+
+  <!-- API contract: the repository's openapi.yaml. -->
+  <PropertyGroup>
+    <OpenApiSpec>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../openapi.yaml'))</OpenApiSpec>
+    <ContractsFile>$(BaseIntermediateOutputPath)Generated/Contracts.g.cs</ContractsFile>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.*" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
+    <!-- The unit tests exercise internal scan helpers directly. -->
+    <InternalsVisibleTo Include="Tests" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NSwag.MSBuild" Version="14.7.1" PrivateAssets="all" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.17.13" />
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
+  <!-- Generates the request/response DTOs from openapi.yaml into obj/Generated
+       (never committed). Re-runs only when the spec changes. -->
+  <Target Name="GenerateContracts" BeforeTargets="BeforeBuild" Inputs="$(OpenApiSpec)" Outputs="$(ContractsFile)">
+    <Exec Command="$(NSwagExe_Net100) openapi2csclient /input:&quot;$(OpenApiSpec)&quot; /output:&quot;$(ContractsFile)&quot; /namespace:WordSearch.Api.Contracts /GenerateClientClasses:false /GenerateClientInterfaces:false /GenerateExceptionClasses:false /GenerateDtoTypes:true /JsonLibrary:SystemTextJson /GenerateNullableReferenceTypes:true /GenerateOptionalPropertiesAsNullable:true /ClassStyle:Poco /GenerateDataAnnotations:false" />
+  </Target>
+  <Target Name="IncludeContracts" AfterTargets="GenerateContracts" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Include="$(ContractsFile)" />
+      <FileWrites Include="$(ContractsFile)" />
+    </ItemGroup>
+  </Target>
 </Project>

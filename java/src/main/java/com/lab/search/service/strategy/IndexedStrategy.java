@@ -1,6 +1,6 @@
 package com.lab.search.service.strategy;
 
-import com.lab.search.model.Hint;
+import com.lab.search.service.Hint;
 import com.lab.search.service.WordSearchService;
 
 import java.util.*;
@@ -8,23 +8,23 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Positional inverted index strategy. Builds a pos→char→Set(word) index per
- * (lang/nbCar) key. For queries with at least one pinned hint, intersecting the
+ * (lang/wordLength) key. For queries with at least one pinned hint, intersecting the
  * index buckets yields a tiny candidate set — O(result) instead of O(vocabulary).
  *
- * Chosen by the dispatcher when hasPinned(lstHint) is true.
+ * Chosen by the dispatcher when hasPinned(hints) is true.
  * Falls back to matchesHints for the rare direct-call edge case (excluded-only hints).
  */
 public final class IndexedStrategy implements SearchStrategy {
 
-    // key = "lang/nbCar" → pos (1-based) → raw char → immutable set of words
+    // key = "lang/wordLength" → pos (1-based) → raw char → immutable set of words
     private final ConcurrentHashMap<String, Map<Integer, Map<String, Set<String>>>> indexCache
             = new ConcurrentHashMap<>();
 
     @Override
     public String name() { return "indexed"; }
 
-    private Map<Integer, Map<String, Set<String>>> ensureIndex(String lang, int nbCar, List<String> words) {
-        return indexCache.computeIfAbsent(lang + "/" + nbCar, k -> buildIndex(words));
+    private Map<Integer, Map<String, Set<String>>> ensureIndex(String lang, int wordLength, List<String> words) {
+        return indexCache.computeIfAbsent(lang + "/" + wordLength, k -> buildIndex(words));
     }
 
     private static Map<Integer, Map<String, Set<String>>> buildIndex(List<String> words) {
@@ -49,36 +49,36 @@ public final class IndexedStrategy implements SearchStrategy {
     }
 
     @Override
-    public List<String> searchInFile(String lang, int nbCar, List<String> words,
-                                     List<String> lstCar, List<Hint> lstHint,
-                                     boolean strict, boolean emptyCars, boolean emptyHints) {
+    public List<String> searchInFile(String lang, int wordLength, List<String> words,
+                                     List<String> letters, List<Hint> hints,
+                                     boolean strict, boolean emptyLetters, boolean emptyHints) {
         Set<String> candidates = null; // null = "all words"
 
         if (!emptyHints) {
             // Only build the index when at least one pinned hint exists to seed candidates.
             // Excluded-only or hint-free queries fall through to the matchesHints fallback below.
             boolean anyPinned = false;
-            for (Hint h : lstHint)
-                if (h.car() != null && !h.car().isEmpty() && !h.inverted()) { anyPinned = true; break; }
+            for (Hint h : hints)
+                if (h.letter() != null && !h.letter().isEmpty() && !h.excluded()) { anyPinned = true; break; }
 
             if (anyPinned) {
-                var posIdx = ensureIndex(lang, nbCar, words);
+                var posIdx = ensureIndex(lang, wordLength, words);
 
                 // Step 1: intersect pinned hints to seed a tight candidate set
-                for (Hint hint : lstHint) {
-                    if (hint.car() == null || hint.car().isEmpty() || hint.inverted()) continue;
-                    Set<String> bucket = posIdx.getOrDefault(hint.pos(), Map.of())
-                                              .getOrDefault(hint.car(), Set.of());
+                for (Hint hint : hints) {
+                    if (hint.letter() == null || hint.letter().isEmpty() || hint.excluded()) continue;
+                    Set<String> bucket = posIdx.getOrDefault(hint.position(), Map.of())
+                                              .getOrDefault(hint.letter(), Set.of());
                     candidates = (candidates == null) ? new HashSet<>(bucket)
                                                       : intersect(candidates, bucket);
                 }
 
                 // Step 2: subtract excluded hints (only when candidates were seeded)
                 if (candidates != null) {
-                    for (Hint hint : lstHint) {
-                        if (hint.car() == null || hint.car().isEmpty() || !hint.inverted()) continue;
-                        candidates.removeAll(posIdx.getOrDefault(hint.pos(), Map.of())
-                                                  .getOrDefault(hint.car(), Set.of()));
+                    for (Hint hint : hints) {
+                        if (hint.letter() == null || hint.letter().isEmpty() || !hint.excluded()) continue;
+                        candidates.removeAll(posIdx.getOrDefault(hint.position(), Map.of())
+                                                  .getOrDefault(hint.letter(), Set.of()));
                     }
                 }
             }
@@ -88,9 +88,9 @@ public final class IndexedStrategy implements SearchStrategy {
         List<String> results = new ArrayList<>();
         for (String word : words) {
             if (candidates != null && !candidates.contains(word)) continue;
-            if (!emptyCars && !WordSearchService.matchesContent(word, lstCar, strict)) continue;
+            if (!emptyLetters && !WordSearchService.matchesContent(word, letters, strict)) continue;
             // Fallback: excluded-only hints with no pinned hints (e.g. direct fileIndexed call)
-            if (candidates == null && !emptyHints && !WordSearchService.matchesHints(word, lstHint)) continue;
+            if (candidates == null && !emptyHints && !WordSearchService.matchesHints(word, hints)) continue;
             results.add(word);
         }
         return results;

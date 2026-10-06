@@ -1,7 +1,7 @@
 // Worker entry point. Each worker thread runs an instance of this script; one
 // inbound message is one single-length `inFile` scan. Because it imports
 // search.ts, every worker keeps its own word-list cache, warmed over its
-// lifetime — the deliberate contrast with Go's single shared sync.Map.
+// lifetime (no cache is shared between threads).
 import { isMainThread, parentPort } from 'worker_threads';
 import { inFileRange, Hint } from './search';
 

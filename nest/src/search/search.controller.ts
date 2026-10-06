@@ -1,24 +1,27 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { SearchService } from './search.service';
-import { SearchFileDto, SearchManyDto, SearchResponse } from './dto/search.dto';
+import {
+  SearchFileRequest,
+  SearchManyRequest,
+  SearchResponse,
+} from './search.types';
 
-@ApiTags('search')
+// Routes and bodies follow the searchFile / searchMany operations of
+// openapi.yaml; the types are generated from it. Both answer 200 (as the
+// contract specifies) rather than Nest's POST default of 201.
 @Controller()
 export class SearchController {
   constructor(private readonly service: SearchService) {}
 
-  @ApiOperation({ summary: 'Search words of a fixed length', description: 'Returns words of exactly nb_car characters that can be formed from the available letter pool and satisfy every positional hint.' })
-  @ApiResponse({ status: 200, type: SearchResponse })
   @Post('search/file')
-  searchFile(@Body() dto: SearchFileDto): Promise<SearchResponse> {
-    return this.service.searchFile(dto);
+  @HttpCode(200)
+  searchFile(@Body() req: SearchFileRequest): Promise<SearchResponse> {
+    return this.service.searchFile(req);
   }
 
-  @ApiOperation({ summary: 'Search words across all lengths', description: 'Returns words for every length from 1 up to len(cars), ordered longest-first.' })
-  @ApiResponse({ status: 200, type: SearchResponse })
   @Post('search/many')
-  searchMany(@Body() dto: SearchManyDto): Promise<SearchResponse> {
-    return this.service.searchMany(dto);
+  @HttpCode(200)
+  searchMany(@Body() req: SearchManyRequest): Promise<SearchResponse> {
+    return this.service.searchMany(req);
   }
 }

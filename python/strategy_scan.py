@@ -55,36 +55,36 @@ def _build_avail_arr(avail: list[str]) -> list[int]:
 class ScanStrategy:
     name = "scan"
 
-    def search_in_file(self, lang="fr", nb_car=0, lst_car: List[str] = None,
-                       lst_hint: List[Hint] = None, strict=False):
-        lst_car = lst_car or []
-        lst_hint = lst_hint or []
-        is_empty_hint = is_hint_list_empty_or_full_of_none(lst_hint)
-        is_empty_cars = is_list_empty_or_full_of_none(lst_car)
-        if nb_car == 0 or (is_empty_cars and is_empty_hint):
-            raise Exception("Parameters lstCar et lstHint cannot be empty at the same time")
+    def search_in_file(self, lang="fr", word_length=0, letters: List[str] = None,
+                       hints: List[Hint] = None, strict=False):
+        letters = letters or []
+        hints = hints or []
+        is_empty_hint = is_hint_list_empty_or_full_of_none(hints)
+        is_empty_letters = is_list_empty_or_full_of_none(letters)
+        if word_length == 0 or (is_empty_letters and is_empty_hint):
+            raise ValueError("letters and hints cannot both be empty")
 
         # Build the available-letter pool once for the whole scan.
-        avail = [c for c in lst_car if c]
+        avail = [c for c in letters if c]
         avail_set = set(avail)
         avail_arr = _build_avail_arr(avail) if strict else None
 
-        for word, normalized_word, word_freq in load_base(lang, nb_car):
-            if is_empty_hint:  # cars non-empty here (guaranteed by the guard above)
+        for word, normalized_word, word_freq in load_base(lang, word_length):
+            if is_empty_hint:  # letters non-empty here (guaranteed by the guard above)
                 if is_search_by_content(normalized_word, avail_set, avail_arr, strict, word_freq):
                     yield word
-            elif is_empty_cars:
-                if is_search_by_hint(word, lst_hint):
+            elif is_empty_letters:
+                if is_search_by_hint(word, hints):
                     yield word
             elif (is_search_by_content(normalized_word, avail_set, avail_arr, strict, word_freq)
-                  and is_search_by_hint(word, lst_hint)):
+                  and is_search_by_hint(word, hints)):
                 yield word
 
-    def search_in_many_files(self, lang="fr", cars="", lst_hint: List[Hint] = None):
-        lst_hint = lst_hint or []
+    def search_in_many_files(self, lang="fr", letters="", hints: List[Hint] = None):
+        hints = hints or []
         min_len = max(
-            (int(h.pos) for h in lst_hint if h.car and not h.inverted),
+            (int(h.position) for h in hints if h.letter and not h.excluded),
             default=1,
         )
-        for i in reversed(range(min_len, len(cars) + 1)):
-            yield from self.search_in_file(lang=lang, nb_car=i, lst_car=list(cars), lst_hint=lst_hint)
+        for i in reversed(range(min_len, len(letters) + 1)):
+            yield from self.search_in_file(lang=lang, word_length=i, letters=list(letters), hints=hints)

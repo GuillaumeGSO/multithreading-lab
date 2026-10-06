@@ -67,9 +67,9 @@ TEST_CASE("noLetters") {
 
 TEST_CASE("noHints") {
     CHECK(noHints({}));
-    Hint h; h.pos = 1; h.inverted = false;   // car = nullopt
+    Hint h; h.position = 1; h.excluded = false;   // letter = nullopt
     CHECK(noHints({h}));
-    h.car = "s";
+    h.letter = "s";
     CHECK_FALSE(noHints({h}));
 }
 
@@ -108,48 +108,48 @@ TEST_CASE("matchesContent: empty word") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("matchesHints: basic match") {
-    Hint h; h.pos = 1; h.car = "s"; h.inverted = false;
+    Hint h; h.position = 1; h.letter = "s"; h.excluded = false;
     CHECK(matchesHints("slave", {h}));
 }
 
 TEST_CASE("matchesHints: mismatch") {
-    Hint h; h.pos = 1; h.car = "z"; h.inverted = false;
+    Hint h; h.position = 1; h.letter = "z"; h.excluded = false;
     CHECK_FALSE(matchesHints("slave", {h}));
 }
 
-TEST_CASE("matchesHints: inverted match (char not at pos)") {
-    Hint h; h.pos = 1; h.car = "z"; h.inverted = true;
+TEST_CASE("matchesHints: excluded letter absent at position") {
+    Hint h; h.position = 1; h.letter = "z"; h.excluded = true;
     CHECK(matchesHints("slave", {h}));
 }
 
-TEST_CASE("matchesHints: inverted rejects char at pos") {
-    Hint h; h.pos = 1; h.car = "s"; h.inverted = true;
+TEST_CASE("matchesHints: excluded rejects letter at position") {
+    Hint h; h.position = 1; h.letter = "s"; h.excluded = true;
     CHECK_FALSE(matchesHints("slave", {h}));
 }
 
 TEST_CASE("matchesHints: out-of-range normal rejects") {
-    Hint h; h.pos = 10; h.car = "s"; h.inverted = false;
+    Hint h; h.position = 10; h.letter = "s"; h.excluded = false;
     CHECK_FALSE(matchesHints("slave", {h}));
 }
 
-TEST_CASE("matchesHints: out-of-range inverted passes") {
-    Hint h; h.pos = 10; h.car = "s"; h.inverted = true;
+TEST_CASE("matchesHints: out-of-range excluded passes") {
+    Hint h; h.position = 10; h.letter = "s"; h.excluded = true;
     CHECK(matchesHints("slave", {h}));
 }
 
-TEST_CASE("matchesHints: null car skipped") {
-    Hint h; h.pos = 1; h.inverted = false;  // car = nullopt
+TEST_CASE("matchesHints: null letter skipped") {
+    Hint h; h.position = 1; h.excluded = false;  // letter = nullopt
     CHECK(matchesHints("slave", {h}));
 }
 
 TEST_CASE("matchesHints: multiple hints all pass") {
-    Hint h1; h1.pos = 1; h1.car = "s"; h1.inverted = false;
-    Hint h2; h2.pos = 5; h2.car = "e"; h2.inverted = false;
+    Hint h1; h1.position = 1; h1.letter = "s"; h1.excluded = false;
+    Hint h2; h2.position = 5; h2.letter = "e"; h2.excluded = false;
     CHECK(matchesHints("slave", {h1, h2}));
 }
 
 TEST_CASE("matchesHints: empty word") {
-    Hint h; h.pos = 1; h.car = "s"; h.inverted = false;
+    Hint h; h.position = 1; h.letter = "s"; h.excluded = false;
     CHECK_FALSE(matchesHints("", {h}));
 }
 
@@ -163,18 +163,18 @@ TEST_CASE("inFile: strict, letters only — 8 results") {
     CHECK(std::find(words.begin(), words.end(), "ailes") != words.end());
 }
 
-TEST_CASE("inFile: pos hints only — 8 results incl slave") {
-    Hint h1; h1.pos = 1; h1.car = "s"; h1.inverted = false;
-    Hint h2; h2.pos = 3; h2.car = "a"; h2.inverted = false;
-    Hint h3; h3.pos = 5; h3.car = "e"; h3.inverted = false;
+TEST_CASE("inFile: position hints only — 8 results incl slave") {
+    Hint h1; h1.position = 1; h1.letter = "s"; h1.excluded = false;
+    Hint h2; h2.position = 3; h2.letter = "a"; h2.excluded = false;
+    Hint h3; h3.position = 5; h3.letter = "e"; h3.excluded = false;
     auto words = inFile("fr", 5, {}, {h1, h2, h3}, false);
     CHECK(words.size() == 8);
     CHECK(std::find(words.begin(), words.end(), "slave") != words.end());
 }
 
 TEST_CASE("inFile: letters + hints — 11 results") {
-    Hint h1; h1.pos = 1; h1.car = "l"; h1.inverted = false;
-    Hint h2; h2.pos = 5; h2.car = "s"; h2.inverted = false;
+    Hint h1; h1.position = 1; h1.letter = "l"; h1.excluded = false;
+    Hint h2; h2.position = 5; h2.letter = "s"; h2.excluded = false;
     auto words = inFile("fr", 5, {"e","l","i","s","a"}, {h1, h2}, false);
     CHECK(words.size() == 11);
 }
@@ -209,8 +209,8 @@ TEST_CASE("inManyFiles: guillaume — 494 results, longest-first") {
 }
 
 TEST_CASE("inManyFiles: maxLen < minLen returns empty") {
-    // hint forces length >= 10, but cars has 3 chars
-    Hint h; h.pos = 10; h.car = "a"; h.inverted = false;
+    // hint forces length >= 10, but letters has 3 chars
+    Hint h; h.position = 10; h.letter = "a"; h.excluded = false;
     auto words = inManyFiles("fr", "abc", {h});
     CHECK(words.empty());
 }
@@ -222,7 +222,7 @@ TEST_CASE("inManyFiles: maxLen < minLen returns empty") {
 
 TEST_CASE("inFileSplit matches inFile for all degrees") {
     std::vector<std::string> letters = {"e", "l", "i", "s", "a"};
-    Hint s1; s1.pos = 1; s1.car = "s"; Hint a3; a3.pos = 3; a3.car = "a"; Hint e5; e5.pos = 5; e5.car = "e";
+    Hint s1; s1.position = 1; s1.letter = "s"; Hint a3; a3.position = 3; a3.letter = "a"; Hint e5; e5.position = 5; e5.letter = "e";
     struct Case { int len; std::vector<std::string> letters; std::vector<Hint> hints; bool strict; };
     std::vector<Case> cases = {
         {5, letters, {}, true},
@@ -240,7 +240,7 @@ TEST_CASE("inFileSplit matches inFile for all degrees") {
 }
 
 TEST_CASE("inManyFiles/Nested match inManyFilesSeq for all degrees") {
-    Hint a4; a4.pos = 4; a4.car = "a"; Hint na1; na1.pos = 1; na1.car = "a"; na1.inverted = true;
+    Hint a4; a4.position = 4; a4.letter = "a"; Hint na1; na1.position = 1; na1.letter = "a"; na1.excluded = true;
     std::vector<std::vector<Hint>> hintSets = { {}, {a4, na1} };
     for (auto& hints : hintSets) {
         auto want = inManyFilesSeq("fr", "guillaume", hints);

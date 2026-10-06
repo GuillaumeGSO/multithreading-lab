@@ -1,75 +1,77 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Scalar.AspNetCore;
-using System.Text.Json;
-using WordSearch.Api.Models;
+using WordSearch.Api;
+using WordSearch.Api.Contracts;
 using WordSearch.Api.Search;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.ConfigureHttpJsonOptions(opts =>
-{
-    opts.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
-    opts.SerializerOptions.PropertyNameCaseInsensitive = true;
-});
-
 builder.Services.AddSingleton<ParallelSearchService>();
-builder.Services.AddOpenApi(options =>
-{
-    options.AddDocumentTransformer((doc, _, _) =>
-    {
-        doc.Info.Title = "Word Search API";
-        doc.Info.Description =
-            "Filters words from dictionary files by available letters, positional hints, " +
-            "and word length. C#/.NET 9 implementation — Task.WhenAll fan-out via ThreadPool.";
-        doc.Info.Version = "1.0.0";
-        return Task.CompletedTask;
-    });
-});
+// Surface unreadable request bodies as BadHttpRequestException in every
+// environment so the middleware below can answer with ErrorResponse.
+builder.Services.Configure<RouteHandlerOptions>(o => o.ThrowOnBadRequest = true);
+builder.Services.AddSingleton(OpenApiSpec.Load());
 
 var app = builder.Build();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8005";
 app.Urls.Add($"http://0.0.0.0:{port}");
 
-app.MapOpenApi("/openapi.json");
+// Malformed or unreadable JSON bodies surface as BadHttpRequestException;
+// answer them with the contract's ErrorResponse instead of an empty 400.
+app.Use(async (ctx, next) =>
+{
+    try
+    {
+        await next(ctx);
+    }
+    catch (BadHttpRequestException ex) when (!ctx.Response.HasStarted)
+    {
+        ctx.Response.StatusCode = StatusCodes.Status400BadRequest;
+        await ctx.Response.WriteAsJsonAsync(new ErrorResponse { Error = ex.Message });
+    }
+});
+
+// The API contract (openapi.yaml) is served verbatim; nothing is generated from code.
+app.MapGet("/openapi.yaml", (OpenApiSpec spec) => Results.Text(spec.Yaml, "application/yaml"));
+app.MapGet("/openapi.json", (OpenApiSpec spec) => Results.Text(spec.Json, "application/json"));
 app.MapGet("/docs", () => Results.Redirect("/docs/v1"));
 app.MapScalarApiReference("/docs", options => options.WithOpenApiRoutePattern("/openapi.json"));
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
-   .WithName("Health")
-   .WithSummary("Liveness check");
+app.MapGet("/health", () => TypedResults.Ok(new HealthResponse { Status = "ok" }));
 
-app.MapPost("/search/file", async (SearchFileRequest req, ParallelSearchService svc) =>
+app.MapPost("/search/file", async Task<Results<Ok<SearchResponse>, BadRequest<ErrorResponse>>> (
+    SearchFileRequest req, ParallelSearchService svc) =>
 {
     try
     {
         var words = await svc.SearchInFileAsync(
-            req.Lang ?? "fr", req.NbCar, req.LstCar, req.LstHint, req.Strict);
-        return Results.Ok(SearchResponse.Of(words));
+            req.Lang ?? "fr", req.WordLength, req.Letters?.ToList(), ToHints(req.Hints), req.Strict ?? false);
+        return TypedResults.Ok(new SearchResponse { Words = words.ToList(), Count = words.Count });
     }
     catch (ArgumentException ex)
     {
-        return Results.BadRequest(new { error = ex.Message });
+        return TypedResults.BadRequest(new ErrorResponse { Error = ex.Message });
     }
-})
-.WithName("SearchFile")
-.WithSummary("Search words of a fixed length")
-.WithDescription("Returns words of exactly NbCar characters that can be formed from the available letter pool and satisfy every positional hint.");
+});
 
-app.MapPost("/search/many", async (SearchManyRequest req, ParallelSearchService svc) =>
+app.MapPost("/search/many", async Task<Results<Ok<SearchResponse>, BadRequest<ErrorResponse>>> (
+    SearchManyRequest req, ParallelSearchService svc) =>
 {
     try
     {
-        var words = await svc.SearchInManyAsync(
-            req.Lang ?? "fr", req.Cars ?? "", req.LstHint);
-        return Results.Ok(SearchResponse.Of(words));
+        var words = await svc.SearchInManyAsync(req.Lang ?? "fr", req.Letters ?? "", ToHints(req.Hints));
+        return TypedResults.Ok(new SearchResponse { Words = words.ToList(), Count = words.Count });
     }
     catch (ArgumentException ex)
     {
-        return Results.BadRequest(new { error = ex.Message });
+        return TypedResults.BadRequest(new ErrorResponse { Error = ex.Message });
     }
-})
-.WithName("SearchMany")
-.WithSummary("Search words across all lengths")
-.WithDescription("Returns words for every length from 1 up to len(Cars), ordered longest-first.");
+});
 
 app.Run();
+
+// Maps the generated contract hints onto the search algorithm's Hint.
+static IReadOnlyList<WordSearch.Api.Search.Hint> ToHints(ICollection<WordSearch.Api.Contracts.Hint>? hints) =>
+    hints?.Select(h => new WordSearch.Api.Search.Hint(h.Position, h.Letter, h.Excluded ?? false)).ToList()
+    ?? [];

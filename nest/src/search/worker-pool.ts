@@ -1,6 +1,5 @@
 // WorkerPool owns a fixed set of persistent worker threads and load-balances
-// search tasks across them. This is the concurrency model under test: the Node
-// analog of Go goroutines / Java ExecutorService.
+// search tasks across them. This is the concurrency model under test.
 //
 // `/search/file` submits one task; `/search/many` submits one task per word
 // length and awaits them all. Idle workers take queued tasks as they free up.

@@ -1,6 +1,5 @@
-// Pure, synchronous brute-force word search — a verbatim port of
-// go/search/search.go. It filters word lists by available letters, positional
-// hints, and word length.
+// Pure, synchronous brute-force word search. It filters word lists by
+// available letters, positional hints, and word length.
 //
 // This module has no NestJS or worker_threads dependency on purpose: it is
 // imported directly by Jest tests and by the worker script alike. The file
@@ -9,13 +8,13 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import unidecode from 'unidecode';
 
-// Hint is a positional constraint on a word. `pos` is 1-indexed. `car` is the
-// expected character; a null or empty `car` imposes no constraint. When
-// `inverted` is true the character must NOT appear at `pos`.
+// Hint is a positional constraint on a word. `position` is 1-indexed.
+// `letter` is the expected character; a null or empty `letter` imposes no
+// constraint. When `excluded` is true the letter must NOT appear at `position`.
 export interface Hint {
-  pos: number;
-  car: string | null;
-  inverted: boolean;
+  position: number;
+  letter: string | null;
+  excluded: boolean;
 }
 
 // wordCache holds word lists keyed by "lang/length". Each key is written once
@@ -58,7 +57,7 @@ export function noLetters(letters: string[]): boolean {
 
 // noHints reports whether the hint list imposes no constraint.
 export function noHints(hints: Hint[]): boolean {
-  return hints.every((h) => h.car == null || h.car === '');
+  return hints.every((h) => h.letter == null || h.letter === '');
 }
 
 // matchesContent reports whether `word` can be built from the letter pool. In
@@ -73,7 +72,7 @@ export function matchesContent(
     return false;
   }
   // Iterate code points of the transliterated word so accented characters
-  // match their plain-ASCII equivalents (matches Go's []rune over Unidecode).
+  // match their plain-ASCII equivalents (compared code point by code point after Unidecode).
   for (const r of unidecode(word)) {
     const idx = letters.indexOf(r);
     if (idx === -1) {
@@ -97,23 +96,23 @@ export function matchesHints(word: string, hints: Hint[]): boolean {
   // Spread into code points so multi-byte characters index correctly.
   const runes = [...word];
   for (const h of hints) {
-    if (h.car == null || h.car === '') {
+    if (h.letter == null || h.letter === '') {
       continue;
     }
-    if (h.pos > runes.length) {
-      // A normal hint past the word's end can never match; an inverted hint
+    if (h.position > runes.length) {
+      // A pinned hint past the word's end can never match; an excluded hint
       // is trivially satisfied (the character is absent).
-      if (!h.inverted) {
+      if (!h.excluded) {
         return false;
       }
       continue;
     }
-    const car = [...h.car][0];
-    if (h.inverted) {
-      if (runes[h.pos - 1] === car) {
+    const letter = [...h.letter][0];
+    if (h.excluded) {
+      if (runes[h.position - 1] === letter) {
         return false;
       }
-    } else if (runes[h.pos - 1] !== car) {
+    } else if (runes[h.position - 1] !== letter) {
       return false;
     }
   }
@@ -181,40 +180,40 @@ export function inFile(
 }
 
 // planLengths derives the word-length range a /search/many request must scan.
-// `maxLen` is the code-point count of `cars`; `minLen` is the largest position
-// among non-inverted hints carrying a character (inverted hints do not
+// `maxLen` is the code-point count of `letters`; `minLen` is the largest
+// position among pinned hints carrying a letter (excluded hints do not
 // constrain the minimum). It does no file I/O, so it is safe on the main thread.
 export function planLengths(
-  cars: string,
+  letters: string,
   hints: Hint[],
-): { minLen: number; maxLen: number; letters: string[] } {
-  const carsRunes = [...cars];
-  const maxLen = carsRunes.length;
+): { minLen: number; maxLen: number; pool: string[] } {
+  const runes = [...letters];
+  const maxLen = runes.length;
   let minLen = 1;
   for (const h of hints) {
-    if (h.car != null && h.car !== '' && !h.inverted && h.pos > minLen) {
-      minLen = h.pos;
+    if (h.letter != null && h.letter !== '' && !h.excluded && h.position > minLen) {
+      minLen = h.position;
     }
   }
-  return { minLen, maxLen, letters: carsRunes };
+  return { minLen, maxLen, pool: runes };
 }
 
-// inManyFiles returns words of every length from len(cars) down to the minimum
+// inManyFiles returns words of every length from len(letters) down to the minimum
 // length implied by the hints, ordered longest-first. This is the synchronous
 // reference used by tests; the service fans the per-length scans out across the
 // worker pool instead.
 export function inManyFiles(
   lang: string,
-  cars: string,
+  letters: string,
   hints: Hint[],
 ): string[] {
-  const { minLen, maxLen, letters } = planLengths(cars, hints);
+  const { minLen, maxLen, pool } = planLengths(letters, hints);
   if (maxLen < minLen) {
     return [];
   }
   const result: string[] = [];
   for (let length = maxLen; length >= minLen; length--) {
-    result.push(...inFile(lang, length, letters, hints, false));
+    result.push(...inFile(lang, length, pool, hints, false));
   }
   return result;
 }

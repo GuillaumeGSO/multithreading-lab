@@ -10,16 +10,16 @@ from seek_words import Hint, search_in_file, search_in_many_files
 from parallel import search_in_file_parallel, search_in_many_parallel
 
 FILE_CASES = [
-    dict(lang="fr", nb_car=5, lst_car=list("elisa"), strict=True),
-    dict(lang="fr", nb_car=5, lst_car=list("elisa"), strict=False),
-    dict(lang="fr", nb_car=5, lst_hint=[Hint(1, "s"), Hint(3, "a"), Hint(5, "e")]),
-    dict(lang="fr", nb_car=5, lst_car=list("elisa"), lst_hint=[Hint(1, "l"), Hint(5, "s")]),
-    dict(lang="fr", nb_car=99, lst_car=list("abc")),  # missing file -> []
+    dict(lang="fr", word_length=5, letters=list("elisa"), strict=True),
+    dict(lang="fr", word_length=5, letters=list("elisa"), strict=False),
+    dict(lang="fr", word_length=5, hints=[Hint(1, "s"), Hint(3, "a"), Hint(5, "e")]),
+    dict(lang="fr", word_length=5, letters=list("elisa"), hints=[Hint(1, "l"), Hint(5, "s")]),
+    dict(lang="fr", word_length=99, letters=list("abc")),  # missing file -> []
 ]
 
 MANY_CASES = [
-    dict(lang="fr", cars="guillaume"),
-    dict(lang="fr", cars="guillaume", lst_hint=[Hint(4, "a"), Hint(1, "a", inverted=True)]),
+    dict(lang="fr", letters="guillaume"),
+    dict(lang="fr", letters="guillaume", hints=[Hint(4, "a"), Hint(1, "a", excluded=True)]),
 ]
 
 

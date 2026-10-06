@@ -84,7 +84,7 @@ cross-language correctness check valid. Edit the generator, not the JSON.
 
 The grid mirrors how a letter game is actually played, not worst cases for the
 brute-force scan. An earlier version used pathological inputs (20+ letter pools,
-8–12 inverted hints) that no real query resembles; the crossover it implied was an
+8–12 excluded hints) that no real query resembles; the crossover it implied was an
 artifact of inputs nobody would send. The current grid is **balanced and realistic**
 so the indexed-vs-scan numbers reflect reality.
 
@@ -104,7 +104,7 @@ it always returns ≥ 1 result.
   |-------|-------|--------|
   | `none` | rack only, no hints | "what can I make from these letters" |
   | `normal` | rack + 2 pinned hints (letter IS at this position) | known correct positions |
-  | `inverted` | rack + 2 excluded hints (letter is NOT at this position) | letters ruled out at a spot |
+  | `excluded` | rack + 2 excluded hints (letter is NOT at this position) | letters ruled out at a spot |
   | `mixed` | rack + 1 pinned + 1 excluded | mid-game knowledge |
 - **`/search/many`** gets the same four shapes over realistic racks of 7–9 letters
   (`MANY_RACKS`) — the classic "find words from my letters" query.

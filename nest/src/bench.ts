@@ -12,33 +12,28 @@ import { readFileSync } from 'fs';
 import { performance } from 'perf_hooks';
 import { Hint, inFile, inManyFiles, planLengths } from './search/search';
 import { WorkerPool } from './search/worker-pool';
+import {
+  HintRequest,
+  SearchFileRequest,
+  SearchManyRequest,
+} from './search/search.types';
 
-interface RawHint {
-  pos: number;
-  car?: string | null;
-  inverted?: boolean;
-}
-interface RawCase {
-  name: string;
-  kind: 'file' | 'many';
-  lang?: string;
-  nb_car?: number;
-  lst_car?: string[];
-  cars?: string;
-  lst_hint?: RawHint[];
-  strict?: boolean;
-}
+// A cases.json entry: a name and kind plus the request body of the matching
+// endpoint (`letters` is an array for "file" cases and a string for "many").
+type BenchCase =
+  | ({ name: string; kind: 'file' } & SearchFileRequest)
+  | ({ name: string; kind: 'many' } & SearchManyRequest);
 
 const WARMUP = parseInt(process.env.BENCH_WARMUP || '', 10) || 20;
 const ITERS = parseInt(process.env.BENCH_ITERS || '', 10) || 100;
 const DEGREE = Math.max(1, parseInt(process.env.SPLIT_DEGREE || '', 10) || 2);
 const CASES_PATH = process.env.CASES_PATH || '/app/cases.json';
 
-function toHints(raw: RawHint[] = []): Hint[] {
+function toHints(raw: HintRequest[] = []): Hint[] {
   return raw.map((h) => ({
-    pos: h.pos,
-    car: h.car ?? null,
-    inverted: h.inverted ?? false,
+    position: h.position,
+    letter: h.letter ?? null,
+    excluded: h.excluded ?? false,
   }));
 }
 
@@ -83,16 +78,16 @@ async function main() {
 
   const manyPool = async (
     lang: string,
-    cars: string,
+    letters: string,
     hints: Hint[],
     chunkCount: number,
   ): Promise<string[]> => {
-    const { minLen, maxLen, letters } = planLengths(cars, hints);
+    const { minLen, maxLen, pool: letterPool } = planLengths(letters, hints);
     if (maxLen < minLen) return [];
     const lengths: number[] = [];
     for (let l = maxLen; l >= minLen; l--) lengths.push(l);
     const perLength = await Promise.all(
-      lengths.map((l) => runChunks(lang, l, letters, hints, false, chunkCount)),
+      lengths.map((l) => runChunks(lang, l, letterPool, hints, false, chunkCount)),
     );
     return perLength.flat();
   };
@@ -104,10 +99,10 @@ async function main() {
     const concurrency = parseInt(process.env.CONCURRENCY || '', 10) || 16;
     const ops = parseInt(process.env.THROUGHPUT_OPS || '', 10) || 200;
     const lang = 'fr';
-    const nbCar = 11;
+    const wordLength = 11;
     const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
-    const hints: Hint[] = [{ pos: 1, car: 'x', inverted: false }];
-    await pool.run({ lang, length: nbCar, letters, hints, strict: false }); // warmup
+    const hints: Hint[] = [{ position: 1, letter: 'x', excluded: false }];
+    await pool.run({ lang, length: wordLength, letters, hints, strict: false }); // warmup
 
     const latencies: number[] = new Array(ops);
     let count = 0;
@@ -118,7 +113,7 @@ async function main() {
         const i = next++;
         if (i >= ops) return;
         const t = performance.now();
-        const r = await pool.run({ lang, length: nbCar, letters, hints, strict: false });
+        const r = await pool.run({ lang, length: wordLength, letters, hints, strict: false });
         latencies[i] = performance.now() - t;
         count = r.length;
       }
@@ -127,7 +122,7 @@ async function main() {
     const elapsed = performance.now() - start;
     latencies.sort((a, b) => a - b);
     return {
-      workload: 'file nb_car=11 pool=26 hint=1:x (baseline scan per op)',
+      workload: 'file wordLength=11 pool=26 hint=1:x (baseline scan per op)',
       concurrency,
       ops,
       elapsed_ms: elapsed,
@@ -137,25 +132,25 @@ async function main() {
     };
   };
 
-  const cases: RawCase[] = JSON.parse(readFileSync(CASES_PATH, 'utf-8'));
+  const cases: BenchCase[] = JSON.parse(readFileSync(CASES_PATH, 'utf-8'));
   const outCases: unknown[] = [];
 
   for (const c of cases) {
     const lang = c.lang || 'fr';
-    const hints = toHints(c.lst_hint);
+    const hints = toHints(c.hints);
     const modes: Record<string, () => Promise<string[]>> = {};
 
     if (c.kind === 'file') {
-      const nbCar = c.nb_car ?? 0;
-      const letters = c.lst_car ?? [];
+      const wordLength = c.wordLength ?? 0;
+      const letters = c.letters ?? [];
       const strict = c.strict ?? false;
-      modes.baseline = async () => inFile(lang, nbCar, letters, hints, strict);
-      modes.split = () => runChunks(lang, nbCar, letters, hints, strict, DEGREE);
+      modes.baseline = async () => inFile(lang, wordLength, letters, hints, strict);
+      modes.split = () => runChunks(lang, wordLength, letters, hints, strict, DEGREE);
     } else {
-      const cars = c.cars ?? '';
-      modes.baseline = async () => inManyFiles(lang, cars, hints);
-      modes.fanout = () => manyPool(lang, cars, hints, 1);
-      modes.nested = () => manyPool(lang, cars, hints, DEGREE);
+      const letters = c.letters ?? '';
+      modes.baseline = async () => inManyFiles(lang, letters, hints);
+      modes.fanout = () => manyPool(lang, letters, hints, 1);
+      modes.nested = () => manyPool(lang, letters, hints, DEGREE);
     }
 
     const modeJson: Record<string, { median_ms: number; min_ms: number }> = {};

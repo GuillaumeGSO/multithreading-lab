@@ -6,9 +6,31 @@ dependencies = [
     "unidecode",
     "fastapi",
     "uvicorn[standard]",
+    "pyyaml>=6.0.3",
 ]
 
 [dependency-groups]
+codegen = [
+    "datamodel-code-generator>=0.83.0",
+]
 dev = [
     "pytest",
 ]
+
+# Pydantic request/response models are generated from the repository's OpenAPI
+# spec into generated/models.py (gitignored). Regenerate with:
+#   uv run --group codegen datamodel-codegen
+[tool.datamodel-codegen]
+input = "../openapi.yaml"
+input-file-type = "openapi"
+output = "generated/models.py"
+output-model-type = "pydantic_v2.BaseModel"
+target-python-version = "3.13"
+snake-case-field = true
+use-annotated = true
+use-field-description = true
+use-schema-description = true
+use-standard-collections = true
+use-union-operator = true
+disable-timestamp = true
+formatters = ["builtin"]

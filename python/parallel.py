@@ -37,46 +37,46 @@ def split_degree() -> int:
     return max(1, n)
 
 
-def _matches(entry, avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint) -> bool:
+def _matches(entry, avail_set, avail_arr, hints, strict, is_empty_letters, is_empty_hint) -> bool:
     word, normalized, word_freq = entry
     if is_empty_hint:
         return is_search_by_content(normalized, avail_set, avail_arr, strict, word_freq)
-    if is_empty_cars:
-        return is_search_by_hint(word, lst_hint)
+    if is_empty_letters:
+        return is_search_by_hint(word, hints)
     return (is_search_by_content(normalized, avail_set, avail_arr, strict, word_freq)
-            and is_search_by_hint(word, lst_hint))
+            and is_search_by_hint(word, hints))
 
 
-def _scan(entries, avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint) -> List[str]:
+def _scan(entries, avail_set, avail_arr, hints, strict, is_empty_letters, is_empty_hint) -> List[str]:
     return [
         entry[0] for entry in entries
-        if _matches(entry, avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint)
+        if _matches(entry, avail_set, avail_arr, hints, strict, is_empty_letters, is_empty_hint)
     ]
 
 
 def search_in_file_parallel(
-    lang="fr", nb_car=0, lst_car: List[str] = None, lst_hint: List[Hint] = None,
+    lang="fr", word_length=0, letters: List[str] = None, hints: List[Hint] = None,
     strict=False, threads: int | None = None,
 ) -> List[str]:
     """Intra-file split (axis B). Mirrors ``search_in_file`` but scans the word list
     in ``threads`` contiguous chunks. threads=1 runs inline (== baseline)."""
-    lst_car = lst_car or []
-    lst_hint = lst_hint or []
-    is_empty_hint = is_hint_list_empty_or_full_of_none(lst_hint)
-    is_empty_cars = is_list_empty_or_full_of_none(lst_car)
-    if nb_car == 0 or (is_empty_cars and is_empty_hint):
-        raise Exception("Parameters lstCar et lstHint cannot be empty at the same time")
+    letters = letters or []
+    hints = hints or []
+    is_empty_hint = is_hint_list_empty_or_full_of_none(hints)
+    is_empty_letters = is_list_empty_or_full_of_none(letters)
+    if word_length == 0 or (is_empty_letters and is_empty_hint):
+        raise ValueError("letters and hints cannot both be empty")
 
-    entries = load_base(lang, nb_car)
+    entries = load_base(lang, word_length)
     # Pool built once and shared read-only across the worker threads.
-    avail = [c for c in lst_car if c]
+    avail = [c for c in letters if c]
     avail_set = set(avail)
     avail_arr = _build_avail_arr(avail) if strict else None
     n = threads if threads is not None else split_degree()
     n = max(1, min(n, max(1, len(entries))))
 
     if n == 1:
-        return _scan(entries, avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint)
+        return _scan(entries, avail_set, avail_arr, hints, strict, is_empty_letters, is_empty_hint)
 
     chunk = (len(entries) + n - 1) // n  # ceil so chunks stay contiguous
     partials: list[list[str] | None] = [None] * n
@@ -84,7 +84,7 @@ def search_in_file_parallel(
 
     def work(idx: int, start: int, end: int) -> None:
         partials[idx] = _scan(
-            entries[start:end], avail_set, avail_arr, lst_hint, strict, is_empty_cars, is_empty_hint
+            entries[start:end], avail_set, avail_arr, hints, strict, is_empty_letters, is_empty_hint
         )
 
     for idx in range(n):
@@ -104,7 +104,7 @@ def search_in_file_parallel(
 
 
 def search_in_many_parallel(
-    lang="fr", cars="", lst_hint: List[Hint] = None, threads: int | None = None,
+    lang="fr", letters="", hints: List[Hint] = None, threads: int | None = None,
 ) -> List[str]:
     """Per-length fan-out (axis A). One thread per word length, longest first.
 
@@ -113,20 +113,20 @@ def search_in_many_parallel(
       - threads=N  → nested mode (threads spawning threads)
     Results are reassembled longest-first, matching ``search_in_many_files``.
     """
-    lst_hint = lst_hint or []
+    hints = hints or []
     min_len = max(
-        (int(h.pos) for h in lst_hint if h.car and not h.inverted),
+        (int(h.position) for h in hints if h.letter and not h.excluded),
         default=1,
     )
-    lengths = list(reversed(range(min_len, len(cars) + 1)))
+    lengths = list(reversed(range(min_len, len(letters) + 1)))
     partials: list[list[str] | None] = [None] * len(lengths)
     workers = []
 
     def work(idx: int, length: int) -> None:
         try:
             partials[idx] = search_in_file_parallel(
-                lang=lang, nb_car=length, lst_car=list(cars),
-                lst_hint=lst_hint, strict=False, threads=threads,
+                lang=lang, word_length=length, letters=list(letters),
+                hints=hints, strict=False, threads=threads,
             )
         except Exception:
             partials[idx] = []

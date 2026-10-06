@@ -1,0 +1,9 @@
+# oapi-codegen configuration: generates the request/response types and the
+# net/http ServerInterface from the repository's openapi.yaml.
+package: api
+output: api.gen.go
+generate:
+  models: true
+  std-http-server: true
+output-options:
+  prefer-skip-optional-pointer: true
