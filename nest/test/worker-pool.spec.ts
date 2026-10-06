@@ -50,7 +50,7 @@ describe('WorkerPool', () => {
   });
 
   it('fans /search/many out across lengths — 494 for "guillaume"', async () => {
-    const { minLen, maxLen, letters } = planLengths('guillaume', []);
+    const { minLen, maxLen, pool: letters } = planLengths('guillaume', []);
     const lengths: number[] = [];
     for (let length = maxLen; length >= minLen; length--) {
       lengths.push(length);

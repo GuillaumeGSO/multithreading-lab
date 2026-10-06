@@ -3,8 +3,9 @@
 // prints a single JSON report to stdout. Logs go to stderr.
 //
 // Modes:
-//   file cases -> baseline (single thread), split (intra-file SPLIT_DEGREE chunks)
-//   many cases -> baseline (sequential), fanout (per-length), nested (per-length + split)
+//
+//	file cases -> baseline (single thread), split (intra-file SPLIT_DEGREE chunks)
+//	many cases -> baseline (sequential), fanout (per-length), nested (per-length + split)
 package main
 
 import (
@@ -18,24 +19,33 @@ import (
 	"sync/atomic"
 	"time"
 
+	"multithreading-lab/go/api"
 	"multithreading-lab/go/search"
 )
 
-type hintJSON struct {
-	Pos      int     `json:"pos"`
-	Car      *string `json:"car"`
-	Inverted bool    `json:"inverted"`
+// benchCase is one entry of cases.json: a name and kind plus the request body
+// of the matching endpoint, decoded into the generated api types (`letters` is
+// an array for "file" cases and a string for "many" cases).
+type benchCase struct {
+	Name string
+	Kind string
+	File api.SearchFileRequest
+	Many api.SearchManyRequest
 }
 
-type caseJSON struct {
-	Name    string     `json:"name"`
-	Kind    string     `json:"kind"`
-	Lang    string     `json:"lang"`
-	NbCar   int        `json:"nb_car"`
-	LstCar  []string   `json:"lst_car"`
-	Cars    string     `json:"cars"`
-	LstHint []hintJSON `json:"lst_hint"`
-	Strict  bool       `json:"strict"`
+func (c *benchCase) UnmarshalJSON(data []byte) error {
+	var head struct {
+		Name string `json:"name"`
+		Kind string `json:"kind"`
+	}
+	if err := json.Unmarshal(data, &head); err != nil {
+		return err
+	}
+	c.Name, c.Kind = head.Name, head.Kind
+	if c.Kind == "file" {
+		return json.Unmarshal(data, &c.File)
+	}
+	return json.Unmarshal(data, &c.Many)
 }
 
 type timing struct {
@@ -63,12 +73,11 @@ type report struct {
 func runThroughput() map[string]interface{} {
 	concurrency := envInt("CONCURRENCY", 16)
 	ops := envInt("THROUGHPUT_OPS", 200)
-	lang, nbCar := "fr", 11
+	lang, wordLength := "fr", 11
 	letters := strings.Split("abcdefghijklmnopqrstuvwxyz", "")
-	car := "x"
-	hints := []search.Hint{{Pos: 1, Car: &car, Inverted: false}}
+	hints := []search.Hint{{Position: 1, Letter: "x", Excluded: false}}
 
-	search.InFile(lang, nbCar, letters, hints, false) // warmup
+	search.InFile(lang, wordLength, letters, hints, false) // warmup
 
 	latencies := make([]float64, ops)
 	var count int64
@@ -85,7 +94,7 @@ func runThroughput() map[string]interface{} {
 					return
 				}
 				t := time.Now()
-				r, _ := search.InFile(lang, nbCar, letters, hints, false)
+				r, _ := search.InFile(lang, wordLength, letters, hints, false)
 				latencies[i] = float64(time.Since(t).Nanoseconds()) / 1e6
 				atomic.StoreInt64(&count, int64(len(r)))
 			}
@@ -95,7 +104,7 @@ func runThroughput() map[string]interface{} {
 	elapsed := float64(time.Since(start).Nanoseconds()) / 1e6
 	sort.Float64s(latencies)
 	return map[string]interface{}{
-		"workload":          "file nb_car=11 pool=26 hint=1:x (baseline scan per op)",
+		"workload":          "file wordLength=11 pool=26 hint=1:x (baseline scan per op)",
 		"concurrency":       concurrency,
 		"ops":               ops,
 		"elapsed_ms":        elapsed,
@@ -114,12 +123,20 @@ func envInt(key string, def int) int {
 	return def
 }
 
-func toHints(raw []hintJSON) []search.Hint {
+func toHints(raw []api.Hint) []search.Hint {
 	out := make([]search.Hint, len(raw))
 	for i, h := range raw {
-		out[i] = search.Hint{Pos: h.Pos, Car: h.Car, Inverted: h.Inverted}
+		out[i] = search.Hint{Position: h.Position, Letter: h.Letter, Excluded: h.Excluded}
 	}
 	return out
+}
+
+// orDefault returns def when s is empty.
+func orDefault(s, def string) string {
+	if s == "" {
+		return def
+	}
+	return s
 }
 
 // timeMode warms up then times `iters` runs; returns count, median ms, min ms.
@@ -157,7 +174,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "read cases:", err)
 		os.Exit(1)
 	}
-	var cases []caseJSON
+	var cases []benchCase
 	if err := json.Unmarshal(data, &cases); err != nil {
 		fmt.Fprintln(os.Stderr, "parse cases:", err)
 		os.Exit(1)
@@ -165,32 +182,33 @@ func main() {
 
 	var results []caseResult
 	for _, c := range cases {
-		lang := c.Lang
-		if lang == "" {
-			lang = "fr"
-		}
-		hints := toHints(c.LstHint)
 		modes := map[string]func() []string{}
 		if c.Kind == "file" {
+			f := c.File
+			lang := orDefault(f.Lang, "fr")
+			hints := toHints(f.Hints)
 			modes["baseline"] = func() []string {
-				r, _ := search.InFile(lang, c.NbCar, c.LstCar, hints, c.Strict)
+				r, _ := search.InFile(lang, f.WordLength, f.Letters, hints, f.Strict)
 				return r
 			}
 			modes["split"] = func() []string {
-				r, _ := search.InFileSplit(lang, c.NbCar, c.LstCar, hints, c.Strict, degree)
+				r, _ := search.InFileSplit(lang, f.WordLength, f.Letters, hints, f.Strict, degree)
 				return r
 			}
 		} else {
+			m := c.Many
+			lang := orDefault(m.Lang, "fr")
+			hints := toHints(m.Hints)
 			modes["baseline"] = func() []string {
-				r, _ := search.InManyFilesSeq(lang, c.Cars, hints)
+				r, _ := search.InManyFilesSeq(lang, m.Letters, hints)
 				return r
 			}
 			modes["fanout"] = func() []string {
-				r, _ := search.InManyFiles(lang, c.Cars, hints)
+				r, _ := search.InManyFiles(lang, m.Letters, hints)
 				return r
 			}
 			modes["nested"] = func() []string {
-				r, _ := search.InManyFilesNested(lang, c.Cars, hints, degree)
+				r, _ := search.InManyFilesNested(lang, m.Letters, hints, degree)
 				return r
 			}
 		}

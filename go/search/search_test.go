@@ -16,9 +16,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// ptr returns a pointer to s, for building Hint.Car values inline.
-func ptr(s string) *string { return &s }
-
 func TestNoLetters(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -45,8 +42,8 @@ func TestNoHints(t *testing.T) {
 		want  bool
 	}{
 		{"empty", []Hint{}, true},
-		{"no car", []Hint{{Pos: 1}, {Pos: 2}}, true},
-		{"has car", []Hint{{Pos: 1, Car: ptr("a")}}, false},
+		{"no letter", []Hint{{Position: 1}, {Position: 2}}, true},
+		{"has letter", []Hint{{Position: 1, Letter: "a"}}, false},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -90,17 +87,17 @@ func TestMatchesHints(t *testing.T) {
 		hints []Hint
 		want  bool
 	}{
-		{"empty word", "", []Hint{{Pos: 1, Car: ptr("a")}}, false},
+		{"empty word", "", []Hint{{Position: 1, Letter: "a"}}, false},
 		{"no hints", "bonjour", nil, true},
-		{"match", "salut", []Hint{{Pos: 1, Car: ptr("s")}}, true},
-		{"no match", "salut", []Hint{{Pos: 1, Car: ptr("a")}}, false},
-		{"inverted excludes", "salut", []Hint{{Pos: 1, Car: ptr("s"), Inverted: true}}, false},
-		{"inverted includes", "salut", []Hint{{Pos: 1, Car: ptr("a"), Inverted: true}}, true},
-		{"out of range normal", "mot", []Hint{{Pos: 4, Car: ptr("a")}}, false},
-		{"out of range inverted", "mot", []Hint{{Pos: 4, Car: ptr("a"), Inverted: true}}, true},
-		{"car none ignored", "bonjour", []Hint{{Pos: 1}}, true},
-		{"multiple all match", "salut", []Hint{{Pos: 1, Car: ptr("s")}, {Pos: 5, Car: ptr("t")}}, true},
-		{"multiple one fails", "salut", []Hint{{Pos: 1, Car: ptr("s")}, {Pos: 5, Car: ptr("x")}}, false},
+		{"match", "salut", []Hint{{Position: 1, Letter: "s"}}, true},
+		{"no match", "salut", []Hint{{Position: 1, Letter: "a"}}, false},
+		{"excluded match rejects", "salut", []Hint{{Position: 1, Letter: "s", Excluded: true}}, false},
+		{"excluded no match accepts", "salut", []Hint{{Position: 1, Letter: "a", Excluded: true}}, true},
+		{"out of range normal", "mot", []Hint{{Position: 4, Letter: "a"}}, false},
+		{"out of range excluded", "mot", []Hint{{Position: 4, Letter: "a", Excluded: true}}, true},
+		{"letter none ignored", "bonjour", []Hint{{Position: 1}}, true},
+		{"multiple all match", "salut", []Hint{{Position: 1, Letter: "s"}, {Position: 5, Letter: "t"}}, true},
+		{"multiple one fails", "salut", []Hint{{Position: 1, Letter: "s"}, {Position: 5, Letter: "x"}}, false},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -148,7 +145,7 @@ func TestInFile(t *testing.T) {
 	})
 
 	t.Run("by hint", func(t *testing.T) {
-		hints := []Hint{{Pos: 1, Car: ptr("s")}, {Pos: 3, Car: ptr("a")}, {Pos: 5, Car: ptr("e")}}
+		hints := []Hint{{Position: 1, Letter: "s"}, {Position: 3, Letter: "a"}, {Position: 5, Letter: "e"}}
 		got, err := InFile("fr", 5, nil, hints, false)
 		if err != nil {
 			t.Fatal(err)
@@ -162,7 +159,7 @@ func TestInFile(t *testing.T) {
 	})
 
 	t.Run("content and hint", func(t *testing.T) {
-		hints := []Hint{{Pos: 1, Car: ptr("l")}, {Pos: 5, Car: ptr("s")}}
+		hints := []Hint{{Position: 1, Letter: "l"}, {Position: 5, Letter: "s"}}
 		got, err := InFile("fr", 5, []string{"e", "l", "i", "s", "a"}, hints, false)
 		if err != nil {
 			t.Fatal(err)
@@ -185,7 +182,7 @@ func TestInManyFiles(t *testing.T) {
 	})
 
 	t.Run("normal hint skips short words", func(t *testing.T) {
-		got, err := InManyFiles("fr", "guillaume", []Hint{{Pos: 4, Car: ptr("a")}})
+		got, err := InManyFiles("fr", "guillaume", []Hint{{Position: 4, Letter: "a"}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -196,8 +193,8 @@ func TestInManyFiles(t *testing.T) {
 		}
 	})
 
-	t.Run("inverted hint includes short words", func(t *testing.T) {
-		got, err := InManyFiles("fr", "guillaume", []Hint{{Pos: 4, Car: ptr("z"), Inverted: true}})
+	t.Run("excluded hint includes short words", func(t *testing.T) {
+		got, err := InManyFiles("fr", "guillaume", []Hint{{Position: 4, Letter: "z", Excluded: true}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -232,25 +229,25 @@ func TestInManyFiles(t *testing.T) {
 func TestParallelMatchesBaseline(t *testing.T) {
 	letters := []string{"e", "l", "i", "s", "a"}
 	fileCases := []struct {
-		name    string
-		nbCar   int
-		letters []string
-		hints   []Hint
-		strict  bool
+		name       string
+		wordLength int
+		letters    []string
+		hints      []Hint
+		strict     bool
 	}{
 		{"strict letters", 5, letters, nil, true},
 		{"open letters", 5, letters, nil, false},
-		{"hints only", 5, nil, []Hint{{Pos: 1, Car: ptr("s")}, {Pos: 3, Car: ptr("a")}, {Pos: 5, Car: ptr("e")}}, false},
+		{"hints only", 5, nil, []Hint{{Position: 1, Letter: "s"}, {Position: 3, Letter: "a"}, {Position: 5, Letter: "e"}}, false},
 		{"missing file", 99, []string{"a", "b", "c"}, nil, false},
 	}
 	for _, c := range fileCases {
 		for _, threads := range []int{1, 2, 3, 5} {
 			t.Run(fmt.Sprintf("file/%s/t%d", c.name, threads), func(t *testing.T) {
-				want, err := InFile("fr", c.nbCar, c.letters, c.hints, c.strict)
+				want, err := InFile("fr", c.wordLength, c.letters, c.hints, c.strict)
 				if err != nil {
 					t.Fatal(err)
 				}
-				got, err := InFileSplit("fr", c.nbCar, c.letters, c.hints, c.strict, threads)
+				got, err := InFileSplit("fr", c.wordLength, c.letters, c.hints, c.strict, threads)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -262,20 +259,20 @@ func TestParallelMatchesBaseline(t *testing.T) {
 	}
 
 	manyCases := []struct {
-		name  string
-		cars  string
-		hints []Hint
+		name    string
+		letters string
+		hints   []Hint
 	}{
 		{"all lengths", "guillaume", nil},
-		{"with hints", "guillaume", []Hint{{Pos: 4, Car: ptr("a")}, {Pos: 1, Car: ptr("a"), Inverted: true}}},
+		{"with hints", "guillaume", []Hint{{Position: 4, Letter: "a"}, {Position: 1, Letter: "a", Excluded: true}}},
 	}
 	for _, c := range manyCases {
-		want, err := InManyFilesSeq("fr", c.cars, c.hints)
+		want, err := InManyFilesSeq("fr", c.letters, c.hints)
 		if err != nil {
 			t.Fatal(err)
 		}
 		t.Run("many/fanout/"+c.name, func(t *testing.T) {
-			got, err := InManyFiles("fr", c.cars, c.hints)
+			got, err := InManyFiles("fr", c.letters, c.hints)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -285,7 +282,7 @@ func TestParallelMatchesBaseline(t *testing.T) {
 		})
 		for _, threads := range []int{1, 2, 3} {
 			t.Run(fmt.Sprintf("many/nested/%s/t%d", c.name, threads), func(t *testing.T) {
-				got, err := InManyFilesNested("fr", c.cars, c.hints, threads)
+				got, err := InManyFilesNested("fr", c.letters, c.hints, threads)
 				if err != nil {
 					t.Fatal(err)
 				}

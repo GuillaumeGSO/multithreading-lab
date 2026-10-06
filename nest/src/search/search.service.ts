@@ -1,11 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { Hint, planLengths } from './search';
 import { WorkerPool } from './worker-pool';
-import { SearchFileDto, SearchManyDto, SearchResponse } from './dto/search.dto';
+import {
+  HintRequest,
+  SearchFileRequest,
+  SearchManyRequest,
+  SearchResponse,
+} from './search.types';
 
-// defaultLang mirrors the "fr" default the other implementations use.
+// defaultLang applies the spec's default language ("fr") when lang is absent.
 function defaultLang(lang?: string): string {
   return lang || 'fr';
+}
+
+// toHints applies the spec's defaults to request hints (TypeScript types
+// carry no default values).
+function toHints(hints: HintRequest[] = []): Hint[] {
+  return hints.map((h) => ({
+    position: h.position,
+    letter: h.letter ?? null,
+    excluded: h.excluded ?? false,
+  }));
 }
 
 @Injectable()
@@ -50,15 +65,15 @@ export class SearchService {
   }
 
   // searchFile scans one fixed length, split into chunkCount chunks across the
-  // pool. An invalid request (nb_car 0, or no letters and no hints) makes the
-  // worker's scan throw; the rejection propagates to the exception filter.
-  async searchFile(dto: SearchFileDto): Promise<SearchResponse> {
+  // pool. An invalid request (wordLength 0, or no letters and no hints) makes
+  // the worker's scan throw; the rejection propagates to the exception filter.
+  async searchFile(req: SearchFileRequest): Promise<SearchResponse> {
     const words = await this.runChunks(
-      defaultLang(dto.lang),
-      dto.nb_car ?? 0,
-      dto.lst_car ?? [],
-      dto.lst_hint ?? [],
-      dto.strict ?? false,
+      defaultLang(req.lang),
+      req.wordLength ?? 0,
+      req.letters ?? [],
+      toHints(req.hints),
+      req.strict ?? false,
     );
     return { words, count: words.length };
   }
@@ -66,10 +81,10 @@ export class SearchService {
   // searchMany fans out per word length across the pool (axis A), each length
   // further split into chunkCount chunks (axis B), then concatenates the
   // results longest-first.
-  async searchMany(dto: SearchManyDto): Promise<SearchResponse> {
-    const lang = defaultLang(dto.lang);
-    const hints = dto.lst_hint ?? [];
-    const { minLen, maxLen, letters } = planLengths(dto.cars ?? '', hints);
+  async searchMany(req: SearchManyRequest): Promise<SearchResponse> {
+    const lang = defaultLang(req.lang);
+    const hints = toHints(req.hints);
+    const { minLen, maxLen, pool } = planLengths(req.letters ?? '', hints);
     if (maxLen < minLen) {
       return { words: [], count: 0 };
     }
@@ -80,7 +95,7 @@ export class SearchService {
     }
     const perLength = await Promise.all(
       lengths.map((length) =>
-        this.runChunks(lang, length, letters, hints, false),
+        this.runChunks(lang, length, pool, hints, false),
       ),
     );
     const words = perLength.flat();

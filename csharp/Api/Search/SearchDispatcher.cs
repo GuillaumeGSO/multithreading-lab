@@ -1,4 +1,3 @@
-using WordSearch.Api.Models;
 
 namespace WordSearch.Api.Search;
 
@@ -8,37 +7,37 @@ public sealed class SearchDispatcher
     public static readonly IndexedStrategy Indexed = new();
 
     public static bool HasPinned(IReadOnlyList<Hint>? hints) =>
-        hints?.Any(h => !string.IsNullOrEmpty(h.Car) && !h.Inverted) ?? false;
+        hints?.Any(h => !string.IsNullOrEmpty(h.Letter) && !h.Excluded) ?? false;
 
     public IReadOnlyList<string> FileDispatch(
-        string lang, int nbCar, IReadOnlyList<string>? lstCar,
-        IReadOnlyList<Hint>? lstHint, bool strict)
+        string lang, int wordLength, IReadOnlyList<string>? letters,
+        IReadOnlyList<Hint>? hints, bool strict)
     {
-        ISearchStrategy strategy = HasPinned(lstHint) ? Indexed : Scan;
-        return strategy.SearchInFile(lang, nbCar, lstCar, lstHint, strict);
+        ISearchStrategy strategy = HasPinned(hints) ? Indexed : Scan;
+        return strategy.SearchInFile(lang, wordLength, letters, hints, strict);
     }
 
     public IReadOnlyList<string> FileBaseline(
-        string lang, int nbCar, IReadOnlyList<string>? lstCar,
-        IReadOnlyList<Hint>? lstHint, bool strict) =>
-        Scan.SearchInFile(lang, nbCar, lstCar, lstHint, strict);
+        string lang, int wordLength, IReadOnlyList<string>? letters,
+        IReadOnlyList<Hint>? hints, bool strict) =>
+        Scan.SearchInFile(lang, wordLength, letters, hints, strict);
 
     public IReadOnlyList<string> FileIndexed(
-        string lang, int nbCar, IReadOnlyList<string>? lstCar,
-        IReadOnlyList<Hint>? lstHint, bool strict) =>
-        Indexed.SearchInFile(lang, nbCar, lstCar, lstHint, strict);
+        string lang, int wordLength, IReadOnlyList<string>? letters,
+        IReadOnlyList<Hint>? hints, bool strict) =>
+        Indexed.SearchInFile(lang, wordLength, letters, hints, strict);
 
-    public IReadOnlyList<string> ManyBaseline(string lang, string cars, IReadOnlyList<Hint>? lstHint)
+    public IReadOnlyList<string> ManyBaseline(string lang, string letters, IReadOnlyList<Hint>? hints)
     {
-        if (string.IsNullOrEmpty(cars))
-            throw new ArgumentException("cars cannot be empty");
-        int minLen = MinLength(lstHint);
+        if (string.IsNullOrEmpty(letters))
+            throw new ArgumentException("letters cannot be empty");
+        int minLen = MinLength(hints);
         var result = new List<string>();
-        for (int len = cars.Length; len >= minLen; len--)
+        for (int len = letters.Length; len >= minLen; len--)
         {
             try
             {
-                result.AddRange(Scan.SearchInFile(lang, len, cars.Select(c => c.ToString()).ToList(), lstHint, false));
+                result.AddRange(Scan.SearchInFile(lang, len, letters.Select(c => c.ToString()).ToList(), hints, false));
             }
             catch (ArgumentException) { }
         }
@@ -50,8 +49,8 @@ public sealed class SearchDispatcher
         if (hints == null) return 1;
         int min = 1;
         foreach (var h in hints)
-            if (!string.IsNullOrEmpty(h.Car) && !h.Inverted && h.Pos > min)
-                min = h.Pos;
+            if (!string.IsNullOrEmpty(h.Letter) && !h.Excluded && h.Position > min)
+                min = h.Position;
         return min;
     }
 }

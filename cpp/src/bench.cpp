@@ -37,10 +37,10 @@ static std::vector<Hint> toHints(const json& arr) {
     std::vector<Hint> hints;
     for (const auto& h : arr) {
         Hint hint;
-        hint.pos = h.value("pos", 0);
-        if (h.contains("car") && !h["car"].is_null())
-            hint.car = h["car"].get<std::string>();
-        hint.inverted = h.value("inverted", false);
+        hint.position = h.value("position", 0);
+        if (h.contains("letter") && !h["letter"].is_null())
+            hint.letter = h["letter"].get<std::string>();
+        hint.excluded = h.value("excluded", false);
         hints.push_back(std::move(hint));
     }
     return hints;
@@ -77,16 +77,16 @@ static json runThroughput() {
     int concurrency = envInt("CONCURRENCY", 16);
     int ops = envInt("THROUGHPUT_OPS", 200);
     std::string lang = "fr";
-    int nbCar = 11;
+    int wordLength = 11;
     std::vector<std::string> letters;
     for (char c = 'a'; c <= 'z'; c++) letters.push_back(std::string(1, c));
     Hint h;
-    h.pos = 1;
-    h.car = "x";
-    h.inverted = false;
+    h.position = 1;
+    h.letter = "x";
+    h.excluded = false;
     std::vector<Hint> hints{h};
 
-    inFile(lang, nbCar, letters, hints, false); // warmup
+    inFile(lang, wordLength, letters, hints, false); // warmup
 
     std::vector<double> latencies(ops);
     std::atomic<int> idx{0};
@@ -99,7 +99,7 @@ static json runThroughput() {
                 int i = idx.fetch_add(1);
                 if (i >= ops) return;
                 auto t = std::chrono::steady_clock::now();
-                auto r = inFile(lang, nbCar, letters, hints, false);
+                auto r = inFile(lang, wordLength, letters, hints, false);
                 latencies[i] = std::chrono::duration<double, std::milli>(
                                    std::chrono::steady_clock::now() - t).count();
                 count.store(static_cast<long>(r.size()));
@@ -111,7 +111,7 @@ static json runThroughput() {
                          std::chrono::steady_clock::now() - start).count();
     std::sort(latencies.begin(), latencies.end());
     return json{
-        {"workload", "file nb_car=11 pool=26 hint=1:x (baseline scan per op)"},
+        {"workload", "file wordLength=11 pool=26 hint=1:x (baseline scan per op)"},
         {"concurrency", concurrency},
         {"ops", ops},
         {"elapsed_ms", elapsed},
@@ -142,20 +142,20 @@ int main() {
         std::string kind = c.value("kind", "file");
         std::string lang = c.value("lang", "fr");
         if (lang.empty()) lang = "fr";
-        auto hints = toHints(c.value("lst_hint", json::array()));
+        auto hints = toHints(c.value("hints", json::array()));
 
         std::vector<std::pair<std::string, std::function<std::vector<std::string>()>>> modes;
         if (kind == "file") {
-            int nbCar = c.value("nb_car", 0);
-            auto letters = c.value("lst_car", std::vector<std::string>{});
+            int wordLength = c.value("wordLength", 0);
+            auto letters = c.value("letters", std::vector<std::string>{});
             bool strict = c.value("strict", false);
-            modes.push_back({"baseline", [=]() { return inFile(lang, nbCar, letters, hints, strict); }});
-            modes.push_back({"split", [=]() { return inFileSplit(lang, nbCar, letters, hints, strict, degree); }});
+            modes.push_back({"baseline", [=]() { return inFile(lang, wordLength, letters, hints, strict); }});
+            modes.push_back({"split", [=]() { return inFileSplit(lang, wordLength, letters, hints, strict, degree); }});
         } else {
-            std::string cars = c.value("cars", "");
-            modes.push_back({"baseline", [=]() { return inManyFilesSeq(lang, cars, hints); }});
-            modes.push_back({"fanout", [=]() { return inManyFiles(lang, cars, hints); }});
-            modes.push_back({"nested", [=]() { return inManyFilesNested(lang, cars, hints, degree); }});
+            std::string letters = c.value("letters", "");
+            modes.push_back({"baseline", [=]() { return inManyFilesSeq(lang, letters, hints); }});
+            modes.push_back({"fanout", [=]() { return inManyFiles(lang, letters, hints); }});
+            modes.push_back({"nested", [=]() { return inManyFilesNested(lang, letters, hints, degree); }});
         }
 
         json modeJson = json::object();

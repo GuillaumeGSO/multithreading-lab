@@ -14,16 +14,14 @@ Concurrency appears at two independent levels:
 2. **Search layer** — a fixed pool of persistent `worker_threads`
    (`WorkerPool`) executes the scans. `/search/file` submits one task;
    `/search/many` submits one task per word length and `await`s them all,
-   concatenating the results longest-first. This is the Node analog of Go's
-   goroutine fan-out and Java's `ExecutorService`.
+   concatenating the results longest-first.
 
-The word-list cache lives inside each worker, so it is **per-thread** — a
-deliberate contrast with Go's single shared `sync.Map`. Each worker warms its
-own cache over its lifetime; no cache is shared across threads and no
-`SharedArrayBuffer` is used (the word lists are strings).
+The word-list cache lives inside each worker, so it is **per-thread**. Each
+worker warms its own cache over its lifetime; no cache is shared across threads
+and no `SharedArrayBuffer` is used (the word lists are strings).
 
-The search algorithm itself is the same brute-force scan as Python's scan strategy
-and `go` — no indexing. This isolates the concurrency model as the only variable.
+The search algorithm itself is a plain brute-force scan — no indexing — so the
+concurrency model is the only variable.
 
 ### Parallel modes & in-process benchmark
 
@@ -31,9 +29,9 @@ A worker task can scan a contiguous **chunk** of a file (`inFileRange` +
 `chunkIndex`/`chunkCount` on the task), enabling an **intra-file split** and a
 **nested** mode (per-length × per-chunk tasks). `SEARCH_MODE=parallel` (default)
 routes `/search/file` → split (`SPLIT_DEGREE` chunks) and `/search/many` →
-nested; `SEARCH_MODE=baseline` keeps one task per length. Unlike Go/C++'s raw
-threads, the extra `nested` tasks just **queue on the fixed pool** rather than
-oversubscribing. Output is identical to baseline (`worker-pool.spec.ts` asserts it).
+nested; `SEARCH_MODE=baseline` keeps one task per length. No thread is ever
+spawned per task: the extra `nested` tasks just **queue on the fixed pool**
+rather than oversubscribing. Output is identical to baseline (`worker-pool.spec.ts` asserts it).
 
 ```bash
 # Cross-language chart (from repo root)
@@ -51,22 +49,48 @@ nest/
 ├── tsconfig.json
 ├── nest-cli.json
 ├── src/
-│   ├── main.ts               # bootstrap: FastifyAdapter, port 8006
+│   ├── main.ts               # bootstrap: FastifyAdapter, port 8006, serves the spec + /docs
 │   ├── app.module.ts
+│   ├── generated/
+│   │   └── api.d.ts          # GENERATED from ../openapi.yaml (gitignored)
 │   ├── common/
-│   │   └── error.filter.ts   # maps failures to {"error": "..."}
+│   │   └── error.filter.ts   # maps failures to ErrorResponse {"error": "..."}
 │   ├── health/               # GET /health
 │   └── search/
 │       ├── search.ts         # pure brute-force algorithm + word cache
+│       ├── search.types.ts   # aliases onto the generated request/response types
 │       ├── search.worker.ts  # worker_threads entry — one length scan per task
 │       ├── worker-pool.ts    # WorkerPool — N persistent workers, task queue
 │       ├── search.controller.ts
-│       ├── search.service.ts # orchestrates file / many across the pool
-│       └── dto/
+│       └── search.service.ts # orchestrates file / many across the pool
 └── test/
     ├── search.spec.ts        # pure-logic unit tests (no workers)
     └── worker-pool.spec.ts   # pool + fan-out integration tests
 ```
+
+## API contract (spec-first)
+
+The repository's [`openapi.yaml`](../openapi.yaml) is the only definition of the API;
+there are no DTO classes or `@Api*` decorators.
+
+- **Types** — [openapi-typescript](https://openapi-ts.dev) generates
+  `src/generated/api.d.ts` from the spec. `search.types.ts` exposes
+  `components['schemas'][…]` as `SearchFileRequest`, `SearchManyRequest`,
+  `SearchResponse`, `HealthResponse`, `ErrorResponse` and `HintRequest`, used by the
+  controllers, the service, the exception filter and the benchmark. Generation uses
+  `--default-non-nullable false`, so fields with a spec `default` stay optional in the
+  request types. TypeScript types carry no runtime values, so the service applies those
+  defaults (`lang = "fr"`, empty lists, `excluded = false`).
+- **Spec and docs** — `main.ts` loads `openapi.yaml` with `js-yaml` and hands it to
+  `SwaggerModule.setup`, which serves Swagger UI at `/docs`, the document at
+  `/openapi.json` and `/openapi.yaml`. `@nestjs/swagger` (+ `@fastify/static`) is used
+  only for the UI, never to build the document.
+- **Status codes** — both search routes use `@HttpCode(200)`, as the contract
+  specifies (Nest's POST default is 201).
+
+`src/generated/` is **gitignored**. `npm run generate` rebuilds it, and runs
+automatically before `npm run build` (`prebuild`) and `npm test` (`pretest`), so a
+spec change is picked up by the next build or test run.
 
 ## Local development
 
@@ -79,9 +103,10 @@ Requires Node 22+.
 ```bash
 # From the nest/ directory
 cd nest && npm install
+npm run generate                       # src/generated/api.d.ts from ../openapi.yaml
 ASSETS_ROOT=../assets PORT=8006 npm run start:dev
 
-# The API starts on http://localhost:8006
+# The API starts on http://localhost:8006 (Swagger UI at /docs)
 ```
 
 ## Docker
@@ -97,7 +122,7 @@ docker run -p 8006:8006 seek-words-nest
 
 ## Unit tests
 
-Two suites mirror the Python / go suites:
+Two suites:
 
 - `search.spec.ts` — pure algorithm: content/hint matching plus integration
   assertions against the real asset files. No worker threads.
@@ -113,6 +138,9 @@ npm run test:integration   # builds, then the worker-pool suite
 
 ## API
 
+The contract is the repository's [`openapi.yaml`](../openapi.yaml); browse it at
+`/docs` (Swagger UI) or fetch it from `/openapi.json` / `/openapi.yaml`.
+
 ### `GET /health`
 
 ```json
@@ -121,34 +149,44 @@ npm run test:integration   # builds, then the worker-pool suite
 
 ### `POST /search/file`
 
-Search words of a fixed length using available letters and/or positional hints.
+Words of exactly `wordLength` characters built from `letters` and/or matching the
+positional `hints`.
 
 ```json
 // Request
 {
   "lang": "fr",
-  "nb_car": 5,
-  "lst_car": ["e","l","i","s","a"],
-  "lst_hint": [
-    {"pos": 1, "car": "s", "inverted": false}
+  "wordLength": 5,
+  "letters": ["e","l","i","s","a"],
+  "hints": [
+    {"position": 1, "letter": "s", "excluded": false}
   ],
   "strict": false
 }
 
 // Response
-{"words": ["ailes", "alise", ...], "count": 8}
+{"words": ["saisi", "salai", "salas", ...], "count": 20}
 ```
 
 ### `POST /search/many`
 
-Search words across all lengths up to `len(cars)`, results ordered longest-first.
+Words of every length up to the number of `letters`, ordered longest-first.
 
 ```json
 // Request
-{"lang": "fr", "cars": "guillaume", "lst_hint": []}
+{"lang": "fr", "letters": "guillaume", "hints": []}
 
 // Response
-{"words": [...], "count": 494}
+{"words": ["aiguillai", "aiguillee", ...], "count": 494}
+```
+
+### Errors
+
+An invalid request (malformed JSON, `wordLength` of 0, or neither `letters` nor
+`hints`) answers `400` with the contract's `ErrorResponse`:
+
+```json
+{"error": "letters and hints cannot both be empty"}
 ```
 
 ## Environment variables
@@ -160,3 +198,4 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 | `WORKER_POOL_SIZE` | `2`                 | Number of persistent search worker threads   |
 | `SEARCH_MODE`      | `parallel`          | `parallel` routes the API through split/nested; `baseline` is one task per length |
 | `SPLIT_DEGREE`     | `2`                 | Intra-file chunk count for `split`/`nested`  |
+| `OPENAPI_PATH`     | `../openapi.yaml` (relative to `dist/`, i.e. the repo root) | API contract served at `/openapi.json`, `/openapi.yaml`, `/docs` |

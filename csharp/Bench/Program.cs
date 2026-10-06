@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using WordSearch.Api.Models;
 using WordSearch.Api.Search;
 
 static int EnvInt(string key, int def) =>
@@ -44,15 +43,15 @@ static IReadOnlyList<Hint> ToHints(JsonArray? arr)
     var hints = new List<Hint>();
     foreach (var h in arr)
     {
-        string? car = h?["car"]?.GetValue<string>();
-        int pos = h?["pos"]?.GetValue<int>() ?? 0;
-        bool inv = h?["inverted"]?.GetValue<bool>() ?? false;
-        hints.Add(new Hint(pos, car, inv));
+        string? letter = h?["letter"]?.GetValue<string>();
+        int position = h?["position"]?.GetValue<int>() ?? 0;
+        bool excluded = h?["excluded"]?.GetValue<bool>() ?? false;
+        hints.Add(new Hint(position, letter, excluded));
     }
     return hints;
 }
 
-static List<string> ToLstCar(JsonArray? arr)
+static List<string> ToLetters(JsonArray? arr)
 {
     if (arr == null) return [];
     var list = new List<string>();
@@ -68,24 +67,24 @@ foreach (var c in casesJson)
     string kind = c?["kind"]?.GetValue<string>() ?? "file";
     string lang = c?["lang"]?.GetValue<string>() ?? "fr";
     if (string.IsNullOrEmpty(lang)) lang = "fr";
-    var hints = ToHints(c?["lst_hint"]?.AsArray());
+    var hints = ToHints(c?["hints"]?.AsArray());
 
     var modes = new Dictionary<string, Func<IReadOnlyList<string>>>();
     if (kind == "file")
     {
-        int nbCar = c?["nb_car"]?.GetValue<int>() ?? 0;
-        var lstCar = ToLstCar(c?["lst_car"]?.AsArray());
+        int wordLength = c?["wordLength"]?.GetValue<int>() ?? 0;
+        var letters = ToLetters(c?["letters"]?.AsArray());
         bool strict = c?["strict"]?.GetValue<bool>() ?? false;
-        modes["baseline"] = () => dispatcher.FileBaseline(lang, nbCar, lstCar, hints, strict);
-        modes["indexed"] = () => dispatcher.FileIndexed(lang, nbCar, lstCar, hints, strict);
-        modes["split"] = () => parallel.FileSplitAsync(lang, nbCar, lstCar, hints, strict, degree).GetAwaiter().GetResult();
+        modes["baseline"] = () => dispatcher.FileBaseline(lang, wordLength, letters, hints, strict);
+        modes["indexed"] = () => dispatcher.FileIndexed(lang, wordLength, letters, hints, strict);
+        modes["split"] = () => parallel.FileSplitAsync(lang, wordLength, letters, hints, strict, degree).GetAwaiter().GetResult();
     }
     else
     {
-        string cars = c?["cars"]?.GetValue<string>() ?? "";
-        modes["baseline"] = () => dispatcher.ManyBaseline(lang, cars, hints);
-        modes["fanout"] = () => parallel.ManyFanoutAsync(lang, cars, hints).GetAwaiter().GetResult();
-        modes["nested"] = () => parallel.ManyNestedAsync(lang, cars, hints, degree).GetAwaiter().GetResult();
+        string letters = c?["letters"]?.GetValue<string>() ?? "";
+        modes["baseline"] = () => dispatcher.ManyBaseline(lang, letters, hints);
+        modes["fanout"] = () => parallel.ManyFanoutAsync(lang, letters, hints).GetAwaiter().GetResult();
+        modes["nested"] = () => parallel.ManyNestedAsync(lang, letters, hints, degree).GetAwaiter().GetResult();
     }
 
     var modeResults = new Dictionary<string, object>();
@@ -102,12 +101,12 @@ foreach (var c in casesJson)
 // Throughput: THROUGHPUT_OPS baseline scans with CONCURRENCY threads in flight
 int concurrency = EnvInt("CONCURRENCY", 16);
 string tLang = "fr";
-int tNbCar = 11;
-var tLstCar = Enumerable.Range('a', 26).Select(c => ((char)c).ToString()).ToList();
+int tWordLength = 11;
+var tLetters = Enumerable.Range('a', 26).Select(c => ((char)c).ToString()).ToList();
 var tHints = new List<Hint> { new Hint(1, "x", false) };
 
 // warmup
-dispatcher.FileBaseline(tLang, tNbCar, tLstCar, tHints, false);
+dispatcher.FileBaseline(tLang, tWordLength, tLetters, tHints, false);
 
 var latencies = new double[throughputOps];
 int tCount = 0;
@@ -124,7 +123,7 @@ for (int i = 0; i < throughputOps; i++)
         try
         {
             long s = Stopwatch.GetTimestamp();
-            var r = dispatcher.FileBaseline(tLang, tNbCar, tLstCar, tHints, false);
+            var r = dispatcher.FileBaseline(tLang, tWordLength, tLetters, tHints, false);
             latencies[idx] = Stopwatch.GetElapsedTime(s).TotalMilliseconds;
             Interlocked.Exchange(ref tCount, r.Count);
         }
@@ -146,7 +145,7 @@ var report = new
     cases = outCases,
     throughput = new
     {
-        workload = "file nb_car=11 pool=26 hint=1:x (baseline scan per op)",
+        workload = "file wordLength=11 pool=26 hint=1:x (baseline scan per op)",
         concurrency,
         ops = throughputOps,
         elapsed_ms = tElapsed,

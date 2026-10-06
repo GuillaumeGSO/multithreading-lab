@@ -1,4 +1,4 @@
-// Package search ports the brute-force word-search algorithm (Python's scan strategy).
+// Package search implements the brute-force word-search scan.
 // It filters word lists by available letters, positional hints, and word length.
 package search
 
@@ -26,13 +26,13 @@ func SplitDegree() int {
 	return 2
 }
 
-// Hint is a positional constraint on a word. Pos is 1-indexed. Car is the
-// expected character; a nil or empty Car imposes no constraint. When Inverted
-// is true the character must NOT appear at Pos.
+// Hint is a positional constraint on a word. Position is 1-indexed. Letter is
+// the expected character; an empty Letter imposes no constraint. When Excluded
+// is true the letter must NOT appear at Position.
 type Hint struct {
-	Pos      int
-	Car      *string
-	Inverted bool
+	Position int
+	Letter   string
+	Excluded bool
 }
 
 // wordCache holds word lists keyed by "lang/length". Each key is written once
@@ -83,7 +83,7 @@ func noLetters(letters []string) bool {
 // noHints reports whether the hint list imposes no constraint.
 func noHints(hints []Hint) bool {
 	for _, h := range hints {
-		if h.Car != nil && *h.Car != "" {
+		if h.Letter != "" {
 			return false
 		}
 	}
@@ -119,21 +119,21 @@ func matchesHints(word string, hints []Hint) bool {
 	}
 	runes := []rune(word)
 	for _, h := range hints {
-		if h.Car == nil || *h.Car == "" {
+		if h.Letter == "" {
 			continue
 		}
-		if h.Pos > len(runes) {
-			if !h.Inverted {
+		if h.Position > len(runes) {
+			if !h.Excluded {
 				return false
 			}
 			continue
 		}
-		car := []rune(*h.Car)[0]
-		if h.Inverted {
-			if runes[h.Pos-1] == car {
+		letter := []rune(h.Letter)[0]
+		if h.Excluded {
+			if runes[h.Position-1] == letter {
 				return false
 			}
-		} else if runes[h.Pos-1] != car {
+		} else if runes[h.Position-1] != letter {
 			return false
 		}
 	}
@@ -162,29 +162,29 @@ func scanWords(words, letters []string, hints []Hint, strict, emptyLetters, empt
 }
 
 // lengthPlan returns the word lengths to scan (longest-first) and the letter
-// pool for InManyFiles* given the available cars and the hints. A normal
-// (non-inverted) hint at position N forces words of length >= N. Returns empty
+// pool for InManyFiles* given the available letters and the hints. A pinned
+// (non-excluded) hint at position N forces words of length >= N. Returns empty
 // slices when no length can satisfy the hints.
-func lengthPlan(cars string, hints []Hint) (lengths []int, letters []string) {
-	carsRunes := []rune(cars)
-	maxLen := len(carsRunes)
+func lengthPlan(letters string, hints []Hint) (lengths []int, pool []string) {
+	runes := []rune(letters)
+	maxLen := len(runes)
 	minLen := 1
 	for _, h := range hints {
-		if h.Car != nil && *h.Car != "" && !h.Inverted && h.Pos > minLen {
-			minLen = h.Pos
+		if h.Letter != "" && !h.Excluded && h.Position > minLen {
+			minLen = h.Position
 		}
 	}
 	if maxLen < minLen {
 		return nil, nil
 	}
-	letters = make([]string, maxLen)
-	for i, r := range carsRunes {
-		letters[i] = string(r)
+	pool = make([]string, maxLen)
+	for i, r := range runes {
+		pool[i] = string(r)
 	}
 	for l := maxLen; l >= minLen; l-- {
 		lengths = append(lengths, l)
 	}
-	return lengths, letters
+	return lengths, pool
 }
 
 // validateFilters errors when length is zero or neither letters nor hints are set.
@@ -256,24 +256,24 @@ func InFileSplit(lang string, length int, letters []string, hints []Hint, strict
 }
 
 // InManyFilesSeq scans every length sequentially (baseline — no concurrency).
-func InManyFilesSeq(lang string, cars string, hints []Hint) ([]string, error) {
-	lengths, letters := lengthPlan(cars, hints)
+func InManyFilesSeq(lang string, letters string, hints []Hint) ([]string, error) {
+	lengths, pool := lengthPlan(letters, hints)
 	result := []string{}
 	for _, length := range lengths {
-		if words, err := InFile(lang, length, letters, hints, false); err == nil {
+		if words, err := InFile(lang, length, pool, hints, false); err == nil {
 			result = append(result, words...)
 		}
 	}
 	return result, nil
 }
 
-// InManyFiles returns words of every length from len(cars) down to the minimum
+// InManyFiles returns words of every length from len(letters) down to the minimum
 // length implied by the hints, ordered longest-first. Each length is scanned in
 // its own goroutine (axis A — per-length fan-out); results are reassembled in
 // length order.
-func InManyFiles(lang string, cars string, hints []Hint) ([]string, error) {
-	return manyFanOut(lang, cars, hints, func(length int, letters []string) ([]string, error) {
-		return InFile(lang, length, letters, hints, false)
+func InManyFiles(lang string, letters string, hints []Hint) ([]string, error) {
+	return manyFanOut(lang, letters, hints, func(length int, pool []string) ([]string, error) {
+		return InFile(lang, length, pool, hints, false)
 	})
 }
 
@@ -281,23 +281,23 @@ func InManyFiles(lang string, cars string, hints []Hint) ([]string, error) {
 // into `threads` chunks (axis B) — i.e. goroutines spawning goroutines. On a
 // CPU-bounded box this deliberately oversubscribes; that is the effect under
 // study. Output is identical to InManyFiles.
-func InManyFilesNested(lang string, cars string, hints []Hint, threads int) ([]string, error) {
-	return manyFanOut(lang, cars, hints, func(length int, letters []string) ([]string, error) {
-		return InFileSplit(lang, length, letters, hints, false, threads)
+func InManyFilesNested(lang string, letters string, hints []Hint, threads int) ([]string, error) {
+	return manyFanOut(lang, letters, hints, func(length int, pool []string) ([]string, error) {
+		return InFileSplit(lang, length, pool, hints, false, threads)
 	})
 }
 
 // manyFanOut runs `scan` for each planned length in its own goroutine and
 // reassembles results longest-first.
-func manyFanOut(lang, cars string, hints []Hint, scan func(length int, letters []string) ([]string, error)) ([]string, error) {
-	lengths, letters := lengthPlan(cars, hints)
+func manyFanOut(lang, letters string, hints []Hint, scan func(length int, pool []string) ([]string, error)) ([]string, error) {
+	lengths, pool := lengthPlan(letters, hints)
 	partials := make([][]string, len(lengths))
 	var wg sync.WaitGroup
 	for idx, length := range lengths {
 		wg.Add(1)
 		go func(idx, length int) {
 			defer wg.Done()
-			if words, err := scan(length, letters); err == nil {
+			if words, err := scan(length, pool); err == nil {
 				partials[idx] = words
 			}
 		}(idx, length)

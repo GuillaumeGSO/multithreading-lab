@@ -1,7 +1,5 @@
 package com.lab.search.service;
 
-import com.lab.search.model.Hint;
-import com.lab.search.model.SearchResponse;
 import com.lab.search.service.strategy.IndexedStrategy;
 import com.lab.search.service.strategy.ScanStrategy;
 import com.lab.search.service.strategy.SearchStrategy;
@@ -64,51 +62,49 @@ public class WordSearchService {
 
     // --- API entry points (controller) ---
 
-    public SearchResponse searchInFile(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict) {
-        var words = parallel
-                ? fileSplit(lang, nbCar, lstCar, lstHint, strict, splitDegree)
-                : fileDispatch(lang, nbCar, lstCar, lstHint, strict);
-        return SearchResponse.of(words);
+    public List<String> searchInFile(String lang, int wordLength, List<String> letters, List<Hint> hints, boolean strict) {
+        return parallel
+                ? fileSplit(lang, wordLength, letters, hints, strict, splitDegree)
+                : fileDispatch(lang, wordLength, letters, hints, strict);
     }
 
-    public SearchResponse searchInManyFiles(String lang, String cars, List<Hint> lstHint) {
-        var words = parallel
-                ? manyNested(lang, cars, lstHint, splitDegree)
-                : manyFanout(lang, cars, lstHint);
-        return SearchResponse.of(words);
+    public List<String> searchInManyFiles(String lang, String letters, List<Hint> hints) {
+        return parallel
+                ? manyNested(lang, letters, hints, splitDegree)
+                : manyFanout(lang, letters, hints);
     }
 
     // --- strategy dispatch (baseline path for /search/file) ---
 
     /// Routes to IndexedStrategy when a pinned hint is present, ScanStrategy otherwise.
     /// Used by searchInFile() when parallel=false; also callable directly (tests, benchmark).
-    public List<String> fileDispatch(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict) {
-        if (isEffectivelyEmpty(lstCar) && hasNoCarHints(lstHint)) {
-            throw new IllegalArgumentException("Either lst_car or lst_hint must be provided");
+    public List<String> fileDispatch(String lang, int wordLength, List<String> letters, List<Hint> hints, boolean strict) {
+        if (wordLength <= 0 || (isEffectivelyEmpty(letters) && hasNoLetterHints(hints))) {
+            throw new IllegalArgumentException("letters and hints cannot both be empty");
         }
-        var words = loadWords(lang, nbCar);
-        return chooseStrategy(lstHint).searchInFile(lang, nbCar, words, lstCar, lstHint, strict,
-                isEffectivelyEmpty(lstCar), hasNoCarHints(lstHint));
+        var words = loadWords(lang, wordLength);
+        return chooseStrategy(hints).searchInFile(lang, wordLength, words, letters, hints, strict,
+                isEffectivelyEmpty(letters), hasNoLetterHints(hints));
     }
 
     /// Forces IndexedStrategy regardless of hints. Used for benchmarking and direct tests.
-    public List<String> fileIndexed(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict) {
-        if (isEffectivelyEmpty(lstCar) && hasNoCarHints(lstHint)) {
-            throw new IllegalArgumentException("Either lst_car or lst_hint must be provided");
+    public List<String> fileIndexed(String lang, int wordLength, List<String> letters, List<Hint> hints, boolean strict) {
+        if (wordLength <= 0 || (isEffectivelyEmpty(letters) && hasNoLetterHints(hints))) {
+            throw new IllegalArgumentException("letters and hints cannot both be empty");
         }
-        var words = loadWords(lang, nbCar);
-        return indexedStrategy.searchInFile(lang, nbCar, words, lstCar, lstHint, strict,
-                isEffectivelyEmpty(lstCar), hasNoCarHints(lstHint));
+        var words = loadWords(lang, wordLength);
+        return indexedStrategy.searchInFile(lang, wordLength, words, letters, hints, strict,
+                isEffectivelyEmpty(letters), hasNoLetterHints(hints));
     }
 
-    private SearchStrategy chooseStrategy(List<Hint> lstHint) {
-        return hasPinned(lstHint) ? indexedStrategy : scanStrategy;
+    private SearchStrategy chooseStrategy(List<Hint> hints) {
+        return hasPinned(hints) ? indexedStrategy : scanStrategy;
     }
 
-    private static boolean hasPinned(List<Hint> lstHint) {
-        if (lstHint == null) return false;
-        for (Hint h : lstHint)
-            if (h.car() != null && !h.car().isEmpty() && !h.inverted()) return true;
+    private static boolean hasPinned(List<Hint> hints) {
+        if (hints == null) return false;
+        for (Hint h : hints)
+            if (h.letter() != null && !h.letter().isEmpty() && !h.excluded()) return true;
         return false;
     }
 
@@ -117,14 +113,14 @@ public class WordSearchService {
     /// scan filters words[from, to) by the letter pool and/or hints, in order.
     /// Single per-word predicate shared by sequential and parallel paths, so
     /// they always agree on matches and ordering. Thread-safe over a shared
-    /// lstCar (matchesContent copies internally for strict mode).
-    private List<String> scan(List<String> words, int from, int to, List<String> lstCar,
-                              List<Hint> lstHint, boolean strict, boolean emptyCars, boolean emptyHints) {
+    /// letters (matchesContent copies internally for strict mode).
+    private List<String> scan(List<String> words, int from, int to, List<String> letters,
+                              List<Hint> hints, boolean strict, boolean emptyLetters, boolean emptyHints) {
         List<String> results = new ArrayList<>();
         for (int i = from; i < to; i++) {
             String word = words.get(i);
-            boolean contentOk = emptyCars || matchesContent(word, lstCar, strict);
-            boolean hintOk = emptyHints || matchesHints(word, lstHint);
+            boolean contentOk = emptyLetters || matchesContent(word, letters, strict);
+            boolean hintOk = emptyHints || matchesHints(word, hints);
             if (contentOk && hintOk) {
                 results.add(word);
             }
@@ -133,27 +129,27 @@ public class WordSearchService {
     }
 
     /// Baseline single-threaded file scan.
-    public List<String> fileBaseline(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict) {
-        if (isEffectivelyEmpty(lstCar) && hasNoCarHints(lstHint)) {
-            throw new IllegalArgumentException("Either lst_car or lst_hint must be provided");
+    public List<String> fileBaseline(String lang, int wordLength, List<String> letters, List<Hint> hints, boolean strict) {
+        if (wordLength <= 0 || (isEffectivelyEmpty(letters) && hasNoLetterHints(hints))) {
+            throw new IllegalArgumentException("letters and hints cannot both be empty");
         }
-        var words = loadWords(lang, nbCar);
-        return scan(words, 0, words.size(), lstCar, lstHint, strict,
-                isEffectivelyEmpty(lstCar), hasNoCarHints(lstHint));
+        var words = loadWords(lang, wordLength);
+        return scan(words, 0, words.size(), letters, hints, strict,
+                isEffectivelyEmpty(letters), hasNoLetterHints(hints));
     }
 
     /// Intra-file split (axis B): word list scanned in `threads` contiguous
     /// chunks on virtual threads, merged in index order (== fileBaseline).
-    public List<String> fileSplit(String lang, int nbCar, List<String> lstCar, List<Hint> lstHint, boolean strict, int threads) {
-        if (isEffectivelyEmpty(lstCar) && hasNoCarHints(lstHint)) {
-            throw new IllegalArgumentException("Either lst_car or lst_hint must be provided");
+    public List<String> fileSplit(String lang, int wordLength, List<String> letters, List<Hint> hints, boolean strict, int threads) {
+        if (wordLength <= 0 || (isEffectivelyEmpty(letters) && hasNoLetterHints(hints))) {
+            throw new IllegalArgumentException("letters and hints cannot both be empty");
         }
-        var words = loadWords(lang, nbCar);
-        boolean emptyCars = isEffectivelyEmpty(lstCar);
-        boolean emptyHints = hasNoCarHints(lstHint);
+        var words = loadWords(lang, wordLength);
+        boolean emptyLetters = isEffectivelyEmpty(letters);
+        boolean emptyHints = hasNoLetterHints(hints);
         int n = Math.max(1, Math.min(threads, Math.max(1, words.size())));
         if (n <= 1) {
-            return scan(words, 0, words.size(), lstCar, lstHint, strict, emptyCars, emptyHints);
+            return scan(words, 0, words.size(), letters, hints, strict, emptyLetters, emptyHints);
         }
         int chunk = (words.size() + n - 1) / n; // ceil keeps chunks contiguous
         var futures = new ArrayList<Future<List<String>>>();
@@ -162,22 +158,22 @@ public class WordSearchService {
                 final int start = Math.min(idx * chunk, words.size());
                 final int end = Math.min(start + chunk, words.size());
                 futures.add(executor.submit(() ->
-                        scan(words, start, end, lstCar, lstHint, strict, emptyCars, emptyHints)));
+                        scan(words, start, end, letters, hints, strict, emptyLetters, emptyHints)));
             }
         }
         return drain(futures, false);
     }
 
     /// Baseline sequential scan across every length (no concurrency).
-    public List<String> manyBaseline(String lang, String cars, List<Hint> lstHint) {
-        validateCars(cars);
-        int minLen = minLength(lstHint);
-        int maxLen = cars.length();
+    public List<String> manyBaseline(String lang, String letters, List<Hint> hints) {
+        validateLetters(letters);
+        int minLen = minLength(hints);
+        int maxLen = letters.length();
         List<String> results = new ArrayList<>();
         for (int len = maxLen; len >= minLen; len--) {
             try {
-                List<String> lstCar = new ArrayList<>(List.of(cars.split("")));
-                results.addAll(fileBaseline(lang, len, lstCar, lstHint, false));
+                List<String> pool = new ArrayList<>(List.of(letters.split("")));
+                results.addAll(fileBaseline(lang, len, pool, hints, false));
             } catch (UncheckedIOException e) {
                 // skip lengths with no word file
             }
@@ -186,29 +182,29 @@ public class WordSearchService {
     }
 
     /// Per-length fan-out (axis A) over virtual threads. (Original Java model.)
-    public List<String> manyFanout(String lang, String cars, List<Hint> lstHint) {
-        return manyParallel(cars, lstHint, (len, lstCar) -> fileBaseline(lang, len, lstCar, lstHint, false));
+    public List<String> manyFanout(String lang, String letters, List<Hint> hints) {
+        return manyParallel(letters, hints, (len, pool) -> fileBaseline(lang, len, pool, hints, false));
     }
 
     /// Nested: per-length fan-out (axis A) AND each length split into `threads`
     /// chunks (axis B) — virtual threads spawning virtual threads. Output is
     /// identical to manyFanout.
-    public List<String> manyNested(String lang, String cars, List<Hint> lstHint, int threads) {
-        return manyParallel(cars, lstHint, (len, lstCar) -> fileSplit(lang, len, lstCar, lstHint, false, threads));
+    public List<String> manyNested(String lang, String letters, List<Hint> hints, int threads) {
+        return manyParallel(letters, hints, (len, pool) -> fileSplit(lang, len, pool, hints, false, threads));
     }
 
-    private List<String> manyParallel(String cars, List<Hint> lstHint,
+    private List<String> manyParallel(String letters, List<Hint> hints,
                                       BiFunction<Integer, List<String>, List<String>> scanLen) {
-        validateCars(cars);
-        int minLen = minLength(lstHint);
-        int maxLen = cars.length();
+        validateLetters(letters);
+        int minLen = minLength(hints);
+        int maxLen = letters.length();
         var futures = new ArrayList<Future<List<String>>>();
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             for (int len = maxLen; len >= minLen; len--) {
-                final int nbCar = len;
+                final int length = len;
                 futures.add(executor.submit(() -> {
-                    List<String> lstCar = new ArrayList<>(List.of(cars.split("")));
-                    return scanLen.apply(nbCar, lstCar);
+                    List<String> pool = new ArrayList<>(List.of(letters.split("")));
+                    return scanLen.apply(length, pool);
                 }));
             }
         }
@@ -238,27 +234,27 @@ public class WordSearchService {
         return results;
     }
 
-    private static void validateCars(String cars) {
-        if (cars == null || cars.isEmpty()) {
-            throw new IllegalArgumentException("cars must be provided");
+    private static void validateLetters(String letters) {
+        if (letters == null || letters.isEmpty()) {
+            throw new IllegalArgumentException("letters must be provided");
         }
     }
 
-    /// A normal (non-inverted) hint at position N forces words of length >= N.
-    private static int minLength(List<Hint> lstHint) {
-        return lstHint.stream()
-                .filter(h -> h.car() != null && !h.inverted())
-                .mapToInt(Hint::pos)
+    /// A pinned (non-excluded) hint at position N forces words of length >= N.
+    private static int minLength(List<Hint> hints) {
+        return hints.stream()
+                .filter(h -> h.letter() != null && !h.excluded())
+                .mapToInt(Hint::position)
                 .max()
                 .orElse(1);
     }
 
     // --- helpers ---
 
-    private List<String> loadWords(String lang, int nbCar) {
-        var key = lang + "/" + nbCar;
+    private List<String> loadWords(String lang, int wordLength) {
+        var key = lang + "/" + wordLength;
         return wordCache.computeIfAbsent(key, k -> {
-            var file = assetsRoot.resolve(lang).resolve(nbCar + ".txt");
+            var file = assetsRoot.resolve(lang).resolve(wordLength + ".txt");
             try {
                 return Files.readAllLines(file);
             } catch (IOException e) {
@@ -273,12 +269,12 @@ public class WordSearchService {
                 .replaceAll("\\p{InCombiningDiacriticalMarks}", "");
     }
 
-    public static boolean matchesContent(String word, List<String> lstCar, boolean strict) {
+    public static boolean matchesContent(String word, List<String> letters, boolean strict) {
         String normalized = normalize(word);
-        if (normalized.isEmpty() || lstCar.isEmpty()) return false;
+        if (normalized.isEmpty() || letters.isEmpty()) return false;
         if (strict) {
             // Each letter must be consumed exactly once — work on a mutable copy
-            List<String> available = new ArrayList<>(lstCar);
+            List<String> available = new ArrayList<>(letters);
             for (char c : normalized.toCharArray()) {
                 String ch = String.valueOf(c);
                 int idx = available.indexOf(ch);
@@ -288,21 +284,21 @@ public class WordSearchService {
             return true;
         } else {
             for (char c : normalized.toCharArray()) {
-                if (!lstCar.contains(String.valueOf(c))) return false;
+                if (!letters.contains(String.valueOf(c))) return false;
             }
             return true;
         }
     }
 
-    public static boolean matchesHints(String word, List<Hint> lstHint) {
-        for (Hint hint : lstHint) {
-            if (hint.car() == null) continue;
-            int pos = hint.pos();
-            if (!hint.inverted() && pos > word.length()) return false;
+    public static boolean matchesHints(String word, List<Hint> hints) {
+        for (Hint hint : hints) {
+            if (hint.letter() == null) continue;
+            int pos = hint.position();
+            if (!hint.excluded() && pos > word.length()) return false;
             if (pos > word.length()) continue;
             char actual = word.charAt(pos - 1);
-            char expected = hint.car().charAt(0);
-            if (hint.inverted()) {
+            char expected = hint.letter().charAt(0);
+            if (hint.excluded()) {
                 if (actual == expected) return false;
             } else {
                 if (actual != expected) return false;
@@ -315,7 +311,7 @@ public class WordSearchService {
         return lst == null || lst.stream().allMatch(s -> s == null || s.isEmpty());
     }
 
-    public static boolean hasNoCarHints(List<Hint> lst) {
-        return lst == null || lst.stream().allMatch(h -> h.car() == null || h.car().isEmpty());
+    public static boolean hasNoLetterHints(List<Hint> lst) {
+        return lst == null || lst.stream().allMatch(h -> h.letter() == null || h.letter().isEmpty());
     }
 }

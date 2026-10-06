@@ -28,15 +28,15 @@ _ASSETS_ROOT = Path(os.environ.get("ASSETS_ROOT") or str(Path(__file__).parent.p
 _base_cache: dict[str, list[tuple[str, str, bytes]]] = {}
 
 
-def load_base(lang: str, nb_car: int) -> list[tuple[str, str, bytes]]:
-    """Words of length `nb_car` as `(word, normalized, freq)` tuples, cached per key.
+def load_base(lang: str, word_length: int) -> list[tuple[str, str, bytes]]:
+    """Words of length `word_length` as `(word, normalized, freq)` tuples, cached per key.
     freq is a 26-byte letter-frequency array for the normalized form, computed once at
     load time so the strict-mode predicate needs no per-word Counter at query time.
     Missing file → []. Accent-free words share one string for word and normalized."""
-    key = f"{lang}/{nb_car}"
+    key = f"{lang}/{word_length}"
     if key not in _base_cache:
         logger.info("base load: %s", key)
-        file_name = _ASSETS_ROOT / lang / f"{nb_car}.txt"
+        file_name = _ASSETS_ROOT / lang / f"{word_length}.txt"
         try:
             with open(file_name, "r", encoding="utf-8") as f:
                 base: list[tuple[str, str, bytes]] = []
@@ -59,17 +59,17 @@ def load_base(lang: str, nb_car: int) -> list[tuple[str, str, bytes]]:
 
 
 class Hint:
-    pos: int
-    car: str | None = None
-    inverted: bool = False
+    position: int
+    letter: str | None = None
+    excluded: bool = False
 
-    def __init__(self, pos, car=None, inverted=False):
-        self.pos = pos
-        self.car = car
-        self.inverted = inverted
+    def __init__(self, position, letter=None, excluded=False):
+        self.position = position
+        self.letter = letter
+        self.excluded = excluded
 
     def __repr__(self):
-        return f"pos:{self.pos}, car:{self.car}, inverted:{self.inverted}"
+        return f"position:{self.position}, letter:{self.letter}, excluded:{self.excluded}"
 
 
 def is_list_empty_or_full_of_none(lst):
@@ -81,7 +81,7 @@ def is_list_empty_or_full_of_none(lst):
 def is_hint_list_empty_or_full_of_none(lst: List[Hint]):
     if not lst:
         return True
-    return all(not x.car for x in lst)
+    return all(not x.letter for x in lst)
 
 
 def is_search_by_hint(word: str, hint_list: List[Hint] = None):
@@ -92,14 +92,14 @@ def is_search_by_hint(word: str, hint_list: List[Hint] = None):
     hint_list = hint_list or []
     if is_hint_list_empty_or_full_of_none(hint_list):
         return True
-    for hint in (x for x in hint_list if x.car):
-        if int(hint.pos) > len(word):
-            if not hint.inverted:
+    for hint in (x for x in hint_list if x.letter):
+        if int(hint.position) > len(word):
+            if not hint.excluded:
                 return False
-        elif hint.inverted:
-            if word[int(hint.pos) - 1] == hint.car:
+        elif hint.excluded:
+            if word[int(hint.position) - 1] == hint.letter:
                 return False
         else:
-            if word[int(hint.pos) - 1] != hint.car:
+            if word[int(hint.position) - 1] != hint.letter:
                 return False
     return True

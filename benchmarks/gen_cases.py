@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deterministically generate a balanced, realistic cases.json.
 
-Earlier versions used pathological inputs (20+ letter pools, 8-12 inverted hints)
+Earlier versions used pathological inputs (20+ letter pools, 8-12 excluded hints)
 to stress the brute-force scan — but no real letter-game query looks like that.
 This version builds a *balanced grid* that mirrors actual usage, so the
 indexed-vs-scan crossover it reveals reflects reality:
@@ -11,7 +11,7 @@ indexed-vs-scan crossover it reveals reflects reality:
   * Four query shapes per length — the variable under study:
       none     - rack only, no positional hints
       normal   - rack + 2 'pinned'   hints (letter IS at this position)
-      inverted - rack + 2 'excluded' hints (letter is NOT at this position)
+      excluded - rack + 2 'excluded' hints (letter is NOT at this position)
       mixed    - rack + 1 pinned + 1 excluded
   * The same four shapes for a few realistic /search/many racks (7-9 letters).
   * A 'none-wide' letters-only case per length with a generous pool (~16 letters) —
@@ -41,16 +41,16 @@ ASSETS_ROOT = os.path.join(HERE, "..", "assets")
 ASCII_WORD = re.compile(r"^[a-z]+$")
 
 RACK_DECOYS = 3                # extra letters beyond the seed's own, in every rack
-N_HINTS = 2                    # hints in the normal / inverted variants (mixed = 1+1)
+N_HINTS = 2                    # hints in the normal / excluded variants (mixed = 1+1)
 FILE_LENGTHS = range(4, 14)    # one /file case-group per length 4..13
 MANY_RACKS = (7, 8, 9)         # realistic /search/many rack sizes
 WIDE_POOL = 16                 # generous letters-only pool ("what can I build from these")
 
-# The four query shapes under study, as (suffix, n_normal, n_inverted).
+# The four query shapes under study, as (suffix, n_normal, n_excluded).
 SHAPES = [
     ("none", 0, 0),
     ("normal", N_HINTS, 0),
-    ("inverted", 0, N_HINTS),
+    ("excluded", 0, N_HINTS),
     ("mixed", 1, 1),
 ]
 
@@ -105,20 +105,20 @@ def make_strict_rack(word: str, decoys: int = RACK_DECOYS) -> list[str]:
     return letters
 
 
-def make_hints(word: str, n_normal: int, n_inverted: int) -> list[dict]:
-    """`n_normal` pinned hints (pin word[pos]) + `n_inverted` excluded hints (forbid a
+def make_hints(word: str, n_normal: int, n_excluded: int) -> list[dict]:
+    """`n_normal` pinned hints (pin word[pos]) + `n_excluded` excluded hints (forbid a
     letter `word` does NOT have at that position), on distinct positions seeded
     from `word` so `word` satisfies every one."""
-    total = n_normal + n_inverted
+    total = n_normal + n_excluded
     positions = rng.sample(range(1, len(word) + 1), k=min(total, len(word)))
     hints = []
     for i, pos in enumerate(positions):
         actual = word[pos - 1]
         if i < n_normal:
-            hints.append({"pos": pos, "car": actual, "inverted": False})
+            hints.append({"position": pos, "letter": actual, "excluded": False})
         else:
             car = rng.choice([c for c in ALPHABET if c != actual])
-            hints.append({"pos": pos, "car": car, "inverted": True})
+            hints.append({"position": pos, "letter": car, "excluded": True})
     return hints
 
 
@@ -133,8 +133,8 @@ def main():
             cases.append({
                 "name": f"file len={length} {suffix}",
                 "kind": "file", "lang": "fr",
-                "nb_car": length, "lst_car": rack,
-                "lst_hint": make_hints(seed, nn, ni), "strict": False,
+                "wordLength": length, "letters": rack,
+                "hints": make_hints(seed, nn, ni), "strict": False,
             })
 
     # --- realistic /search/many grid: a rack of N letters, 4 shapes each ---
@@ -153,7 +153,7 @@ def main():
             cases.append({
                 "name": f"many rack={clen} {suffix}",
                 "kind": "many", "lang": "fr",
-                "cars": cars, "lst_hint": make_hints(seed, nn, ni),
+                "letters": cars, "hints": make_hints(seed, nn, ni),
             })
 
     # --- generous-pool letters-only /file cases ("qwertyuiop"-style) ---
@@ -166,8 +166,8 @@ def main():
         cases.append({
             "name": f"file len={length} none-wide",
             "kind": "file", "lang": "fr",
-            "nb_car": length, "lst_car": make_wide_rack(seed),
-            "lst_hint": [], "strict": False,
+            "wordLength": length, "letters": make_wide_rack(seed),
+            "hints": [], "strict": False,
         })
 
     # --- strict /file (Scrabble / Countdown / anagram): exact tile counts ---
@@ -183,8 +183,8 @@ def main():
             cases.append({
                 "name": f"file len={length} {suffix} strict",
                 "kind": "file", "lang": "fr",
-                "nb_car": length, "lst_car": rack,
-                "lst_hint": make_hints(seed, nn, ni), "strict": True,
+                "wordLength": length, "letters": rack,
+                "hints": make_hints(seed, nn, ni), "strict": True,
             })
 
     # --- hint-only / no-pool /file (crossword): known positions, letters unrestricted ---
@@ -197,8 +197,8 @@ def main():
             cases.append({
                 "name": f"file len={length} {suffix} nopool",
                 "kind": "file", "lang": "fr",
-                "nb_car": length, "lst_car": [],
-                "lst_hint": make_hints(seed, nn, ni), "strict": False,
+                "wordLength": length, "letters": [],
+                "hints": make_hints(seed, nn, ni), "strict": False,
             })
 
     with open(OUT, "w", encoding="utf-8") as f:

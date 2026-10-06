@@ -18,9 +18,8 @@ Concurrency appears at two independent levels:
 
 The word-list cache is a `sync.Map`, safe for the concurrent requests above.
 
-The search algorithm itself is the same brute-force scan as Python's scan strategy
-([`python/strategy_scan.py`](../python/strategy_scan.py)) — no indexing. This isolates
-the concurrency model as the only variable.
+The search algorithm itself is a plain brute-force scan — no indexing — so the
+concurrency model is the only variable.
 
 ### Parallel modes & in-process benchmark
 
@@ -49,11 +48,45 @@ go/
 ├── go.mod
 ├── go.sum
 ├── Dockerfile
-├── main.go            # HTTP server, routing, request/response structs, handlers
+├── main.go               # HTTP server: implements api.ServerInterface, serves the spec + /docs
+├── api/
+│   ├── generate.go       # go:generate directive (pinned oapi-codegen version)
+│   ├── oapi-codegen.yaml # generator configuration
+│   └── api.gen.go        # GENERATED from ../openapi.yaml — committed, never edited
+├── bench/
+│   └── main.go           # in-process benchmark runner
 └── search/
-    ├── search.go      # Hint type, word-list cache, search algorithm
-    └── search_test.go # unit + integration tests
+    ├── search.go         # Hint type, word-list cache, search algorithm
+    └── search_test.go    # unit + integration tests
 ```
+
+## API contract (spec-first)
+
+The repository's [`openapi.yaml`](../openapi.yaml) is the only definition of the API.
+[oapi-codegen](https://github.com/oapi-codegen/oapi-codegen) (v2.8.0, pinned in
+`api/generate.go`) turns it into `api/api.gen.go`:
+
+- **Models** — `SearchFileRequest`, `SearchManyRequest`, `SearchResponse`, `Hint`,
+  `HealthResponse`, `ErrorResponse`, with the spec's descriptions as doc comments and
+  its camelCase names as JSON tags.
+- **Server interface** — `api.ServerInterface` (`Health`, `SearchFile`, `SearchMany`).
+  `main.go` implements it and `api.HandlerFromMux` registers the routes, so paths and
+  methods come from the spec too.
+
+Optional fields are plain values, not pointers (`prefer-skip-optional-pointer`), and
+oapi-codegen does not apply schema defaults, so the handlers fill in `lang = "fr"`.
+
+Following Go convention, **`api.gen.go` is committed** (`go build` never runs
+generators). After any change to `openapi.yaml`:
+
+```bash
+cd go && go generate ./...   # regenerate api/api.gen.go
+git diff --exit-code         # CI-style drift check: fails if the committed file is stale
+```
+
+The spec itself is served unchanged: `main.go` reads `openapi.yaml` (`OPENAPI_PATH`) at
+startup and serves it at `/openapi.yaml`, converted to JSON at `/openapi.json`, with
+Swagger UI at `/docs`.
 
 ## Local development
 
@@ -61,9 +94,9 @@ Requires Go 1.23+.
 
 ```bash
 # From the go/ directory — run the API locally
-cd go && ASSETS_ROOT=../assets go run .
+cd go && ASSETS_ROOT=../assets OPENAPI_PATH=../openapi.yaml go run .
 
-# The API starts on http://localhost:8003
+# The API starts on http://localhost:8003 (Swagger UI at /docs)
 ```
 
 ## Docker
@@ -79,8 +112,8 @@ docker run -p 8003:8003 seek-words-go
 
 ## Unit tests
 
-Tests mirror the Python pytest suite — unit tests for content/hint matching
-plus integration tests against the real asset files. `TestMain` points
+Unit tests for content/hint matching plus integration tests against the real
+asset files. `TestMain` points
 `ASSETS_ROOT` at the repo-root `assets/` directory automatically.
 
 ```bash
@@ -103,6 +136,9 @@ to the `InManyFiles` fan-out.
 
 ## API
 
+The contract is the repository's [`openapi.yaml`](../openapi.yaml); browse it at
+`/docs` (Swagger UI) or fetch it from `/openapi.json` / `/openapi.yaml`.
+
 ### `GET /health`
 
 ```json
@@ -111,34 +147,44 @@ to the `InManyFiles` fan-out.
 
 ### `POST /search/file`
 
-Search words of a fixed length using available letters and/or positional hints.
+Words of exactly `wordLength` characters built from `letters` and/or matching the
+positional `hints`.
 
 ```json
 // Request
 {
   "lang": "fr",
-  "nb_car": 5,
-  "lst_car": ["e","l","i","s","a"],
-  "lst_hint": [
-    {"pos": 1, "car": "s", "inverted": false}
+  "wordLength": 5,
+  "letters": ["e","l","i","s","a"],
+  "hints": [
+    {"position": 1, "letter": "s", "excluded": false}
   ],
   "strict": false
 }
 
 // Response
-{"words": ["ailes", "alise", ...], "count": 8}
+{"words": ["saisi", "salai", "salas", ...], "count": 20}
 ```
 
 ### `POST /search/many`
 
-Search words across all lengths up to `len(cars)`, results ordered longest-first.
+Words of every length up to the number of `letters`, ordered longest-first.
 
 ```json
 // Request
-{"lang": "fr", "cars": "guillaume", "lst_hint": []}
+{"lang": "fr", "letters": "guillaume", "hints": []}
 
 // Response
-{"words": [...], "count": 494}
+{"words": ["aiguillai", "aiguillee", ...], "count": 494}
+```
+
+### Errors
+
+An invalid request (malformed JSON, `wordLength` of 0, or neither `letters` nor
+`hints`) answers `400` with the contract's `ErrorResponse`:
+
+```json
+{"error": "letters and hints cannot both be empty"}
 ```
 
 ## Environment variables
@@ -148,3 +194,4 @@ Search words across all lengths up to `len(cars)`, results ordered longest-first
 | `ASSETS_ROOT` | `assets` (relative) | Path to the word list directory |
 | `SEARCH_MODE` | `parallel` | `parallel` routes the API through split/nested; `baseline` restores the original fan-out |
 | `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |
+| `OPENAPI_PATH` | `/app/openapi.yaml` | API contract served at `/openapi.yaml` and `/openapi.json` |

@@ -1,3 +1,4 @@
+#include "models.gen.h"  // generated from openapi.yaml (see CMakeLists.txt)
 #include "search.h"
 
 #include <httplib.h>
@@ -19,7 +20,7 @@ static bool parallelMode() {
     return !(m && std::string(m) == "baseline");
 }
 
-// defaultLang mirrors the "fr" default every other implementation uses.
+// defaultLang applies the spec's default language ("fr") when lang is empty.
 static std::string defaultLang(const std::string& lang) {
     return lang.empty() ? "fr" : lang;
 }
@@ -30,22 +31,24 @@ static void writeJSON(httplib::Response& res, int status, const json& body) {
 }
 
 static void writeError(httplib::Response& res, const std::string& msg) {
-    writeJSON(res, 400, {{"error", msg}});
+    writeJSON(res, 400, api::ErrorResponse{msg});
 }
 
-// toHints converts the JSON hint array into the search::Hint vector.
-static std::vector<Hint> toHints(const json& arr) {
+// toHints converts the generated api::Hint models into the search Hint type.
+static std::vector<Hint> toHints(const std::vector<api::Hint>& in) {
     std::vector<Hint> hints;
-    for (const auto& h : arr) {
-        Hint hint;
-        hint.pos = h.value("pos", 0);
-        if (h.contains("car") && !h["car"].is_null()) {
-            hint.car = h["car"].get<std::string>();
-        }
-        hint.inverted = h.value("inverted", false);
-        hints.push_back(std::move(hint));
+    hints.reserve(in.size());
+    for (const auto& h : in) {
+        hints.push_back(Hint{h.position, h.letter, h.excluded});
     }
     return hints;
+}
+
+static void writeWords(httplib::Response& res, std::vector<std::string> words) {
+    api::SearchResponse out;
+    out.count = static_cast<int>(words.size());
+    out.words = std::move(words);
+    writeJSON(res, 200, out);
 }
 
 // g_openApiSpec holds the contents of openapi.yaml, loaded once at startup.
@@ -102,31 +105,21 @@ static void handleDocs(const httplib::Request&, httplib::Response& res) {
 }
 
 static void handleHealth(const httplib::Request&, httplib::Response& res) {
-    writeJSON(res, 200, {{"status", "ok"}});
+    writeJSON(res, 200, api::HealthResponse{"ok"});
 }
 
+// Request bodies are parsed into the generated models: a malformed body, a
+// missing required field or a wrong type throws and is answered with 400.
 static void handleSearchFile(const httplib::Request& req,
                               httplib::Response& res) {
-    json body;
     try {
-        body = json::parse(req.body);
-    } catch (const json::exception& e) {
-        writeError(res, e.what());
-        return;
-    }
-    try {
-        std::string lang = defaultLang(body.value("lang", std::string{}));
-        int nbCar = body.value("nb_car", 0);
-        std::vector<std::string> lstCar =
-            body.value("lst_car", std::vector<std::string>{});
-        std::vector<Hint> hints =
-            toHints(body.value("lst_hint", json::array()));
-        bool strict = body.value("strict", false);
-
+        auto body = json::parse(req.body).get<api::SearchFileRequest>();
+        std::string lang = defaultLang(body.lang);
+        std::vector<Hint> hints = toHints(body.hints);
         auto words = parallelMode()
-                         ? inFileSplit(lang, nbCar, lstCar, hints, strict, splitDegree())
-                         : inFile(lang, nbCar, lstCar, hints, strict);
-        writeJSON(res, 200, {{"words", words}, {"count", words.size()}});
+                         ? inFileSplit(lang, body.wordLength, body.letters, hints, body.strict, splitDegree())
+                         : inFile(lang, body.wordLength, body.letters, hints, body.strict);
+        writeWords(res, std::move(words));
     } catch (const std::exception& e) {
         writeError(res, e.what());
     }
@@ -134,23 +127,14 @@ static void handleSearchFile(const httplib::Request& req,
 
 static void handleSearchMany(const httplib::Request& req,
                               httplib::Response& res) {
-    json body;
     try {
-        body = json::parse(req.body);
-    } catch (const json::exception& e) {
-        writeError(res, e.what());
-        return;
-    }
-    try {
-        std::string lang = defaultLang(body.value("lang", std::string{}));
-        std::string cars = body.value("cars", std::string{});
-        std::vector<Hint> hints =
-            toHints(body.value("lst_hint", json::array()));
-
+        auto body = json::parse(req.body).get<api::SearchManyRequest>();
+        std::string lang = defaultLang(body.lang);
+        std::vector<Hint> hints = toHints(body.hints);
         auto words = parallelMode()
-                         ? inManyFilesNested(lang, cars, hints, splitDegree())
-                         : inManyFiles(lang, cars, hints);
-        writeJSON(res, 200, {{"words", words}, {"count", words.size()}});
+                         ? inManyFilesNested(lang, body.letters, hints, splitDegree())
+                         : inManyFiles(lang, body.letters, hints);
+        writeWords(res, std::move(words));
     } catch (const std::exception& e) {
         writeError(res, e.what());
     }
@@ -168,8 +152,11 @@ int main() {
         std::cerr << "warning: openapi.yaml not found; /openapi.yaml will return 503\n";
     }
 
-    // openapi.json is pre-converted from openapi.yaml at Docker build time.
-    std::string jsonPath = yamlPath.substr(0, yamlPath.rfind('.')) + ".json";
+    // openapi.json is converted from openapi.yaml by the CMake build
+    // (build/openapi.json). OPENAPI_JSON_PATH overrides the default, which is
+    // the YAML path with a .json extension.
+    const char* jsonEnv = std::getenv("OPENAPI_JSON_PATH");
+    std::string jsonPath = jsonEnv ? jsonEnv : yamlPath.substr(0, yamlPath.rfind('.')) + ".json";
     std::ifstream jsonFile(jsonPath);
     if (jsonFile) {
         std::ostringstream ss;

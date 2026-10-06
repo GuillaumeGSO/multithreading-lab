@@ -1,15 +1,17 @@
-# Build stage
+# Build stage — the repo layout is mirrored (/build/openapi.yaml + /build/java)
+# so the pom's ../openapi.yaml resolves to the API contract.
 FROM maven:3.9-eclipse-temurin-25 AS build
-WORKDIR /build
+WORKDIR /build/java
 COPY java/pom.xml .
 RUN mvn dependency:go-offline -q
+COPY openapi.yaml /build/openapi.yaml
 COPY java/src/ src/
 RUN mvn package -DskipTests -q
 
 # Run stage
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
-COPY --from=build /build/target/search-*.jar app.jar
+COPY --from=build /build/java/target/search-*.jar app.jar
 COPY assets/ /app/assets/
 COPY benchmarks/cases.json /app/cases.json
 ENV ASSETS_ROOT=/app/assets

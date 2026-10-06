@@ -3,13 +3,19 @@ info:
   title: Word Search API
   description: >
     Filters words from dictionary files by available letters, positional hints,
-    and word length. The same contract is implemented in Python, Go, Java, C++,
-    NestJS, and C# — each using its ecosystem's idiomatic OpenAPI tooling.
+    and word length.
   version: 1.0.0
+
+tags:
+  - name: health
+    description: Service liveness
+  - name: search
+    description: Dictionary word search
 
 paths:
   /health:
     get:
+      tags: [health]
       summary: Liveness check
       operationId: health
       responses:
@@ -18,19 +24,16 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: ok
+                $ref: "#/components/schemas/HealthResponse"
 
   /search/file:
     post:
+      tags: [search]
       summary: Search words of a fixed length
       operationId: searchFile
       description: >
-        Returns words of exactly `nb_car` characters that can be formed from
-        the available letter pool and satisfy every positional hint.
+        Returns words of exactly `wordLength` characters that can be formed from
+        the available `letters` and satisfy every positional hint.
       requestBody:
         required: true
         content:
@@ -45,15 +48,22 @@ paths:
               schema:
                 $ref: "#/components/schemas/SearchResponse"
         "400":
-          description: Invalid request (e.g. nb_car is 0 or no letters and no hints)
+          description: >
+            Invalid request (e.g. `wordLength` is 0, or both `letters` and
+            `hints` are empty).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /search/many:
     post:
+      tags: [search]
       summary: Search words across all lengths
       operationId: searchMany
       description: >
-        Returns words for every length from 1 up to len(cars), ordered
-        longest-first. Useful when the exact word length is unknown.
+        Returns words for every length from 1 up to the number of `letters`,
+        ordered longest-first. Useful when the exact word length is unknown.
       requestBody:
         required: true
         content:
@@ -68,92 +78,123 @@ paths:
               schema:
                 $ref: "#/components/schemas/SearchResponse"
         "400":
-          description: Invalid request
+          description: Invalid request (e.g. malformed JSON body).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   schemas:
-    Hint:
+    HealthResponse:
       type: object
       required:
-        - pos
+        - status
       properties:
-        pos:
+        status:
+          type: string
+          description: Always `ok` when the service is up.
+          example: ok
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable reason the request was rejected.
+          example: letters and hints cannot both be empty
+
+    Hint:
+      type: object
+      description: Positional constraint on a word.
+      required:
+        - position
+      properties:
+        position:
           type: integer
-          description: 1-indexed position of the character constraint in the word.
+          description: 1-indexed position of the constraint in the word.
           example: 3
-        car:
+        letter:
           type: string
           nullable: true
           description: >
-            Expected character at `pos`. Null or absent means no character
-            constraint (only position matters).
+            Expected letter at `position`. Null or absent means no letter
+            constraint (only the position matters).
           example: "e"
-        inverted:
+        excluded:
           type: boolean
           default: false
-          description: When true, the character must NOT appear at `pos`.
+          description: When true, `letter` must NOT appear at `position`.
 
     SearchFileRequest:
       type: object
+      description: Search for words of one fixed length.
       required:
-        - nb_car
+        - wordLength
       properties:
         lang:
           type: string
           default: fr
-          description: Language code — selects the dictionary subfolder under assets/.
+          description: Language code — selects the dictionary to search.
           example: fr
-        nb_car:
+        wordLength:
           type: integer
           description: Exact word length to search for.
           example: 5
-        lst_car:
+        letters:
           type: array
           items:
             type: string
           default: []
           description: >
-            Available letters. Each element is one character. Empty means no
+            Available letters, one character per element. Empty means no
             letter-pool constraint (only hints filter).
           example: ["a", "e", "r", "s", "t"]
-        lst_hint:
+        hints:
           type: array
           items:
             $ref: "#/components/schemas/Hint"
           default: []
-          description: Positional constraints. Applied after the letter-pool filter.
+          description: Positional constraints, applied after the letter-pool filter.
         strict:
           type: boolean
           default: false
           description: >
-            When true, each letter from `lst_car` may only be used once
+            When true, each element of `letters` may only be used once
             (Scrabble-style).
 
     SearchManyRequest:
       type: object
+      description: Search for words of every length up to the number of letters.
       required:
-        - cars
+        - letters
       properties:
         lang:
           type: string
           default: fr
-          description: Language code — selects the dictionary subfolder under assets/.
+          description: Language code — selects the dictionary to search.
           example: fr
-        cars:
+        letters:
           type: string
           description: >
-            Available letters as a string. The maximum word length equals
-            len(cars); all shorter lengths are also scanned.
+            Available letters as a single string. The longest word searched has
+            as many characters as `letters`; every shorter length is scanned too.
           example: "artes"
-        lst_hint:
+        hints:
           type: array
           items:
             $ref: "#/components/schemas/Hint"
           default: []
-          description: Positional constraints applied across every length scanned.
+          description: Positional constraints, applied to every length scanned.
 
     SearchResponse:
       type: object
+      description: Word search result.
+      required:
+        - words
+        - count
       properties:
         words:
           type: array
@@ -162,4 +203,4 @@ components:
           description: Matching words in scan order (longest-first for /search/many).
         count:
           type: integer
-          description: Total number of matching words (equals len(words)).
+          description: Number of matching words (the length of `words`).

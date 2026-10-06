@@ -55,15 +55,15 @@ Each Artillery request picks a random row from `queries.csv`. The row contains:
 
 | Column | Description |
 |--------|-------------|
-| `nb_car` | Word length to search (4–8) |
-| `cars` | Available letters as a string (e.g. `wvebcintz`) |
-| `strict` | Whether the word must use only the provided letters |
-| `lst_hint` | JSON array of positional hints `[{pos, car, inverted}]` |
+| `wordLength` | Word length to search (4–10) |
+| `letters` | Available letters as a string (e.g. `wvebcintz`) |
+| `strict` | Whether each letter may only be used once |
+| `hints` | JSON array of positional hints `[{position, letter, excluded}]` |
 
 `payload-processor.js` is called as a `beforeRequest` hook and converts each row into the correct JSON body per endpoint:
 
-- `/search/file` — splits `cars` into `lst_car: ["w","v","e",...]` and passes `nb_car`
-- `/search/many` — passes `cars` as a plain string; `nb_car` is ignored (all lengths are searched)
+- `/search/file` — splits `letters` into `["w","v","e",...]` and passes `wordLength`
+- `/search/many` — passes `letters` as a plain string; `wordLength` is ignored (all lengths are searched)
 
 ## Regenerating queries
 

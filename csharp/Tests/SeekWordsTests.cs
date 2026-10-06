@@ -1,4 +1,3 @@
-using WordSearch.Api.Models;
 using WordSearch.Api.Search;
 using Xunit;
 
@@ -21,14 +20,14 @@ public class SeekWordsTests
     [Fact]
     public void HasNoCarHints_True_WhenNullOrNoCar()
     {
-        Assert.True(ScanStrategy.HasNoCarHints(null));
-        Assert.True(ScanStrategy.HasNoCarHints(new[] { new Hint(1, null) }));
-        Assert.True(ScanStrategy.HasNoCarHints(new[] { new Hint(1, "") }));
+        Assert.True(ScanStrategy.HasNoLetterHints(null));
+        Assert.True(ScanStrategy.HasNoLetterHints(new[] { new Hint(1, null) }));
+        Assert.True(ScanStrategy.HasNoLetterHints(new[] { new Hint(1, "") }));
     }
 
     [Fact]
     public void HasNoCarHints_False_WhenHasCar() =>
-        Assert.False(ScanStrategy.HasNoCarHints(new[] { new Hint(1, "a") }));
+        Assert.False(ScanStrategy.HasNoLetterHints(new[] { new Hint(1, "a") }));
 
     // ---------------------------------------------------------------------------
     // MatchesContent
@@ -103,31 +102,31 @@ public class SeekWordsTests
     }
 
     [Fact]
-    public void MatchesHints_Inverted_Match_ReturnsFalse()
+    public void MatchesHints_Excluded_Match_ReturnsFalse()
     {
         // excluded hint: word must NOT have 'h' at pos 1, but it does
-        var hints = new[] { new Hint(1, "h", Inverted: true) };
+        var hints = new[] { new Hint(1, "h", Excluded: true) };
         Assert.False(ScanStrategy.MatchesHints("hello", hints));
     }
 
     [Fact]
-    public void MatchesHints_Inverted_NoMatch_ReturnsTrue()
+    public void MatchesHints_Excluded_NoMatch_ReturnsTrue()
     {
-        var hints = new[] { new Hint(1, "x", Inverted: true) };
+        var hints = new[] { new Hint(1, "x", Excluded: true) };
         Assert.True(ScanStrategy.MatchesHints("hello", hints));
     }
 
     [Fact]
-    public void MatchesHints_PosOutOfRange_PinnedReturnsFalse()
+    public void MatchesHints_PositionOutOfRange_PinnedReturnsFalse()
     {
         var hints = new[] { new Hint(10, "h") };
         Assert.False(ScanStrategy.MatchesHints("hello", hints));
     }
 
     [Fact]
-    public void MatchesHints_PosOutOfRange_InvertedReturnsTrue()
+    public void MatchesHints_PositionOutOfRange_ExcludedReturnsTrue()
     {
-        var hints = new[] { new Hint(10, "h", Inverted: true) };
+        var hints = new[] { new Hint(10, "h", Excluded: true) };
         Assert.True(ScanStrategy.MatchesHints("hello", hints));
     }
 
@@ -158,7 +157,7 @@ public class SeekWordsTests
     public void SearchInFile_ContentAndHint()
     {
         var svc = new SearchDispatcher();
-        var hints = new[] { new Hint(1, "l") };
+        var hints = new[] { new Hint(1, "l"), new Hint(5, "s") };
         var result = svc.FileDispatch("fr", 5, new[] { "e", "l", "i", "s", "a" }, hints, strict: false);
         Assert.Equal(11, result.Count);
     }
@@ -192,9 +191,9 @@ public class SeekWordsTests
     [Fact]
     public void IndexedEqualsScaneForContentOnlyQuery()
     {
-        var lstCar = new[] { "e", "l", "i", "s", "a" };
-        var scan = SearchDispatcher.Scan.SearchInFile("fr", 5, lstCar, null, false);
-        var indexed = SearchDispatcher.Indexed.SearchInFile("fr", 5, lstCar, null, false);
+        var letters = new[] { "e", "l", "i", "s", "a" };
+        var scan = SearchDispatcher.Scan.SearchInFile("fr", 5, letters, null, false);
+        var indexed = SearchDispatcher.Indexed.SearchInFile("fr", 5, letters, null, false);
         Assert.Equal(scan, indexed);
     }
 
@@ -210,10 +209,10 @@ public class SeekWordsTests
     [Fact]
     public void IndexedEqualsScaneForMixedQuery()
     {
-        var lstCar = new[] { "e", "l", "i", "s", "a" };
+        var letters = new[] { "e", "l", "i", "s", "a" };
         var hints = new[] { new Hint(1, "l") };
-        var scan = SearchDispatcher.Scan.SearchInFile("fr", 5, lstCar, hints, false);
-        var indexed = SearchDispatcher.Indexed.SearchInFile("fr", 5, lstCar, hints, false);
+        var scan = SearchDispatcher.Scan.SearchInFile("fr", 5, letters, hints, false);
+        var indexed = SearchDispatcher.Indexed.SearchInFile("fr", 5, letters, hints, false);
         Assert.Equal(scan, indexed);
     }
 }

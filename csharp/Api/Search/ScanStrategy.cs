@@ -1,4 +1,3 @@
-using WordSearch.Api.Models;
 
 namespace WordSearch.Api.Search;
 
@@ -7,23 +6,23 @@ public sealed class ScanStrategy : ISearchStrategy
     public string Name => "scan";
 
     public IReadOnlyList<string> SearchInFile(
-        string lang, int nbCar,
-        IReadOnlyList<string>? lstCar,
-        IReadOnlyList<Hint>? lstHint,
+        string lang, int wordLength,
+        IReadOnlyList<string>? letters,
+        IReadOnlyList<Hint>? hints,
         bool strict)
     {
-        ValidateParams(lstCar, lstHint);
-        var entries = WordBase.Load(lang, nbCar);
-        var avail = BuildAvail(lstCar);
+        ValidateParams(wordLength, letters, hints);
+        var entries = WordBase.Load(lang, wordLength);
+        var avail = BuildAvail(letters);
         var (availSet, availFreq) = BuildAvailStructures(avail, strict);
-        bool emptyCars = IsEffectivelyEmpty(lstCar);
-        bool emptyHints = HasNoCarHints(lstHint);
+        bool emptyLetters = IsEffectivelyEmpty(letters);
+        bool emptyHints = HasNoLetterHints(hints);
 
         var results = new List<string>();
         foreach (var entry in entries)
         {
-            bool ok = (emptyCars || MatchesContent(entry.Normalized, availSet, availFreq, strict, entry.Freq))
-                   && (emptyHints || MatchesHints(entry.Word, lstHint));
+            bool ok = (emptyLetters || MatchesContent(entry.Normalized, availSet, availFreq, strict, entry.Freq))
+                   && (emptyHints || MatchesHints(entry.Word, hints));
             if (ok) results.Add(entry.Word);
         }
         return results;
@@ -31,16 +30,16 @@ public sealed class ScanStrategy : ISearchStrategy
 
     public static IReadOnlyList<string> ScanRange(
         IReadOnlyList<WordEntry> entries, int start, int end,
-        IReadOnlyList<string>? lstCar, IReadOnlyList<Hint>? lstHint, bool strict,
-        bool emptyCars, bool emptyHints,
+        IReadOnlyList<string>? letters, IReadOnlyList<Hint>? hints, bool strict,
+        bool emptyLetters, bool emptyHints,
         HashSet<string> availSet, byte[]? availFreq)
     {
         var results = new List<string>();
         for (int i = start; i < end; i++)
         {
             var entry = entries[i];
-            bool ok = (emptyCars || MatchesContent(entry.Normalized, availSet, availFreq, strict, entry.Freq))
-                   && (emptyHints || MatchesHints(entry.Word, lstHint));
+            bool ok = (emptyLetters || MatchesContent(entry.Normalized, availSet, availFreq, strict, entry.Freq))
+                   && (emptyHints || MatchesHints(entry.Word, hints));
             if (ok) results.Add(entry.Word);
         }
         return results;
@@ -64,16 +63,16 @@ public sealed class ScanStrategy : ISearchStrategy
         if (hints == null) return true;
         foreach (var hint in hints)
         {
-            if (string.IsNullOrEmpty(hint.Car)) continue;
-            int idx = hint.Pos - 1;
+            if (string.IsNullOrEmpty(hint.Letter)) continue;
+            int idx = hint.Position - 1;
             if (idx >= word.Length)
             {
-                if (!hint.Inverted) return false;
+                if (!hint.Excluded) return false;
                 continue;
             }
             char wc = word[idx];
-            char hc = hint.Car[0];
-            if (hint.Inverted ? wc == hc : wc != hc) return false;
+            char hc = hint.Letter[0];
+            if (hint.Excluded ? wc == hc : wc != hc) return false;
         }
         return true;
     }
@@ -81,17 +80,17 @@ public sealed class ScanStrategy : ISearchStrategy
     public static bool IsEffectivelyEmpty(IReadOnlyList<string>? lst) =>
         lst == null || lst.All(s => string.IsNullOrEmpty(s));
 
-    public static bool HasNoCarHints(IReadOnlyList<Hint>? lst) =>
-        lst == null || lst.All(h => string.IsNullOrEmpty(h.Car));
+    public static bool HasNoLetterHints(IReadOnlyList<Hint>? lst) =>
+        lst == null || lst.All(h => string.IsNullOrEmpty(h.Letter));
 
-    public static void ValidateParams(IReadOnlyList<string>? lstCar, IReadOnlyList<Hint>? lstHint)
+    public static void ValidateParams(int wordLength, IReadOnlyList<string>? letters, IReadOnlyList<Hint>? hints)
     {
-        if (IsEffectivelyEmpty(lstCar) && HasNoCarHints(lstHint))
-            throw new ArgumentException("lst_car and lst_hint cannot both be empty");
+        if (wordLength <= 0 || (IsEffectivelyEmpty(letters) && HasNoLetterHints(hints)))
+            throw new ArgumentException("letters and hints cannot both be empty");
     }
 
-    internal static List<string> BuildAvail(IReadOnlyList<string>? lstCar) =>
-        lstCar?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? [];
+    internal static List<string> BuildAvail(IReadOnlyList<string>? letters) =>
+        letters?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? [];
 
     internal static (HashSet<string> availSet, byte[]? availFreq) BuildAvailStructures(
         List<string> avail, bool strict)

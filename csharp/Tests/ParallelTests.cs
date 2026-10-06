@@ -1,4 +1,3 @@
-using WordSearch.Api.Models;
 using WordSearch.Api.Search;
 using Xunit;
 
@@ -6,10 +5,10 @@ namespace WordSearch.Tests;
 
 public class ParallelTests
 {
-    private static readonly string[] LstCar = { "e", "l", "i", "s", "a" };
+    private static readonly string[] Letters = { "e", "l", "i", "s", "a" };
     private static readonly Hint[] HintsPinned = { new Hint(1, "l") };
-    private static readonly Hint[] HintsInverted = { new Hint(2, "a", Inverted: true) };
-    private static readonly Hint[] HintsMixed = { new Hint(1, "l"), new Hint(3, "i", Inverted: true) };
+    private static readonly Hint[] HintsExcluded = { new Hint(2, "a", Excluded: true) };
+    private static readonly Hint[] HintsMixed = { new Hint(1, "l"), new Hint(3, "i", Excluded: true) };
 
     // ---------------------------------------------------------------------------
     // FileSplit byte-identical to baseline for split degrees 1..5
@@ -23,8 +22,8 @@ public class ParallelTests
     public async Task FileSplit_ContentOnly_MatchesBaseline(int degree)
     {
         var svc = new ParallelSearchService();
-        var baseline = new SearchDispatcher().FileBaseline("fr", 5, LstCar, null, false);
-        var split = await svc.FileSplitAsync("fr", 5, LstCar, null, false, degree);
+        var baseline = new SearchDispatcher().FileBaseline("fr", 5, Letters, null, false);
+        var split = await svc.FileSplitAsync("fr", 5, Letters, null, false, degree);
         Assert.Equal(baseline, split);
     }
 
@@ -33,8 +32,8 @@ public class ParallelTests
     public async Task FileSplit_ContentStrict_MatchesBaseline(int degree)
     {
         var svc = new ParallelSearchService();
-        var baseline = new SearchDispatcher().FileBaseline("fr", 5, LstCar, null, strict: true);
-        var split = await svc.FileSplitAsync("fr", 5, LstCar, null, strict: true, degree);
+        var baseline = new SearchDispatcher().FileBaseline("fr", 5, Letters, null, strict: true);
+        var split = await svc.FileSplitAsync("fr", 5, Letters, null, strict: true, degree);
         Assert.Equal(baseline, split);
     }
 
@@ -53,8 +52,8 @@ public class ParallelTests
     public async Task FileSplit_Mixed_MatchesBaseline(int degree)
     {
         var svc = new ParallelSearchService();
-        var baseline = new SearchDispatcher().FileBaseline("fr", 5, LstCar, HintsMixed, false);
-        var split = await svc.FileSplitAsync("fr", 5, LstCar, HintsMixed, false, degree);
+        var baseline = new SearchDispatcher().FileBaseline("fr", 5, Letters, HintsMixed, false);
+        var split = await svc.FileSplitAsync("fr", 5, Letters, HintsMixed, false, degree);
         Assert.Equal(baseline, split);
     }
 
@@ -82,10 +81,10 @@ public class ParallelTests
     }
 
     [Fact]
-    public async Task ManyFanout_WithInvertedHint_MatchesBaseline()
+    public async Task ManyFanout_WithExcludedHint_MatchesBaseline()
     {
         var svc = new ParallelSearchService();
-        var hints = new[] { new Hint(1, "g", Inverted: true) };
+        var hints = new[] { new Hint(1, "g", Excluded: true) };
         var baseline = new SearchDispatcher().ManyBaseline("fr", "guillaume", hints);
         var fanout = await svc.ManyFanoutAsync("fr", "guillaume", hints);
         Assert.Equal(baseline, fanout);

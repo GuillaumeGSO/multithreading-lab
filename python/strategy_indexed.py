@@ -28,16 +28,16 @@ from common import (
 _pos_index: dict[str, dict[int, dict[str, frozenset]]] = {}
 
 
-def _ensure_index(lang: str, nb_car: int) -> str:
-    key = f"{lang}/{nb_car}"
+def _ensure_index(lang: str, word_length: int) -> str:
+    key = f"{lang}/{word_length}"
     if key in _pos_index:
         return key
 
     logger.info("index build (indexed): %s", key)
-    pos_idx: dict[int, dict[str, set]] = {pos: {} for pos in range(1, nb_car + 1)}
+    pos_idx: dict[int, dict[str, set]] = {pos: {} for pos in range(1, word_length + 1)}
 
-    for word, _, _ in load_base(lang, nb_car):
-        for pos in range(1, nb_car + 1):
+    for word, _, _ in load_base(lang, word_length):
+        for pos in range(1, word_length + 1):
             char = word[pos - 1]
             if char not in pos_idx[pos]:
                 pos_idx[pos][char] = set()
@@ -53,53 +53,53 @@ def _ensure_index(lang: str, nb_car: int) -> str:
 class IndexedStrategy:
     name = "indexed"
 
-    def search_in_file(self, lang="fr", nb_car=0, lst_car: List[str] = None,
-                       lst_hint: List[Hint] = None, strict=False):
-        lst_car = lst_car or []
-        lst_hint = lst_hint or []
-        is_empty_hint = is_hint_list_empty_or_full_of_none(lst_hint)
-        is_empty_cars = is_list_empty_or_full_of_none(lst_car)
-        if nb_car == 0 or (is_empty_cars and is_empty_hint):
-            raise Exception("Parameters lstCar et lstHint cannot be empty at the same time")
+    def search_in_file(self, lang="fr", word_length=0, letters: List[str] = None,
+                       hints: List[Hint] = None, strict=False):
+        letters = letters or []
+        hints = hints or []
+        is_empty_hint = is_hint_list_empty_or_full_of_none(hints)
+        is_empty_letters = is_list_empty_or_full_of_none(letters)
+        if word_length == 0 or (is_empty_letters and is_empty_hint):
+            raise ValueError("letters and hints cannot both be empty")
 
-        key = _ensure_index(lang, nb_car)
+        key = _ensure_index(lang, word_length)
         pos_idx = _pos_index[key]
-        base = load_base(lang, nb_car)
+        base = load_base(lang, word_length)
 
         # Build candidate set from the positional index.
         candidates: frozenset | None = None
         if not is_empty_hint:
-            active_hints = [h for h in lst_hint if h.car]
+            active_hints = [h for h in hints if h.letter]
             for hint in active_hints:
-                if hint.inverted:
+                if hint.excluded:
                     continue
-                pos = int(hint.pos)
-                if pos > nb_car:
+                pos = int(hint.position)
+                if pos > word_length:
                     return  # pinned hint beyond word length — nothing can match
-                hint_set = pos_idx.get(pos, {}).get(hint.car, frozenset())
+                hint_set = pos_idx.get(pos, {}).get(hint.letter, frozenset())
                 candidates = hint_set if candidates is None else candidates & hint_set
 
             if candidates is None:
                 candidates = frozenset(w for w, *_ in base)
 
             for hint in active_hints:
-                if not hint.inverted:
+                if not hint.excluded:
                     continue
-                pos = int(hint.pos)
-                if pos > nb_car:
+                pos = int(hint.position)
+                if pos > word_length:
                     continue  # excluded hint beyond word length — no effect
-                excluded = pos_idx.get(pos, {}).get(hint.car, frozenset())
-                candidates = candidates - excluded
+                excluded_words = pos_idx.get(pos, {}).get(hint.letter, frozenset())
+                candidates = candidates - excluded_words
 
         # Filter by letter availability. Non-strict: membership in the pool set.
         # Strict: membership first (cheap early-exit), then 26-int freq comparison
         # against the precomputed word_freq from load_base — no Counter allocation.
-        if not is_empty_cars:
-            query_set = set(lst_car)
+        if not is_empty_letters:
+            query_set = set(letters)
             query_arr: list[int] | None = None
             if strict:
                 query_arr = [0] * 26
-                for c in lst_car:
+                for c in letters:
                     i = ord(c) - 97
                     if 0 <= i < 26:
                         query_arr[i] += 1
@@ -118,11 +118,11 @@ class IndexedStrategy:
                 if word in candidate_set:
                     yield word
 
-    def search_in_many_files(self, lang="fr", cars="", lst_hint: List[Hint] = None):
-        lst_hint = lst_hint or []
+    def search_in_many_files(self, lang="fr", letters="", hints: List[Hint] = None):
+        hints = hints or []
         min_len = max(
-            (int(h.pos) for h in lst_hint if h.car and not h.inverted),
+            (int(h.position) for h in hints if h.letter and not h.excluded),
             default=1,
         )
-        for i in reversed(range(min_len, len(cars) + 1)):
-            yield from self.search_in_file(lang=lang, nb_car=i, lst_car=list(cars), lst_hint=lst_hint)
+        for i in reversed(range(min_len, len(letters) + 1)):
+            yield from self.search_in_file(lang=lang, word_length=i, letters=list(letters), hints=hints)

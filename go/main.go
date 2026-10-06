@@ -1,4 +1,6 @@
 // Command search exposes the brute-force word-search API over HTTP on :8003.
+// The request/response types and routing come from the api package, generated
+// from the repository's openapi.yaml.
 package main
 
 import (
@@ -8,7 +10,9 @@ import (
 	"net/http"
 	"os"
 
+	"multithreading-lab/go/api"
 	"multithreading-lab/go/search"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -23,42 +27,16 @@ var openAPISpec []byte
 // openAPISpecJSON holds the JSON-encoded version of openapi.yaml for /openapi.json.
 var openAPISpecJSON []byte
 
-// hint is the JSON shape of a positional hint in a request body.
-type hint struct {
-	Pos      int     `json:"pos"`
-	Car      *string `json:"car"`
-	Inverted bool    `json:"inverted"`
-}
-
-type searchFileRequest struct {
-	Lang    string   `json:"lang"`
-	NbCar   int      `json:"nb_car"`
-	LstCar  []string `json:"lst_car"`
-	LstHint []hint   `json:"lst_hint"`
-	Strict  bool     `json:"strict"`
-}
-
-type searchManyRequest struct {
-	Lang    string `json:"lang"`
-	Cars    string `json:"cars"`
-	LstHint []hint `json:"lst_hint"`
-}
-
-type searchResponse struct {
-	Words []string `json:"words"`
-	Count int      `json:"count"`
-}
-
 // toSearchHints converts request hints into the search package's Hint type.
-func toSearchHints(hints []hint) []search.Hint {
+func toSearchHints(hints []api.Hint) []search.Hint {
 	out := make([]search.Hint, len(hints))
 	for i, h := range hints {
-		out[i] = search.Hint{Pos: h.Pos, Car: h.Car, Inverted: h.Inverted}
+		out[i] = search.Hint{Position: h.Position, Letter: h.Letter, Excluded: h.Excluded}
 	}
 	return out
 }
 
-// defaultLang mirrors the "fr" default the other implementations use.
+// defaultLang applies the spec's default language ("fr") when lang is absent.
 func defaultLang(lang string) string {
 	if lang == "" {
 		return "fr"
@@ -81,11 +59,16 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, map[string]string{"error": msg})
+	writeJSON(w, status, api.ErrorResponse{Error: msg})
 }
 
-func handleHealth(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+// server implements api.ServerInterface, the handler set generated from openapi.yaml.
+type server struct{}
+
+var _ api.ServerInterface = server{}
+
+func (server) Health(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, api.HealthResponse{Status: "ok"})
 }
 
 // convertYAMLValue recursively converts yaml.v2's map[interface{}]interface{}
@@ -157,8 +140,8 @@ func handleDocs(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write([]byte(swaggerUIHTML))
 }
 
-func handleSearchFile(w http.ResponseWriter, r *http.Request) {
-	var req searchFileRequest
+func (server) SearchFile(w http.ResponseWriter, r *http.Request) {
+	var req api.SearchFileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -166,19 +149,20 @@ func handleSearchFile(w http.ResponseWriter, r *http.Request) {
 	var words []string
 	var err error
 	if parallelMode {
-		words, err = search.InFileSplit(defaultLang(req.Lang), req.NbCar, req.LstCar, toSearchHints(req.LstHint), req.Strict, search.SplitDegree())
+		words, err = search.InFileSplit(defaultLang(req.Lang), req.WordLength, req.Letters, toSearchHints(req.Hints), req.Strict, search.SplitDegree())
 	} else {
-		words, err = search.InFile(defaultLang(req.Lang), req.NbCar, req.LstCar, toSearchHints(req.LstHint), req.Strict)
+		words, err = search.InFile(defaultLang(req.Lang), req.WordLength, req.Letters, toSearchHints(req.Hints), req.Strict)
 	}
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, searchResponse{Words: ensureSlice(words), Count: len(words)})
+	words = ensureSlice(words)
+	writeJSON(w, http.StatusOK, api.SearchResponse{Words: words, Count: len(words)})
 }
 
-func handleSearchMany(w http.ResponseWriter, r *http.Request) {
-	var req searchManyRequest
+func (server) SearchMany(w http.ResponseWriter, r *http.Request) {
+	var req api.SearchManyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -186,15 +170,16 @@ func handleSearchMany(w http.ResponseWriter, r *http.Request) {
 	var words []string
 	var err error
 	if parallelMode {
-		words, err = search.InManyFilesNested(defaultLang(req.Lang), req.Cars, toSearchHints(req.LstHint), search.SplitDegree())
+		words, err = search.InManyFilesNested(defaultLang(req.Lang), req.Letters, toSearchHints(req.Hints), search.SplitDegree())
 	} else {
-		words, err = search.InManyFiles(defaultLang(req.Lang), req.Cars, toSearchHints(req.LstHint))
+		words, err = search.InManyFiles(defaultLang(req.Lang), req.Letters, toSearchHints(req.Hints))
 	}
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, searchResponse{Words: ensureSlice(words), Count: len(words)})
+	words = ensureSlice(words)
+	writeJSON(w, http.StatusOK, api.SearchResponse{Words: words, Count: len(words)})
 }
 
 func main() {
@@ -216,12 +201,11 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", handleHealth)
 	mux.HandleFunc("GET /openapi.yaml", handleOpenAPISpec)
 	mux.HandleFunc("GET /openapi.json", handleOpenAPISpecJSON)
 	mux.HandleFunc("GET /docs", handleDocs)
-	mux.HandleFunc("POST /search/file", handleSearchFile)
-	mux.HandleFunc("POST /search/many", handleSearchMany)
+	// Registers GET /health, POST /search/file and POST /search/many.
+	api.HandlerFromMux(server{}, mux)
 
 	const addr = "0.0.0.0:8003"
 	log.Printf("listening on %s", addr)

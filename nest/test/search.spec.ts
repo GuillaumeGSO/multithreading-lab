@@ -1,6 +1,6 @@
-// Pure-logic unit tests — no workers. Imports the algorithm directly and
-// mirrors go/search/search_test.go: helper, content and hint matching, plus
-// integration assertions against the real asset files.
+// Pure-logic unit tests — no workers. Imports the algorithm directly: helper,
+// content and hint matching, plus integration assertions against the real
+// asset files.
 import * as path from 'path';
 
 // Point ASSETS_ROOT at the repo-root assets/ before any word list is loaded.
@@ -19,11 +19,11 @@ import {
   planLengths,
 } from '../src/search/search';
 
-// h builds a Hint with a default non-inverted flag.
-const h = (pos: number, car: string | null, inverted = false): Hint => ({
-  pos,
-  car,
-  inverted,
+// h builds a Hint that is pinned (not excluded) by default.
+const h = (position: number, letter: string | null, excluded = false): Hint => ({
+  position,
+  letter,
+  excluded,
 });
 
 describe('noLetters', () => {
@@ -87,16 +87,16 @@ describe('matchesHints', () => {
   it('rejects a mismatched position', () => {
     expect(matchesHints('salut', [h(1, 'a')])).toBe(false);
   });
-  it('rejects when an inverted hint is present at the position', () => {
+  it('rejects when the excluded letter is present at the position', () => {
     expect(matchesHints('salut', [h(1, 's', true)])).toBe(false);
   });
-  it('passes when an inverted hint is absent at the position', () => {
+  it('passes when the excluded letter is absent at the position', () => {
     expect(matchesHints('salut', [h(1, 'a', true)])).toBe(true);
   });
   it('rejects a normal hint past the word end', () => {
     expect(matchesHints('sal', [h(4, 'x')])).toBe(false);
   });
-  it('passes an inverted hint past the word end', () => {
+  it('passes an excluded hint past the word end', () => {
     expect(matchesHints('sal', [h(4, 'x', true)])).toBe(true);
   });
   it('ignores a hint with no character', () => {
@@ -130,7 +130,7 @@ describe('inFile', () => {
     expect(words).toHaveLength(8);
     expect(words).toContain('ailes');
   });
-  it('searches by hint — pos1=s, pos3=a, pos5=e', () => {
+  it('searches by hint — position 1=s, 3=a, 5=e', () => {
     const words = inFile(
       'fr',
       5,
@@ -154,16 +154,16 @@ describe('inFile', () => {
 });
 
 describe('planLengths', () => {
-  it('uses len(cars) as the max length', () => {
+  it('uses len(letters) as the max length', () => {
     expect(planLengths('guillaume', []).maxLen).toBe(9);
   });
   it('min length is 1 with no hints', () => {
     expect(planLengths('guillaume', []).minLen).toBe(1);
   });
-  it('a non-inverted hint raises the min length', () => {
+  it('a pinned hint raises the min length', () => {
     expect(planLengths('guillaume', [h(4, 'a')]).minLen).toBe(4);
   });
-  it('an inverted hint does not constrain the min length', () => {
+  it('an excluded hint does not constrain the min length', () => {
     expect(planLengths('guillaume', [h(4, 'a', true)]).minLen).toBe(1);
   });
 });
@@ -178,7 +178,7 @@ describe('inManyFiles', () => {
       expect([...words[i]].length).toBeLessThanOrEqual([...words[i - 1]].length);
     }
   });
-  it('returns an empty list when hints force a length above len(cars)', () => {
+  it('returns an empty list when hints force a length above len(letters)', () => {
     expect(inManyFiles('fr', 'abc', [h(9, 'a')])).toEqual([]);
   });
 });

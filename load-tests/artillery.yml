@@ -26,10 +26,10 @@ config:
     path: "./queries.csv"
     skipHeader: true
     fields:
-      - nb_car
-      - cars
+      - wordLength
+      - letters
       - strict
-      - lst_hint
+      - hints
     order: random
   processor: "./payload-processor.js"
 

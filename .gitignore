@@ -8,3 +8,10 @@ benchmarks/results/
 .DS_Store
 load-tests/._compare-report.html
 benchmarks/._compare.html
+
+# Generated from openapi.yaml at build time — never committed.
+python/generated/
+nest/src/generated/
+# .NET build output (obj/ also holds the generated Contracts.g.cs).
+csharp/**/bin/
+csharp/**/obj/

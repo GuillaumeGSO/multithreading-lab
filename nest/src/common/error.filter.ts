@@ -1,7 +1,7 @@
-// AllExceptionsFilter normalizes every failure into the lab's error contract:
-// a `{"error": "..."}` body. This covers Fastify's JSON-parse errors, the
-// algorithm's thrown Error ("letters and hints cannot both be empty"), and any
-// HttpException. It is the Node analog of Go's writeError helper.
+// AllExceptionsFilter normalizes every failure into the contract's
+// ErrorResponse: a `{"error": "..."}` body. This covers Fastify's JSON-parse
+// errors, the algorithm's thrown Error ("letters and hints cannot both be
+// empty"), and any HttpException.
 import {
   ArgumentsHost,
   Catch,
@@ -9,6 +9,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
+import { ErrorResponse } from '../search/search.types';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -33,6 +34,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = exception.message;
     }
 
-    void reply.status(status).send({ error: message });
+    const body: ErrorResponse = { error: message };
+    void reply.status(status).send(body);
   }
 }
