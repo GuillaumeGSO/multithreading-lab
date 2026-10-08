@@ -1,7 +1,7 @@
 # Build stage — install all deps, generate the API types from openapi.yaml and
 # compile TypeScript to dist/. The repo layout is mirrored (/build/openapi.yaml
 # + /build/nest) so the generate script's ../openapi.yaml resolves.
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /build/nest
 COPY nest/package.json nest/package-lock.json ./
 RUN npm ci
@@ -11,7 +11,7 @@ COPY nest/src ./src
 RUN npm run build
 
 # Runtime stage — production deps only, compiled output, shared word lists.
-FROM node:22-alpine
+FROM node:26-alpine
 WORKDIR /app
 COPY nest/package.json nest/package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
