@@ -30,7 +30,7 @@ jobs:
       matrix:
         service: [python, java, go, nest, csharp]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Build exactly the commit CI tested, not whatever master is now.
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
