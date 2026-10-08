@@ -14,14 +14,13 @@ O(result). Built from `common.load_base`, so normalization is shared with ScanSt
 and never repeated.
 """
 
-from typing import List
 
 from common import (
     Hint,
     is_hint_list_empty_or_full_of_none,
     is_list_empty_or_full_of_none,
-    logger,
     load_base,
+    logger,
 )
 
 # pos_index[key][pos][char] → frozenset of words with that char at that 1-based position
@@ -53,8 +52,8 @@ def _ensure_index(lang: str, word_length: int) -> str:
 class IndexedStrategy:
     name = "indexed"
 
-    def search_in_file(self, lang="fr", word_length=0, letters: List[str] = None,
-                       hints: List[Hint] = None, strict=False):
+    def search_in_file(self, lang="fr", word_length=0, letters: list[str] | None = None,
+                       hints: list[Hint] | None = None, strict=False):
         letters = letters or []
         hints = hints or []
         is_empty_hint = is_hint_list_empty_or_full_of_none(hints)
@@ -118,7 +117,7 @@ class IndexedStrategy:
                 if word in candidate_set:
                     yield word
 
-    def search_in_many_files(self, lang="fr", letters="", hints: List[Hint] = None):
+    def search_in_many_files(self, lang="fr", letters="", hints: list[Hint] | None = None):
         hints = hints or []
         min_len = max(
             (int(h.position) for h in hints if h.letter and not h.excluded),

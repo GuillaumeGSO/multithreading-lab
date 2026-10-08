@@ -5,6 +5,16 @@ info:
     Filters words from dictionary files by available letters, positional hints,
     and word length.
   version: 1.0.0
+  contact:
+    name: GuillaumeGSO
+    url: https://github.com/GuillaumeGSO/multithreading-lab
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+# Relative: every implementation serves the same API on its own port.
+servers:
+  - url: /
 
 tags:
   - name: health
@@ -17,6 +27,8 @@ paths:
     get:
       tags: [health]
       summary: Liveness check
+      description: >
+        Answers 200 with `{"status": "ok"}` while the service is up.
       operationId: health
       responses:
         "200":

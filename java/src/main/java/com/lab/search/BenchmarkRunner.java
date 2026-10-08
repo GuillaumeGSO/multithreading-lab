@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -72,8 +73,16 @@ public final class BenchmarkRunner {
         return new Timing(median, samples[0]);
     }
 
-    // runThroughput runs THROUGHPUT_OPS baseline scans with CONCURRENCY threads
-    // in flight, reporting aggregate ops/sec and median per-op latency.
+    // runThroughput runs THROUGHPUT_OPS baseline scans with CONCURRENCY in flight,
+    // reporting aggregate ops/sec and median per-op latency. Each scan runs on its
+    // own virtual thread (Java's concurrency model throughout this project); a
+    // semaphore keeps CONCURRENCY scans admitted at once, like the other runners.
+    //
+    // Virtual threads are not time-sliced: a CPU-bound scan keeps its carrier
+    // thread until it finishes, so only as many scans run at once as there are
+    // carriers (2 here) and the rest wait before starting. The latency below is
+    // timed from when a scan starts running, so it is close to one scan's own
+    // time; ops/sec is the number that compares across runtimes.
     private static Map<String, Object> runThroughput(WordSearchService service) throws Exception {
         int concurrency = envInt("CONCURRENCY", 16);
         int ops = envInt("THROUGHPUT_OPS", 200);
@@ -87,25 +96,34 @@ public final class BenchmarkRunner {
 
         double[] latencies = new double[ops];
         AtomicInteger count = new AtomicInteger();
-        ExecutorService ex = Executors.newFixedThreadPool(concurrency);
-        long start = System.nanoTime();
-        List<Future<?>> futures = new ArrayList<>();
-        for (int i = 0; i < ops; i++) {
-            final int idx = i;
-            futures.add(ex.submit(() -> {
-                long t = System.nanoTime();
-                List<String> r = service.fileBaseline(lang, wordLength, letters, hints, false);
-                latencies[idx] = (System.nanoTime() - t) / 1_000_000.0;
-                count.set(r.size());
-            }));
+        Semaphore inFlight = new Semaphore(concurrency);
+        long start;
+        double elapsed;
+        try (ExecutorService ex = Executors.newVirtualThreadPerTaskExecutor()) {
+            start = System.nanoTime();
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < ops; i++) {
+                final int idx = i;
+                inFlight.acquire();
+                futures.add(ex.submit(() -> {
+                    try {
+                        long t = System.nanoTime();
+                        List<String> r = service.fileBaseline(lang, wordLength, letters, hints, false);
+                        latencies[idx] = (System.nanoTime() - t) / 1_000_000.0;
+                        count.set(r.size());
+                    } finally {
+                        inFlight.release();
+                    }
+                }));
+            }
+            for (Future<?> f : futures) f.get();
+            elapsed = (System.nanoTime() - start) / 1_000_000.0;
         }
-        for (Future<?> f : futures) f.get();
-        ex.shutdown();
-        double elapsed = (System.nanoTime() - start) / 1_000_000.0;
         Arrays.sort(latencies);
 
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("workload", "file wordLength=11 pool=26 hint=1:x (baseline scan per op)");
+        m.put("executor", "virtual thread per task");
         m.put("concurrency", concurrency);
         m.put("ops", ops);
         m.put("elapsed_ms", elapsed);

@@ -11,7 +11,6 @@ The module-level `is_search_by_content` is also imported by `parallel.py` (the G
 threaded modes run on this scan data path).
 """
 
-from typing import List
 
 from common import (
     Hint,
@@ -55,8 +54,8 @@ def _build_avail_arr(avail: list[str]) -> list[int]:
 class ScanStrategy:
     name = "scan"
 
-    def search_in_file(self, lang="fr", word_length=0, letters: List[str] = None,
-                       hints: List[Hint] = None, strict=False):
+    def search_in_file(self, lang="fr", word_length=0, letters: list[str] | None = None,
+                       hints: list[Hint] | None = None, strict=False):
         letters = letters or []
         hints = hints or []
         is_empty_hint = is_hint_list_empty_or_full_of_none(hints)
@@ -80,7 +79,7 @@ class ScanStrategy:
                   and is_search_by_hint(word, hints)):
                 yield word
 
-    def search_in_many_files(self, lang="fr", letters="", hints: List[Hint] = None):
+    def search_in_many_files(self, lang="fr", letters="", hints: list[Hint] | None = None):
         hints = hints or []
         min_len = max(
             (int(h.position) for h in hints if h.letter and not h.excluded),

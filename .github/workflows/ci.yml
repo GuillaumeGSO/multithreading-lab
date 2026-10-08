@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: OpenAPI contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint openapi.yaml (Spectral)
+        run: npx --yes @stoplight/spectral-cli@6 lint openapi.yaml --fail-severity=warn
+
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - name: Generate models from openapi.yaml
+        run: uv run --frozen --group codegen datamodel-codegen
+      - run: uv run --frozen ruff check .
+      - run: uv run --frozen pytest -q
+
+  go:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - run: go vet ./...
+      - run: go test ./...
+      - name: Committed api.gen.go matches openapi.yaml
+        run: go generate ./... && git diff --exit-code -- api/
+
+  java:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: java
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - run: mvn -B -ntp test
+
+  nest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: nest/package-lock.json
+      - run: npm ci
+      - run: npm run generate
+      - run: npx tsc -p tsconfig.json --noEmit
+      - run: npm test
+      - run: npm run test:integration
+
+  csharp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: csharp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test Tests/Tests.csproj
+
+  smoke:
+    name: Docker smoke test
+    needs: [contract, python, go, java, nest, csharp]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start every service (waits for health checks)
+        run: docker compose up -d --build --wait --wait-timeout 300
+      - name: Valid request answers 200, invalid answers 400
+        run: |
+          set -u
+          fail=0
+          for port in 8007 8002 8003 8006 8005; do
+            ok=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+              -d '{"wordLength":5,"letters":["e","l","i","s","a"]}' "localhost:$port/search/file")
+            bad=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+              -d '{"wordLength":5,"letters":["a"],"hints":[{"position":0,"letter":"a"}]}' "localhost:$port/search/file")
+            echo "port $port: valid=$ok invalid=$bad"
+            [ "$ok" = 200 ] && [ "$bad" = 400 ] || fail=1
+          done
+          exit $fail
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --tail 100

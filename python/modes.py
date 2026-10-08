@@ -14,7 +14,8 @@ serving a different mode.
 """
 
 import os
-from typing import Callable, Iterable, NamedTuple
+from collections.abc import Callable, Iterable
+from typing import NamedTuple
 
 from parallel import search_in_file_parallel, search_in_many_parallel
 from seek_words import SCAN, search_in_file, search_in_many_files

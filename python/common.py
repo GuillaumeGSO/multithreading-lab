@@ -15,7 +15,6 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import List
 
 import unidecode
 
@@ -93,13 +92,13 @@ def is_list_empty_or_full_of_none(lst):
     return all(x is None or not x for x in lst)
 
 
-def is_hint_list_empty_or_full_of_none(lst: List[Hint]):
+def is_hint_list_empty_or_full_of_none(lst: list[Hint]):
     if not lst:
         return True
     return all(not x.letter for x in lst)
 
 
-def is_search_by_hint(word: str, hint_list: List[Hint] = None):
+def is_search_by_hint(word: str, hint_list: list[Hint] | None = None):
     """Returns False if word is empty; True if no hints; otherwise every pinned hint
     must match its position and every excluded hint must not match its position."""
     if not word:

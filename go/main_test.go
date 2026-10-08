@@ -48,7 +48,6 @@ func TestInvalidRequestsAre400(t *testing.T) {
 		{"/search/file", `{"wordLength":5}`},
 		{"/search/file", `{not json`},
 		{"/search/many", `{not json`},
-		{"/search/many", `{"letters":"` + strings.Repeat("a", 70000) + `"}`},
 	}
 	for _, c := range cases {
 		rec := post(t, c.path, c.body)
@@ -72,5 +71,34 @@ func TestValidRequestsAtTheBoundsAre200(t *testing.T) {
 		if rec := post(t, c.path, c.body); rec.Code != http.StatusOK {
 			t.Errorf("%s %s: status %d, want 200 (%s)", c.path, c.body, rec.Code, rec.Body)
 		}
+	}
+}
+
+// /openapi.json is the served openapi.yaml, converted without loss.
+func TestOpenAPIJSONMatchesSpec(t *testing.T) {
+	if err := loadSpec("../openapi.yaml"); err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	newMux().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/openapi.json", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d", rec.Code)
+	}
+	var served map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &served); err != nil {
+		t.Fatal(err)
+	}
+	info, _ := served["info"].(map[string]any)
+	paths, _ := served["paths"].(map[string]any)
+	if info["version"] != "1.0.0" || paths["/search/many"] == nil {
+		t.Errorf("unexpected spec: info=%v, %d paths", info, len(paths))
+	}
+}
+
+// A body over the 64 KiB cap is a 413 ErrorResponse.
+func TestOversizedBodyIs413(t *testing.T) {
+	rec := post(t, "/search/many", `{"letters":"`+strings.Repeat("a", 70000)+`"}`)
+	if rec.Code != http.StatusRequestEntityTooLarge || !strings.Contains(rec.Body.String(), `"error"`) {
+		t.Errorf("status %d, body %s; want 413 ErrorResponse", rec.Code, rec.Body)
 	}
 }

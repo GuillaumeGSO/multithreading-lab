@@ -16,7 +16,6 @@ away.
 
 import os
 import threading
-from typing import List
 
 from common import (
     Hint,
@@ -47,7 +46,7 @@ def _matches(entry, avail_set, avail_arr, hints, strict, is_empty_letters, is_em
             and is_search_by_hint(word, hints))
 
 
-def _scan(entries, avail_set, avail_arr, hints, strict, is_empty_letters, is_empty_hint) -> List[str]:
+def _scan(entries, avail_set, avail_arr, hints, strict, is_empty_letters, is_empty_hint) -> list[str]:
     return [
         entry[0] for entry in entries
         if _matches(entry, avail_set, avail_arr, hints, strict, is_empty_letters, is_empty_hint)
@@ -55,9 +54,9 @@ def _scan(entries, avail_set, avail_arr, hints, strict, is_empty_letters, is_emp
 
 
 def search_in_file_parallel(
-    lang="fr", word_length=0, letters: List[str] = None, hints: List[Hint] = None,
+    lang="fr", word_length=0, letters: list[str] | None = None, hints: list[Hint] | None = None,
     strict=False, threads: int | None = None,
-) -> List[str]:
+) -> list[str]:
     """Intra-file split (axis B). Mirrors ``search_in_file`` but scans the word list
     in ``threads`` contiguous chunks. threads=1 runs inline (== baseline)."""
     letters = letters or []
@@ -104,8 +103,8 @@ def search_in_file_parallel(
 
 
 def search_in_many_parallel(
-    lang="fr", letters="", hints: List[Hint] = None, threads: int | None = None,
-) -> List[str]:
+    lang="fr", letters="", hints: list[Hint] | None = None, threads: int | None = None,
+) -> list[str]:
     """Per-length fan-out (axis A). One thread per word length, longest first.
 
     ``threads`` controls the *inner* intra-file split each length uses:
@@ -128,7 +127,9 @@ def search_in_many_parallel(
                 lang=lang, word_length=length, letters=list(letters),
                 hints=hints, strict=False, threads=threads,
             )
-        except Exception:
+        except ValueError:
+            # A length the search rejects contributes no words; any other error
+            # is a bug and must surface rather than silently drop results.
             partials[idx] = []
 
     for idx, length in enumerate(lengths):

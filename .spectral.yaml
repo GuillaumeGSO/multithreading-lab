@@ -1,0 +1,2 @@
+# OpenAPI lint rules for openapi.yaml (run in CI with the Spectral CLI).
+extends: ["spectral:oas"]

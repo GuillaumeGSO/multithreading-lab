@@ -191,12 +191,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <p><em>Artillery · generated <span id="gen"></span> · lower latency is better</em></p>
 
 <div class="note">
-  End-to-end HTTP: the web framework, JSON handling and the server's concurrency model
-  count as much as the search itself, because a search takes only a few milliseconds.
-  Every service runs the same <code>artillery.yml</code> at the same constant arrival rate,
-  so latency, not saturation, is what differs. Languages are compared within one
-  <code>SEARCH_MODE</code> profile: <code>baseline</code> runs a single-threaded scan per
-  request, and <code>parallel</code> also splits each request's scan across threads.
+  End-to-end HTTP: the web framework, JSON handling and the server's concurrency model are
+  part of every number, and a large share of short requests. Every service runs the same
+  <code>artillery.yml</code> at the same constant arrival rate, chosen so each should keep
+  up; a median rising to seconds means a service is saturated, not just slower. Languages
+  are compared within one <code>SEARCH_MODE</code> profile: <code>baseline</code> runs a
+  single-threaded scan per request; <code>parallel</code> splits each file scan into
+  chunks, and <code>/search/many</code> also runs one task per word length.
   With several rounds, bars show the median and whiskers the min–max across rounds.
 </div>
 

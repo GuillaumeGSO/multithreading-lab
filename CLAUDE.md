@@ -140,6 +140,19 @@ the correctness reference; its `test_dispatch.py` additionally asserts the two s
 return byte-identical output (so per-query dispatch can never change results) and the other
 languages mirror these expected results.
 
+## CI
+
+`.github/workflows/ci.yml` runs on pushes and pull requests to `master`:
+- Spectral lint of `openapi.yaml`, failing on warnings.
+- Each language's suite, plus `ruff check` for Python and `gofmt`, `go vet` and a regenerate-and-diff of
+  `go/api/api.gen.go` for Go.
+- A Docker smoke test: `docker compose up --wait` on the health checks, then one valid and one
+  invalid request per service.
+
+Keep it green: run the matching local command before changing a language, and regenerate Go's
+`api.gen.go` whenever `openapi.yaml` changes. Dependabot (`.github/dependabot.yml`) opens weekly
+updates for every ecosystem.
+
 ## Concurrency models by implementation
 
 | Implementation   | `parallel` mode uses |

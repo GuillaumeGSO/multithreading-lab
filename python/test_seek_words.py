@@ -18,7 +18,6 @@ from seek_words import (
     search_in_many_files,
 )
 
-
 # --- is_list_empty_or_full_of_none ---
 
 def test_list_empty():
@@ -86,11 +85,11 @@ def test_hint_multiple_one_fails():
 # --- search_in_file (integration — uses real assets) ---
 
 def test_search_file_raises_without_params():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         list(search_in_file(lang="fr", word_length=0))
 
 def test_search_file_raises_empty_cars_and_hints():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         list(search_in_file(lang="fr", word_length=5))
 
 def test_search_file_missing_file_returns_empty():

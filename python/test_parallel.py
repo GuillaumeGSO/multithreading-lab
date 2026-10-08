@@ -6,8 +6,8 @@ the scan strategy while the baseline may dispatch to the index.
 
 import pytest
 
-from seek_words import Hint, search_in_file, search_in_many_files
 from parallel import search_in_file_parallel, search_in_many_parallel
+from seek_words import Hint, search_in_file, search_in_many_files
 
 FILE_CASES = [
     dict(lang="fr", word_length=5, letters=list("elisa"), strict=True),

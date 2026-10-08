@@ -19,7 +19,6 @@ from seek_words import (
     search_in_many_files,
 )
 
-
 # --- 1. Routing ---
 
 @pytest.mark.parametrize("hints, expected", [

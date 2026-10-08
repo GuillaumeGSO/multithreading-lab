@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse, Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from generated.models import (
     ErrorResponse,
@@ -42,6 +43,47 @@ async def lifespan(app: FastAPI):
 # below serve the checked-in contract instead.
 app = FastAPI(lifespan=lifespan, openapi_url=None, docs_url=None, redoc_url=None)
 
+# 64 KiB is far above any valid request (≤ 32 letters, ≤ 31 hints).
+MAX_BODY_BYTES = 64 * 1024
+
+
+class BodyTooLarge(StarletteHTTPException):
+    def __init__(self) -> None:
+        super().__init__(status_code=413, detail="request body is too large")
+
+
+class BodySizeLimit:
+    """ASGI middleware: refuses bodies over MAX_BODY_BYTES with 413. A declared
+    Content-Length is checked up front; a chunked body is counted as it is read,
+    so an oversized body is never buffered in full."""
+
+    def __init__(self, app, max_bytes: int = MAX_BODY_BYTES):
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        length = dict(scope.get("headers", [])).get(b"content-length")
+        if length is not None and length.isdigit() and int(length) > self.max_bytes:
+            response = JSONResponse(status_code=413, content={"error": "request body is too large"})
+            return await response(scope, receive, send)
+        received = 0
+
+        async def limited_receive():
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > self.max_bytes:
+                    raise BodyTooLarge()
+            return message
+
+        await self.app(scope, limited_receive, send)
+
+
+app.add_middleware(BodySizeLimit)
+
 
 def _error(message: str) -> JSONResponse:
     return JSONResponse(status_code=400, content=ErrorResponse(error=message).model_dump())
@@ -50,6 +92,13 @@ def _error(message: str) -> JSONResponse:
 @app.exception_handler(RequestValidationError)
 async def validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
     return _error("; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors()))
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
+    # 404/405/413 and the like keep their status, in the contract's error shape.
+    return JSONResponse(status_code=exc.status_code,
+                        content=ErrorResponse(error=str(exc.detail)).model_dump())
 
 
 @app.exception_handler(ValueError)
