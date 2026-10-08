@@ -89,7 +89,7 @@ export class WorkerPool implements OnApplicationShutdown {
       }
       this.release(worker);
     });
-    worker.on('error', (err) => {
+    worker.on('error', (err: Error) => {
       // Fail the in-flight task, drop the dead worker, and respawn.
       const taskId = this.taskByWorker.get(worker);
       if (taskId !== undefined) {
