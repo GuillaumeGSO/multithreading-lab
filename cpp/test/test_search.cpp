@@ -250,3 +250,23 @@ TEST_CASE("inManyFiles/Nested match inManyFilesSeq for all degrees") {
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// input guards
+// ---------------------------------------------------------------------------
+
+TEST_CASE("an unsafe lang is rejected and never read") {
+    for (const std::string lang : {"../../etc", "/etc", "fr/../en", ""}) {
+        CHECK_FALSE(isValidLang(lang));
+        CHECK(loadWords(lang, 5)->empty());
+        CHECK_THROWS_AS(inFile(lang, 5, {"a"}, {}, false), SearchError);
+    }
+    CHECK(isValidLang("fr"));
+}
+
+TEST_CASE("a hint position below 1 is out of range") {
+    for (int position : {0, -1}) {
+        CHECK_FALSE(matchesHints("abc", {Hint{position, std::string("a"), false}}));
+        CHECK(matchesHints("abc", {Hint{position, std::string("a"), true}}));
+    }
+}

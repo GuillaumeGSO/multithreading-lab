@@ -293,3 +293,34 @@ func TestParallelMatchesBaseline(t *testing.T) {
 		}
 	}
 }
+
+// A hint position below 1 is out of range (never a panic), in every scan path.
+func TestNonPositivePositionDoesNotPanic(t *testing.T) {
+	for _, pos := range []int{0, -1} {
+		hints := []Hint{{Position: pos, Letter: "a"}}
+		if got := matchesHints("abc", hints); got {
+			t.Errorf("matchesHints(position %d) = true, want false", pos)
+		}
+		excluded := []Hint{{Position: pos, Letter: "a", Excluded: true}}
+		if got := matchesHints("abc", excluded); !got {
+			t.Errorf("matchesHints(excluded position %d) = false, want true", pos)
+		}
+		if _, err := InFileSplit("fr", 5, []string{"a"}, hints, false, 2); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := InManyFilesNested("fr", "abc", hints, 2); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestUnsafeLangIsRejected(t *testing.T) {
+	for _, lang := range []string{"../../etc", "/etc", "fr/../en", ""} {
+		if _, err := InFile(lang, 5, []string{"a"}, nil, false); err == nil {
+			t.Errorf("InFile(lang %q) = nil error, want error", lang)
+		}
+		if words := loadWords(lang, 5); len(words) != 0 {
+			t.Errorf("loadWords(%q) returned %d words", lang, len(words))
+		}
+	}
+}

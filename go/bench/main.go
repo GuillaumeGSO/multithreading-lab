@@ -185,7 +185,7 @@ func main() {
 		modes := map[string]func() []string{}
 		if c.Kind == "file" {
 			f := c.File
-			lang := orDefault(f.Lang, "fr")
+			lang := orDefault(string(f.Lang), "fr")
 			hints := toHints(f.Hints)
 			modes["baseline"] = func() []string {
 				r, _ := search.InFile(lang, f.WordLength, f.Letters, hints, f.Strict)
@@ -197,7 +197,7 @@ func main() {
 			}
 		} else {
 			m := c.Many
-			lang := orDefault(m.Lang, "fr")
+			lang := orDefault(string(m.Lang), "fr")
 			hints := toHints(m.Hints)
 			modes["baseline"] = func() []string {
 				r, _ := search.InManyFilesSeq(lang, m.Letters, hints)

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -48,9 +49,22 @@ func assetsRoot() string {
 	return "assets"
 }
 
+// langPattern accepts only plain directory names under assets/. Anything else
+// ("..", "/", an absolute path) would let lang escape the assets directory.
+var langPattern = regexp.MustCompile(`^[a-z]{2,8}$`)
+
+// ValidLang reports whether lang is a safe dictionary directory name.
+func ValidLang(lang string) bool {
+	return langPattern.MatchString(lang)
+}
+
 // loadWords returns the word list for (lang, length), reading it from disk on
 // the first call and caching it afterwards. A missing file yields an empty list.
+// An unsafe lang yields an empty list and is never cached.
 func loadWords(lang string, length int) []string {
+	if !ValidLang(lang) {
+		return []string{}
+	}
 	key := fmt.Sprintf("%s/%d", lang, length)
 	if cached, ok := wordCache.Load(key); ok {
 		return cached.([]string)
@@ -122,7 +136,9 @@ func matchesHints(word string, hints []Hint) bool {
 		if h.Letter == "" {
 			continue
 		}
-		if h.Position > len(runes) {
+		// Positions are 1-indexed; one below 1 is out of range like one past
+		// the end (indexing runes[-1] would panic).
+		if h.Position < 1 || h.Position > len(runes) {
 			if !h.Excluded {
 				return false
 			}
@@ -187,8 +203,12 @@ func lengthPlan(letters string, hints []Hint) (lengths []int, pool []string) {
 	return lengths, pool
 }
 
-// validateFilters errors when length is zero or neither letters nor hints are set.
-func validateFilters(length int, emptyLetters, emptyHints bool) error {
+// validateFilters errors on an unsafe lang, when length is zero, or when neither
+// letters nor hints are set.
+func validateFilters(lang string, length int, emptyLetters, emptyHints bool) error {
+	if !ValidLang(lang) {
+		return fmt.Errorf("invalid lang: %q", lang)
+	}
 	if length == 0 || (emptyLetters && emptyHints) {
 		return errors.New("letters and hints cannot both be empty")
 	}
@@ -201,7 +221,7 @@ func validateFilters(length int, emptyLetters, emptyHints bool) error {
 func InFile(lang string, length int, letters []string, hints []Hint, strict bool) ([]string, error) {
 	emptyLetters := noLetters(letters)
 	emptyHints := noHints(hints)
-	if err := validateFilters(length, emptyLetters, emptyHints); err != nil {
+	if err := validateFilters(lang, length, emptyLetters, emptyHints); err != nil {
 		return nil, err
 	}
 	return scanWords(loadWords(lang, length), letters, hints, strict, emptyLetters, emptyHints), nil
@@ -213,7 +233,7 @@ func InFile(lang string, length int, letters []string, hints []Hint, strict bool
 func InFileSplit(lang string, length int, letters []string, hints []Hint, strict bool, threads int) ([]string, error) {
 	emptyLetters := noLetters(letters)
 	emptyHints := noHints(hints)
-	if err := validateFilters(length, emptyLetters, emptyHints); err != nil {
+	if err := validateFilters(lang, length, emptyLetters, emptyHints); err != nil {
 		return nil, err
 	}
 	words := loadWords(lang, length)

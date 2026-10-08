@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 
 @Service
 public class WordSearchService {
@@ -251,12 +253,27 @@ public class WordSearchService {
 
     // --- helpers ---
 
+    /// A language code is a plain directory name under assets/. Anything else
+    /// ("..", "/", an absolute path) would let `lang` escape the assets directory.
+    private static final Pattern LANG = Pattern.compile("[a-z]{2,8}");
+
+    public static boolean isValidLang(String lang) {
+        return lang != null && LANG.matcher(lang).matches();
+    }
+
+    /// Word list for (lang, wordLength), cached. A missing file yields an empty
+    /// list; an unsafe lang is rejected before any path is built.
     private List<String> loadWords(String lang, int wordLength) {
+        if (!isValidLang(lang)) {
+            throw new IllegalArgumentException("invalid lang: " + lang);
+        }
         var key = lang + "/" + wordLength;
         return wordCache.computeIfAbsent(key, k -> {
             var file = assetsRoot.resolve(lang).resolve(wordLength + ".txt");
             try {
                 return Files.readAllLines(file);
+            } catch (NoSuchFileException e) {
+                return List.of();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -294,8 +311,11 @@ public class WordSearchService {
         for (Hint hint : hints) {
             if (hint.letter() == null) continue;
             int pos = hint.position();
-            if (!hint.excluded() && pos > word.length()) return false;
-            if (pos > word.length()) continue;
+            // Positions are 1-indexed: one below 1 is out of range like one past
+            // the end (charAt(-1) would throw).
+            boolean outOfRange = pos < 1 || pos > word.length();
+            if (!hint.excluded() && outOfRange) return false;
+            if (outOfRange) continue;
             char actual = word.charAt(pos - 1);
             char expected = hint.letter().charAt(0);
             if (hint.excluded()) {

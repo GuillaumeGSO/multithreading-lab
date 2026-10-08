@@ -10,6 +10,24 @@ import (
 	"net/http"
 )
 
+// Defines values for Lang.
+const (
+	En Lang = "en"
+	Fr Lang = "fr"
+)
+
+// Valid indicates whether the value is a known member of the Lang enum.
+func (e Lang) Valid() bool {
+	switch e {
+	case En:
+		return true
+	case Fr:
+		return true
+	default:
+		return false
+	}
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	// Error Human-readable reason the request was rejected.
@@ -43,6 +61,11 @@ type Hint struct {
 	Position int `json:"position"`
 }
 
+// Lang Language code — selects the dictionary to search.
+//
+// Example: fr
+type Lang string
+
 // SearchFileRequest Search for words of one fixed length.
 type SearchFileRequest struct {
 	// Hints Positional constraints, applied after the letter-pool filter.
@@ -51,7 +74,7 @@ type SearchFileRequest struct {
 	// Lang Language code — selects the dictionary to search.
 	//
 	// Example: fr
-	Lang string `json:"lang,omitempty"`
+	Lang Lang `json:"lang,omitempty"`
 
 	// Letters Available letters, one character per element. Empty means no letter-pool constraint (only hints filter).
 	//
@@ -76,7 +99,7 @@ type SearchManyRequest struct {
 	// Lang Language code — selects the dictionary to search.
 	//
 	// Example: fr
-	Lang string `json:"lang,omitempty"`
+	Lang Lang `json:"lang,omitempty"`
 
 	// Letters Available letters as a single string. The longest word searched has as many characters as `letters`; every shorter length is scanned too.
 	//

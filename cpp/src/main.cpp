@@ -1,5 +1,5 @@
+#include "handlers.h"
 #include "models.gen.h"  // generated from openapi.yaml (see CMakeLists.txt)
-#include "search.h"
 
 #include <httplib.h>
 #include <nlohmann/json.hpp>
@@ -13,42 +13,9 @@
 
 using json = nlohmann::json;
 
-// parallelMode routes /search through the threaded variants (intra-file split
-// for /file, nested per-length fan-out for /many) unless SEARCH_MODE=baseline.
-static bool parallelMode() {
-    const char* m = std::getenv("SEARCH_MODE");
-    return !(m && std::string(m) == "baseline");
-}
-
-// defaultLang applies the spec's default language ("fr") when lang is empty.
-static std::string defaultLang(const std::string& lang) {
-    return lang.empty() ? "fr" : lang;
-}
-
 static void writeJSON(httplib::Response& res, int status, const json& body) {
     res.status = status;
     res.set_content(body.dump(), "application/json");
-}
-
-static void writeError(httplib::Response& res, const std::string& msg) {
-    writeJSON(res, 400, api::ErrorResponse{msg});
-}
-
-// toHints converts the generated api::Hint models into the search Hint type.
-static std::vector<Hint> toHints(const std::vector<api::Hint>& in) {
-    std::vector<Hint> hints;
-    hints.reserve(in.size());
-    for (const auto& h : in) {
-        hints.push_back(Hint{h.position, h.letter, h.excluded});
-    }
-    return hints;
-}
-
-static void writeWords(httplib::Response& res, std::vector<std::string> words) {
-    api::SearchResponse out;
-    out.count = static_cast<int>(words.size());
-    out.words = std::move(words);
-    writeJSON(res, 200, out);
 }
 
 // g_openApiSpec holds the contents of openapi.yaml, loaded once at startup.
@@ -108,36 +75,17 @@ static void handleHealth(const httplib::Request&, httplib::Response& res) {
     writeJSON(res, 200, api::HealthResponse{"ok"});
 }
 
-// Request bodies are parsed into the generated models: a malformed body, a
-// missing required field or a wrong type throws and is answered with 400.
-static void handleSearchFile(const httplib::Request& req,
-                              httplib::Response& res) {
-    try {
-        auto body = json::parse(req.body).get<api::SearchFileRequest>();
-        std::string lang = defaultLang(body.lang);
-        std::vector<Hint> hints = toHints(body.hints);
-        auto words = parallelMode()
-                         ? inFileSplit(lang, body.wordLength, body.letters, hints, body.strict, splitDegree())
-                         : inFile(lang, body.wordLength, body.letters, hints, body.strict);
-        writeWords(res, std::move(words));
-    } catch (const std::exception& e) {
-        writeError(res, e.what());
-    }
+// The search endpoints live in handlers.cpp as pure body -> Reply functions.
+static void handleSearchFile(const httplib::Request& req, httplib::Response& res) {
+    auto reply = searchFile(req.body);
+    res.status = reply.status;
+    res.set_content(reply.body, "application/json");
 }
 
-static void handleSearchMany(const httplib::Request& req,
-                              httplib::Response& res) {
-    try {
-        auto body = json::parse(req.body).get<api::SearchManyRequest>();
-        std::string lang = defaultLang(body.lang);
-        std::vector<Hint> hints = toHints(body.hints);
-        auto words = parallelMode()
-                         ? inManyFilesNested(lang, body.letters, hints, splitDegree())
-                         : inManyFiles(lang, body.letters, hints);
-        writeWords(res, std::move(words));
-    } catch (const std::exception& e) {
-        writeError(res, e.what());
-    }
+static void handleSearchMany(const httplib::Request& req, httplib::Response& res) {
+    auto reply = searchMany(req.body);
+    res.status = reply.status;
+    res.set_content(reply.body, "application/json");
 }
 
 int main() {
@@ -182,6 +130,16 @@ int main() {
     // A shorter keep-alive timeout frees idle connections promptly as a backstop.
     svr.new_task_queue = [] { return new httplib::ThreadPool(64); };
     svr.set_keep_alive_timeout(2);
+    // 64 KiB is far above any valid request (≤ 32 letters, ≤ 31 hints); larger
+    // bodies are refused with 413 before reaching a handler.
+    svr.set_payload_max_length(64 * 1024);
+    // Errors raised by httplib itself (413 past the payload limit, 404, ...)
+    // carry no body; give them the contract's ErrorResponse shape.
+    svr.set_error_handler([](const httplib::Request&, httplib::Response& res) {
+        if (res.body.empty()) {
+            writeJSON(res, res.status, api::ErrorResponse{httplib::status_message(res.status)});
+        }
+    });
     svr.Get("/health",         handleHealth);
     svr.Get("/openapi.yaml",   handleOpenApi);
     svr.Get("/openapi.json",   handleOpenApiJson);

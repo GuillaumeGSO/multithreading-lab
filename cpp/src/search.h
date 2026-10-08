@@ -1,8 +1,17 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+// SearchError marks a search the algorithm rejects because of its input (an
+// unsafe lang, or neither letters nor hints). The HTTP layer answers it with
+// 400; any other exception is an internal fault.
+class SearchError : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
 
 // Hint is a positional constraint on a word. position is 1-indexed. letter is
 // the expected character; nullopt or an empty letter imposes no constraint. When
@@ -39,16 +48,23 @@ bool matchesContent(const std::string& word,
 
 bool matchesHints(const std::string& word, const std::vector<Hint>& hints);
 
+// isValidLang reports whether lang is a safe dictionary directory name: 2–8
+// lowercase ASCII letters. Anything else ("..", "/", an absolute path) would let
+// lang escape the assets directory.
+bool isValidLang(const std::string& lang);
+
 // loadWords returns a shared_ptr to the cached word list for (lang, length),
 // reading from assets/{lang}/{length}.txt on first call. Thread-safe via an
 // internal mutex. Returning shared_ptr avoids copying the full word list on
 // every call (O(1) handle instead of an O(n) copy).
-// A missing file yields an empty vector.
+// A missing file yields an empty vector. An unsafe lang yields an empty vector
+// and is never read or cached.
 std::shared_ptr<const std::vector<std::string>> loadWords(const std::string& lang, int length);
 
 // inFile returns all words of exactly `length` codepoints that match the
-// letter pool and/or positional hints. Throws std::runtime_error when length
-// is zero or both letters and hints are empty.
+// letter pool and/or positional hints. Throws SearchError (a
+// std::runtime_error) on an unsafe lang, when length is zero, or when both
+// letters and hints are empty.
 std::vector<std::string> inFile(const std::string& lang,
                                 int length,
                                 const std::vector<std::string>& letters,

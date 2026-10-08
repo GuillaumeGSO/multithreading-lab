@@ -65,7 +65,9 @@ public sealed class ScanStrategy : ISearchStrategy
         {
             if (string.IsNullOrEmpty(hint.Letter)) continue;
             int idx = hint.Position - 1;
-            if (idx >= word.Length)
+            // Positions are 1-indexed: one below 1 is out of range like one past
+            // the end (word[-1] would throw).
+            if (idx < 0 || idx >= word.Length)
             {
                 if (!hint.Excluded) return false;
                 continue;

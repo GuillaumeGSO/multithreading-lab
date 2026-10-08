@@ -26,9 +26,22 @@ function assetsRoot(): string {
   return process.env.ASSETS_ROOT || 'assets';
 }
 
+// LANG_PATTERN accepts only plain directory names under assets/. Anything else
+// ("..", "/", an absolute path) would let `lang` escape the assets directory.
+const LANG_PATTERN = /^[a-z]{2,8}$/;
+
+// isValidLang reports whether `lang` is a safe dictionary directory name.
+export function isValidLang(lang: string): boolean {
+  return LANG_PATTERN.test(lang);
+}
+
 // loadWords returns the word list for (lang, length), reading it from disk on
 // the first call and caching it afterwards. A missing file yields an empty list.
+// An unsafe `lang` yields an empty list and is never cached.
 export function loadWords(lang: string, length: number): string[] {
+  if (!isValidLang(lang)) {
+    return [];
+  }
   const key = `${lang}/${length}`;
   const cached = wordCache.get(key);
   if (cached !== undefined) {
@@ -99,9 +112,9 @@ export function matchesHints(word: string, hints: Hint[]): boolean {
     if (h.letter == null || h.letter === '') {
       continue;
     }
-    if (h.position > runes.length) {
-      // A pinned hint past the word's end can never match; an excluded hint
-      // is trivially satisfied (the character is absent).
+    if (h.position < 1 || h.position > runes.length) {
+      // A pinned hint outside the word can never match; an excluded hint is
+      // trivially satisfied (the character is absent). Positions are 1-indexed.
       if (!h.excluded) {
         return false;
       }
@@ -134,6 +147,9 @@ export function inFileRange(
   chunkIndex = 0,
   chunkCount = 1,
 ): string[] {
+  if (!isValidLang(lang)) {
+    throw new Error(`invalid lang: ${JSON.stringify(lang)}`);
+  }
   const emptyLetters = noLetters(letters);
   const emptyHints = noHints(hints);
   if (length === 0 || (emptyLetters && emptyHints)) {

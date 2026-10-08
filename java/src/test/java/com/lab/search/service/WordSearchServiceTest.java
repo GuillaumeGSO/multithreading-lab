@@ -86,9 +86,25 @@ class WordSearchServiceTest {
                 () -> service.searchInFile("fr", 5, List.of(), List.of(), false));
     }
     @Test void searchFileMissingFileReturnsEmpty() {
-        // wordLength=99 → no such file → UncheckedIOException caught inside → empty
-        assertThrows(Exception.class,
-                () -> service.searchInFile("fr", 99, List.of("a", "b", "c"), List.of(), false));
+        // wordLength=99 → no such file → empty (mirrors the Python reference)
+        assertEquals(List.of(), service.searchInFile("fr", 99, List.of("a", "b", "c"), List.of(), false));
+    }
+
+    // --- input guards ---
+
+    @Test void unsafeLangIsRejected() {
+        for (String lang : List.of("../../etc", "/etc", "fr/../en", "")) {
+            assertFalse(WordSearchService.isValidLang(lang), lang);
+            assertThrows(IllegalArgumentException.class,
+                    () -> service.searchInFile(lang, 5, List.of("a"), List.of(), false), lang);
+        }
+        assertTrue(WordSearchService.isValidLang("fr"));
+    }
+    @Test void hintPositionBelowOneIsOutOfRange() {
+        for (int position : new int[]{0, -1}) {
+            assertFalse(WordSearchService.matchesHints("abc", List.of(new Hint(position, "a", false))));
+            assertTrue(WordSearchService.matchesHints("abc", List.of(new Hint(position, "a", true))));
+        }
     }
     @Test void searchFileByContent() {
         List<String> r = service.searchInFile("fr", 5, List.of("e","l","i","s","a"), List.of(), true);

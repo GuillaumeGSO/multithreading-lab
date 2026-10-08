@@ -52,11 +52,13 @@ cpp/
 │   ├── gen_models.py        # openapi.yaml -> build/generated/models.gen.h
 │   └── spec_to_json.py      # openapi.yaml -> build/openapi.json
 ├── src/
-│   ├── main.cpp             # HTTP handlers + main(), port 8004
+│   ├── main.cpp             # httplib server + main(), port 8004
+│   ├── handlers.{h,cpp}     # /search endpoints as body -> Reply functions
 │   ├── search.h             # algorithm declarations
 │   └── search.cpp           # brute-force algorithm + word cache
 └── test/
-    └── test_search.cpp      # doctest suite
+    ├── test_search.cpp      # doctest suite: algorithm
+    └── test_api.cpp         # doctest suite: request validation in the handlers
 ```
 
 ## API contract (spec-first)
@@ -71,11 +73,16 @@ run by CMake on every build where the spec changed:
   `api::ErrorResponse`), with nlohmann `from_json` / `to_json`. The spec's descriptions
   become comments and `api::kVersion` holds its `info.version`. Mapping rules:
   required → plain member (parsing throws when it is absent), optional with a `default`
-  → member initialised to that default, otherwise `std::optional<T>`.
-- **Handlers** — `main.cpp` parses bodies with `json::parse(body).get<api::…>()`.
-  Malformed JSON, a missing required field or a wrong type answers `400` with
-  `api::ErrorResponse`. The generated `api::Hint` is mapped onto the algorithm's
-  own `Hint`.
+  → member initialised to that default, otherwise `std::optional<T>`. A `$ref` to a
+  scalar schema (the `Lang` enum) becomes that scalar with its default.
+- **Validation** — the generator also emits `api::validate(const T&)` per struct from
+  the spec's constraints (`enum`, `minimum`/`maximum`, `maxLength`, `maxItems`, nested
+  hints). It throws `std::invalid_argument` naming the field.
+- **Handlers** — `handlers.cpp` parses bodies with `json::parse(body).get<api::…>()`
+  and calls `api::validate`. Malformed JSON, a missing required field, a wrong type or
+  a constraint violation answers `400` with `api::ErrorResponse`; any other failure is
+  a generic `500`. Bodies over 64 KiB are refused with `413`. The generated `api::Hint`
+  is mapped onto the algorithm's own `Hint`.
 - **Spec and docs** — `codegen/spec_to_json.py` writes `build/openapi.json`. The server
   serves `openapi.yaml` (`OPENAPI_PATH`) at `/openapi.yaml`, the JSON file
   (`OPENAPI_JSON_PATH`) at `/openapi.json`, and Swagger UI at `/docs`.
@@ -126,6 +133,9 @@ docker run -p 8004:8004 seek-words-cpp
 - `inFile` integration: 8 / 8 / 11 results against real `assets/fr/5.txt`
 - `inManyFiles` integration: 494 results for "guillaume", longest-first order
 - Error cases: empty params throw, missing file returns `[]`
+- Input guards: unsafe `lang` rejected, hint position below 1 out of range
+
+`test/test_api.cpp` drives the handlers with invalid bodies and expects `400`.
 
 ```bash
 cd cpp/build && ASSETS_ROOT=../../assets ctest -V
@@ -177,8 +187,10 @@ Words of every length up to the number of `letters`, ordered longest-first.
 
 ### Errors
 
-An invalid request (malformed JSON, `wordLength` of 0, or neither `letters` nor
-`hints`) answers `400` with the contract's `ErrorResponse`:
+An invalid request answers `400` with the contract's `ErrorResponse`. That covers
+malformed JSON, a wrong field type, any value outside the bounds in `openapi.yaml`
+(`lang` other than `fr`/`en`, `wordLength` or a hint `position` outside 1–31, more
+than 32 letters or 31 hints), and a request with neither `letters` nor `hints`:
 
 ```json
 {"error": "letters and hints cannot both be empty"}

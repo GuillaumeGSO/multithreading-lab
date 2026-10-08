@@ -125,7 +125,9 @@ about the contract is written by hand here:
   `api.py` serves `openapi.yaml` unchanged at `/openapi.yaml`, converts it to JSON once at startup
   for `/openapi.json`, and renders Swagger UI at `/docs`.
 - **Errors** — validation failures and invalid filters answer `400` with the contract's
-  `ErrorResponse` (`{"error": "..."}`).
+  `ErrorResponse` (`{"error": "..."}`). The generated models carry the spec's bounds
+  (`lang` enum, `wordLength` and hint `position` 1–31, at most 32 letters and 31
+  hints), so Pydantic enforces them; `test_api.py` covers them over HTTP.
 
 `generated/` is **gitignored**: generate it after cloning and after every change to
 `openapi.yaml`:
