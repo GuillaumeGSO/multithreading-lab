@@ -180,8 +180,10 @@ Words of every length up to the number of `letters`, ordered longest-first.
 
 ### Errors
 
-An invalid request (malformed JSON, `wordLength` of 0, or neither `letters` nor
-`hints`) answers `400` with the contract's `ErrorResponse`:
+An invalid request answers `400` with the contract's `ErrorResponse`. That covers
+malformed JSON, a wrong field type, any value outside the bounds in `openapi.yaml`
+(`lang` other than `fr`/`en`, `wordLength` or a hint `position` outside 1–31, more
+than 32 letters or 31 hints), and a request with neither `letters` nor `hints`:
 
 ```json
 {"error": "letters and hints cannot both be empty"}

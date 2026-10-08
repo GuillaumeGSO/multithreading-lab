@@ -13,6 +13,7 @@ once per length total, not once per strategy.
 
 import logging
 import os
+import re
 from pathlib import Path
 from typing import List
 
@@ -27,12 +28,23 @@ _ASSETS_ROOT = Path(os.environ.get("ASSETS_ROOT") or str(Path(__file__).parent.p
 # freq is bytes(26): freq[i] = count of chr(i + ord('a')) in the normalized word.
 _base_cache: dict[str, list[tuple[str, str, bytes]]] = {}
 
+# A language code is a plain directory name under assets/. Anything else (``..``,
+# ``/``, an absolute path) would let `lang` escape the assets directory.
+_LANG_RE = re.compile(r"[a-z]{2,8}")
+
+
+def check_lang(lang: str) -> None:
+    """Raise ValueError unless `lang` is a safe dictionary directory name."""
+    if not isinstance(lang, str) or not _LANG_RE.fullmatch(lang):
+        raise ValueError(f"invalid lang: {lang!r}")
+
 
 def load_base(lang: str, word_length: int) -> list[tuple[str, str, bytes]]:
     """Words of length `word_length` as `(word, normalized, freq)` tuples, cached per key.
     freq is a 26-byte letter-frequency array for the normalized form, computed once at
     load time so the strict-mode predicate needs no per-word Counter at query time.
     Missing file → []. Accent-free words share one string for word and normalized."""
+    check_lang(lang)
     key = f"{lang}/{word_length}"
     if key not in _base_cache:
         logger.info("base load: %s", key)
@@ -64,6 +76,9 @@ class Hint:
     excluded: bool = False
 
     def __init__(self, position, letter=None, excluded=False):
+        # Positions are 1-indexed; 0 or below would silently index from the end.
+        if int(position) < 1:
+            raise ValueError(f"hint position must be >= 1, got {position}")
         self.position = position
         self.letter = letter
         self.excluded = excluded

@@ -240,8 +240,15 @@ static std::unordered_map<std::string,
                            std::shared_ptr<const std::vector<std::string>>>
     word_cache;
 
+bool isValidLang(const std::string& lang) {
+    if (lang.size() < 2 || lang.size() > 8) return false;
+    return std::all_of(lang.begin(), lang.end(),
+                       [](char c) { return c >= 'a' && c <= 'z'; });
+}
+
 std::shared_ptr<const std::vector<std::string>> loadWords(
     const std::string& lang, int length) {
+    if (!isValidLang(lang)) return std::make_shared<const std::vector<std::string>>();
     std::string key = lang + "/" + std::to_string(length);
     {
         std::lock_guard<std::mutex> lock(cache_mutex);
@@ -449,10 +456,11 @@ std::vector<std::string> inFile(const std::string& lang,
                                 const std::vector<std::string>& letters,
                                 const std::vector<Hint>& hints,
                                 bool strict) {
+    if (!isValidLang(lang)) throw SearchError("invalid lang: " + lang);
     bool emptyLetters = noLetters(letters);
     bool emptyHints = noHints(hints);
     if (length == 0 || (emptyLetters && emptyHints))
-        throw std::runtime_error("letters and hints cannot both be empty");
+        throw SearchError("letters and hints cannot both be empty");
 
     auto words = loadWords(lang, length);
     return scanWords(*words, 0, words->size(), letters, hints, strict, emptyLetters, emptyHints);
@@ -464,10 +472,11 @@ std::vector<std::string> inFileSplit(const std::string& lang,
                                      const std::vector<Hint>& hints,
                                      bool strict,
                                      int threads) {
+    if (!isValidLang(lang)) throw SearchError("invalid lang: " + lang);
     bool emptyLetters = noLetters(letters);
     bool emptyHints = noHints(hints);
     if (length == 0 || (emptyLetters && emptyHints))
-        throw std::runtime_error("letters and hints cannot both be empty");
+        throw SearchError("letters and hints cannot both be empty");
 
     auto words = loadWords(lang, length);
     size_t total = words->size();

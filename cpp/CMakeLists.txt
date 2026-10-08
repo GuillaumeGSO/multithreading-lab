@@ -61,7 +61,7 @@ add_custom_command(
 add_custom_target(api_models DEPENDS ${MODELS_HEADER} ${SPEC_JSON})
 
 # Main server executable
-add_executable(search src/main.cpp src/search.cpp)
+add_executable(search src/main.cpp src/handlers.cpp src/search.cpp)
 add_dependencies(search api_models)
 target_include_directories(search PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(search PRIVATE httplib::httplib nlohmann_json::nlohmann_json)
@@ -84,5 +84,16 @@ if(UNIX)
   target_link_libraries(test_search PRIVATE pthread)
 endif()
 
+# HTTP-handler tests: the search endpoints as body -> Reply functions, with the
+# generated models and their validate() (no socket, no httplib).
+add_executable(test_api test/test_api.cpp src/handlers.cpp src/search.cpp)
+add_dependencies(test_api api_models)
+target_include_directories(test_api PRIVATE ${doctest_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/generated)
+target_link_libraries(test_api PRIVATE nlohmann_json::nlohmann_json)
+if(UNIX)
+  target_link_libraries(test_api PRIVATE pthread)
+endif()
+
 enable_testing()
 add_test(NAME test_search COMMAND test_search)
+add_test(NAME test_api COMMAND test_api)

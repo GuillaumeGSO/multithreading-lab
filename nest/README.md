@@ -62,10 +62,12 @@ nest/
 │       ├── search.worker.ts  # worker_threads entry — one length scan per task
 │       ├── worker-pool.ts    # WorkerPool — N persistent workers, task queue
 │       ├── search.controller.ts
+│       ├── search.validation.ts # runtime checks of bodies against the spec's bounds
 │       └── search.service.ts # orchestrates file / many across the pool
 └── test/
     ├── search.spec.ts        # pure-logic unit tests (no workers)
-    └── worker-pool.spec.ts   # pool + fan-out integration tests
+    ├── worker-pool.spec.ts   # pool + fan-out integration tests
+    └── api.spec.ts           # HTTP request validation (built app, Fastify inject)
 ```
 
 ## API contract (spec-first)
@@ -129,11 +131,13 @@ Two suites:
 - `worker-pool.spec.ts` — the pool itself: task dispatch, concurrent fan-out,
   parity with the pure algorithm, and clean teardown. It runs against the
   compiled `dist/`, so it builds first.
+- `api.spec.ts` — the HTTP layer: invalid bodies answer `400`, valid ones `200`.
+  It also runs against `dist/`.
 
 ```bash
 cd nest
 npm test               # pure-logic suite
-npm run test:integration   # builds, then the worker-pool suite
+npm run test:integration   # builds, then the worker-pool and HTTP suites
 ```
 
 ## API
@@ -182,8 +186,10 @@ Words of every length up to the number of `letters`, ordered longest-first.
 
 ### Errors
 
-An invalid request (malformed JSON, `wordLength` of 0, or neither `letters` nor
-`hints`) answers `400` with the contract's `ErrorResponse`:
+An invalid request answers `400` with the contract's `ErrorResponse`. That covers
+malformed JSON, a wrong field type, any value outside the bounds in `openapi.yaml`
+(`lang` other than `fr`/`en`, `wordLength` or a hint `position` outside 1–31, more
+than 32 letters or 31 hints), and a request with neither `letters` nor `hints`:
 
 ```json
 {"error": "letters and hints cannot both be empty"}

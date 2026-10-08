@@ -215,4 +215,28 @@ public class SeekWordsTests
         var indexed = SearchDispatcher.Indexed.SearchInFile("fr", 5, letters, hints, false);
         Assert.Equal(scan, indexed);
     }
+
+    // ---------------------------------------------------------------------------
+    // Input guards
+    // ---------------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("../../etc")]
+    [InlineData("/etc")]
+    [InlineData("fr/../en")]
+    [InlineData("")]
+    public void UnsafeLangIsRejected(string lang)
+    {
+        Assert.False(WordBase.IsValidLang(lang));
+        Assert.Throws<ArgumentException>(() => WordBase.Load(lang, 5));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void HintPositionBelowOneIsOutOfRange(int position)
+    {
+        Assert.False(ScanStrategy.MatchesHints("abc", new[] { new Hint(position, "a") }));
+        Assert.True(ScanStrategy.MatchesHints("abc", new[] { new Hint(position, "a", Excluded: true) }));
+    }
 }

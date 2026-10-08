@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace WordSearch.Api.Search;
 
@@ -14,8 +15,18 @@ public static class WordBase
         Environment.GetEnvironmentVariable("ASSETS_ROOT")
         ?? Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "assets");
 
-    public static IReadOnlyList<WordEntry> Load(string lang, int length) =>
-        Cache.GetOrAdd($"{lang}/{length}", _ => Build(lang, length));
+    // A language code is a plain directory name under assets/. Anything else
+    // ("..", "/", an absolute path — which Path.Combine would even let replace
+    // the root) would let lang escape the assets directory.
+    private static readonly Regex LangPattern = new("^[a-z]{2,8}$", RegexOptions.Compiled);
+
+    public static bool IsValidLang(string? lang) => lang != null && LangPattern.IsMatch(lang);
+
+    public static IReadOnlyList<WordEntry> Load(string lang, int length)
+    {
+        if (!IsValidLang(lang)) throw new ArgumentException($"invalid lang: {lang}");
+        return Cache.GetOrAdd($"{lang}/{length}", _ => Build(lang, length));
+    }
 
     private static IReadOnlyList<WordEntry> Build(string lang, int length)
     {

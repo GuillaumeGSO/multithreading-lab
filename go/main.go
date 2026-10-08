@@ -4,11 +4,18 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
+	"unicode/utf8"
 
 	"multithreading-lab/go/api"
 	"multithreading-lab/go/search"
@@ -37,11 +44,92 @@ func toSearchHints(hints []api.Hint) []search.Hint {
 }
 
 // defaultLang applies the spec's default language ("fr") when lang is absent.
-func defaultLang(lang string) string {
+func defaultLang(lang api.Lang) string {
 	if lang == "" {
-		return "fr"
+		return string(api.Fr)
 	}
-	return lang
+	return string(lang)
+}
+
+// Bounds from openapi.yaml. oapi-codegen generates the types but not runtime
+// validation, so the handlers enforce the contract's limits explicitly.
+const (
+	maxBodyBytes  = 64 << 10 // far above any valid request (≤ 32 letters, ≤ 31 hints)
+	minWordLength = 1
+	maxWordLength = 31
+	maxLetters    = 32
+	maxHints      = 31
+	minPosition   = 1
+	maxPosition   = 31
+)
+
+// errBadRequest marks a request rejected by validation (answered with 400).
+var errBadRequest = errors.New("bad request")
+
+func badRequest(format string, args ...any) error {
+	return fmt.Errorf("%w: %s", errBadRequest, fmt.Sprintf(format, args...))
+}
+
+// decodeBody reads a size-capped JSON body into v and reports which top-level
+// keys were present, so required fields can be told apart from zero values.
+func decodeBody(w http.ResponseWriter, r *http.Request, v any) (map[string]json.RawMessage, error) {
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBodyBytes))
+	if err != nil {
+		return nil, badRequest("request body too large or unreadable")
+	}
+	var keys map[string]json.RawMessage
+	if json.Unmarshal(body, &keys) != nil || json.Unmarshal(body, v) != nil {
+		return nil, badRequest("malformed JSON body")
+	}
+	return keys, nil
+}
+
+func validateLang(lang api.Lang) error {
+	if lang != "" && !lang.Valid() {
+		return badRequest("lang: must be one of fr, en")
+	}
+	return nil
+}
+
+func validateHints(hints []api.Hint) error {
+	if len(hints) > maxHints {
+		return badRequest("hints: at most %d items", maxHints)
+	}
+	for i, h := range hints {
+		if h.Position < minPosition || h.Position > maxPosition {
+			return badRequest("hints[%d].position: must be between %d and %d", i, minPosition, maxPosition)
+		}
+	}
+	return nil
+}
+
+func validateFileRequest(req api.SearchFileRequest, keys map[string]json.RawMessage) error {
+	if _, ok := keys["wordLength"]; !ok {
+		return badRequest("wordLength: required")
+	}
+	if err := validateLang(req.Lang); err != nil {
+		return err
+	}
+	if req.WordLength < minWordLength || req.WordLength > maxWordLength {
+		return badRequest("wordLength: must be between %d and %d", minWordLength, maxWordLength)
+	}
+	if len(req.Letters) > maxLetters {
+		return badRequest("letters: at most %d items", maxLetters)
+	}
+	return validateHints(req.Hints)
+}
+
+func validateManyRequest(req api.SearchManyRequest, keys map[string]json.RawMessage) error {
+	if _, ok := keys["letters"]; !ok {
+		return badRequest("letters: required")
+	}
+	if err := validateLang(req.Lang); err != nil {
+		return err
+	}
+	if utf8.RuneCountInString(req.Letters) > maxLetters {
+		return badRequest("letters: at most %d characters", maxLetters)
+	}
+	return validateHints(req.Hints)
 }
 
 // ensureSlice guarantees a non-nil slice so JSON encodes [] rather than null.
@@ -142,12 +230,15 @@ func handleDocs(w http.ResponseWriter, _ *http.Request) {
 
 func (server) SearchFile(w http.ResponseWriter, r *http.Request) {
 	var req api.SearchFileRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	keys, err := decodeBody(w, r, &req)
+	if err == nil {
+		err = validateFileRequest(req, keys)
+	}
+	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	var words []string
-	var err error
 	if parallelMode {
 		words, err = search.InFileSplit(defaultLang(req.Lang), req.WordLength, req.Letters, toSearchHints(req.Hints), req.Strict, search.SplitDegree())
 	} else {
@@ -163,12 +254,15 @@ func (server) SearchFile(w http.ResponseWriter, r *http.Request) {
 
 func (server) SearchMany(w http.ResponseWriter, r *http.Request) {
 	var req api.SearchManyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	keys, err := decodeBody(w, r, &req)
+	if err == nil {
+		err = validateManyRequest(req, keys)
+	}
+	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	var words []string
-	var err error
 	if parallelMode {
 		words, err = search.InManyFilesNested(defaultLang(req.Lang), req.Letters, toSearchHints(req.Hints), search.SplitDegree())
 	} else {
@@ -200,14 +294,36 @@ func main() {
 		}
 	}
 
+	srv := &http.Server{Addr: "0.0.0.0:8003", Handler: newMux()}
+	srv.ReadHeaderTimeout = 5 * time.Second
+	srv.ReadTimeout = 10 * time.Second
+	srv.WriteTimeout = 30 * time.Second
+	srv.IdleTimeout = 60 * time.Second
+
+	// Graceful shutdown: stop accepting on SIGINT/SIGTERM (docker stop) and let
+	// in-flight requests finish.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_ = srv.Shutdown(shutdownCtx)
+	}()
+
+	log.Printf("listening on %s", srv.Addr)
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatal(err)
+	}
+}
+
+// newMux registers every route: the generated API handlers plus the spec and docs.
+func newMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /openapi.yaml", handleOpenAPISpec)
 	mux.HandleFunc("GET /openapi.json", handleOpenAPISpecJSON)
 	mux.HandleFunc("GET /docs", handleDocs)
 	// Registers GET /health, POST /search/file and POST /search/many.
 	api.HandlerFromMux(server{}, mux)
-
-	const addr = "0.0.0.0:8003"
-	log.Printf("listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	return mux
 }

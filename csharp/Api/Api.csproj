@@ -31,7 +31,7 @@
   <!-- Generates the request/response DTOs from openapi.yaml into obj/Generated
        (never committed). Re-runs only when the spec changes. -->
   <Target Name="GenerateContracts" BeforeTargets="BeforeBuild" Inputs="$(OpenApiSpec)" Outputs="$(ContractsFile)">
-    <Exec Command="$(NSwagExe_Net100) openapi2csclient /input:&quot;$(OpenApiSpec)&quot; /output:&quot;$(ContractsFile)&quot; /namespace:WordSearch.Api.Contracts /GenerateClientClasses:false /GenerateClientInterfaces:false /GenerateExceptionClasses:false /GenerateDtoTypes:true /JsonLibrary:SystemTextJson /GenerateNullableReferenceTypes:true /GenerateOptionalPropertiesAsNullable:true /ClassStyle:Poco /GenerateDataAnnotations:false" />
+    <Exec Command="$(NSwagExe_Net100) openapi2csclient /input:&quot;$(OpenApiSpec)&quot; /output:&quot;$(ContractsFile)&quot; /namespace:WordSearch.Api.Contracts /GenerateClientClasses:false /GenerateClientInterfaces:false /GenerateExceptionClasses:false /GenerateDtoTypes:true /JsonLibrary:SystemTextJson /GenerateNullableReferenceTypes:true /GenerateOptionalPropertiesAsNullable:true /ClassStyle:Poco /GenerateDataAnnotations:true" />
   </Target>
   <Target Name="IncludeContracts" AfterTargets="GenerateContracts" BeforeTargets="CoreCompile">
     <ItemGroup>

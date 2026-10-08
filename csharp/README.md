@@ -40,8 +40,12 @@ Nothing about the contract is hand-written here: no model classes, no `.WithSumm
   (`CS1591` is suppressed).
 - **Endpoints** — `Program.cs` binds the generated request DTOs and returns
   `TypedResults` (`Ok<SearchResponse>` / `BadRequest<ErrorResponse>`). The generated
-  `Hint` is mapped onto the algorithm's own `Search.Hint` record. Unreadable JSON bodies
-  also answer `400` with `ErrorResponse` (`ThrowOnBadRequest` + a small middleware).
+  `Hint` is mapped onto the algorithm's own `Search.Hint` record.
+- **Validation** — NSwag runs with `GenerateDataAnnotations`, so the spec's bounds become
+  `[Range]` / `[MaxLength]` / `[StringLength]` / `[Required]`. `RequestValidation`
+  checks them, including each hint, and an unknown `lang` fails JSON binding. Both answer
+  `400` with `ErrorResponse`. Unreadable JSON also answers `400` (`ThrowOnBadRequest` +
+  a small middleware), bodies over 64 KiB `413`, and any other failure a generic `500`.
 - **Spec and docs** — `OpenApiSpec` loads `openapi.yaml` (`OPENAPI_PATH`) once at
   startup. It is served unchanged at `/openapi.yaml`, converted to JSON (YamlDotNet) at
   `/openapi.json`, and the Scalar API reference at `/docs` reads `/openapi.json`.

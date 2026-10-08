@@ -182,3 +182,19 @@ describe('inManyFiles', () => {
     expect(inManyFiles('fr', 'abc', [h(9, 'a')])).toEqual([]);
   });
 });
+
+describe('input guards', () => {
+  it('treats a hint position below 1 as out of range', () => {
+    for (const position of [0, -1]) {
+      expect(matchesHints('abc', [{ position, letter: 'a', excluded: false }])).toBe(false);
+      expect(matchesHints('abc', [{ position, letter: 'a', excluded: true }])).toBe(true);
+    }
+  });
+
+  it('rejects an unsafe lang without reading or caching anything', () => {
+    for (const lang of ['../../etc', '/etc', 'fr/../en', '']) {
+      expect(loadWords(lang, 5)).toEqual([]);
+      expect(() => inFile(lang, 5, ['a'], [], false)).toThrow('invalid lang');
+    }
+  });
+});

@@ -79,15 +79,18 @@ no OpenAPI annotation is written by hand.
   and response types are all taken from the contract. The controller maps the
   generated `Hint` model onto the algorithm's own `service.Hint` record.
 - **Generator options** (`pom.xml`): `interfaceOnly`, `useSpringBoot4`, `useJakartaEe`,
-  `useTags`, no bean validation, no nullable wrapper, no documentation annotations —
-  the generated code depends only on Spring Web, Jackson annotations and
-  `jakarta.validation-api` (for `@NotNull` markers).
+  `useTags`, `useBeanValidation`, no nullable wrapper, no documentation annotations.
+  The spec's constraints become `@NotNull` / `@Min` / `@Max` / `@Size` on the models
+  and `@Valid` on the request bodies, enforced by `spring-boot-starter-validation`.
+  `JsonConfig` turns off Jackson's lenient coercions (number → string, 5.5 → 5).
 - **Spec and docs** — `maven-resources-plugin` copies `openapi.yaml` onto the classpath.
   `OpenApiController` serves it unchanged at `/openapi.yaml`, converts it to JSON at
   `/openapi.json`, and serves a Swagger UI page at `/docs`. The UI assets come from the
   `swagger-ui` webjar, so `/docs` works offline.
-- **Errors** — `IllegalArgumentException` and unreadable bodies answer `400` with the
-  generated `ErrorResponse`.
+- **Errors** — constraint violations, unreadable bodies (including an unknown `lang`)
+  and `IllegalArgumentException` answer `400` with the generated `ErrorResponse`.
+  Parser messages are not echoed. Any other failure is logged and answered with a
+  generic `500` `ErrorResponse`.
 
 Nothing generated is committed: any Maven build (`mvn compile`, `mvn test`,
 `mvn package`) regenerates from `../openapi.yaml`, so a spec change takes effect on the
@@ -176,8 +179,10 @@ Words of every length up to the number of `letters`, ordered longest-first.
 
 ### Errors
 
-An invalid request (malformed JSON, `wordLength` of 0, or neither `letters` nor
-`hints`) answers `400` with the contract's `ErrorResponse`:
+An invalid request answers `400` with the contract's `ErrorResponse`. That covers
+malformed JSON, a wrong field type, any value outside the bounds in `openapi.yaml`
+(`lang` other than `fr`/`en`, `wordLength` or a hint `position` outside 1–31, more
+than 32 letters or 31 hints), and a request with neither `letters` nor `hints`:
 
 ```json
 {"error": "letters and hints cannot both be empty"}

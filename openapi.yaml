@@ -49,8 +49,9 @@ paths:
                 $ref: "#/components/schemas/SearchResponse"
         "400":
           description: >
-            Invalid request (e.g. `wordLength` is 0, or both `letters` and
-            `hints` are empty).
+            Invalid request: malformed JSON, a value outside the schema's
+            bounds (e.g. unknown `lang`, `wordLength` outside 1–31, hint
+            `position` below 1), or both `letters` and `hints` empty.
           content:
             application/json:
               schema:
@@ -78,7 +79,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/SearchResponse"
         "400":
-          description: Invalid request (e.g. malformed JSON body).
+          description: >
+            Invalid request: malformed JSON or a value outside the schema's
+            bounds (e.g. unknown `lang`, more than 32 `letters`).
           content:
             application/json:
               schema:
@@ -106,6 +109,13 @@ components:
           description: Human-readable reason the request was rejected.
           example: letters and hints cannot both be empty
 
+    Lang:
+      type: string
+      enum: [fr, en]
+      default: fr
+      description: Language code — selects the dictionary to search.
+      example: fr
+
     Hint:
       type: object
       description: Positional constraint on a word.
@@ -114,6 +124,8 @@ components:
       properties:
         position:
           type: integer
+          minimum: 1
+          maximum: 31
           description: 1-indexed position of the constraint in the word.
           example: 3
         letter:
@@ -135,16 +147,16 @@ components:
         - wordLength
       properties:
         lang:
-          type: string
-          default: fr
-          description: Language code — selects the dictionary to search.
-          example: fr
+          $ref: "#/components/schemas/Lang"
         wordLength:
           type: integer
+          minimum: 1
+          maximum: 31
           description: Exact word length to search for.
           example: 5
         letters:
           type: array
+          maxItems: 32
           items:
             type: string
           default: []
@@ -154,6 +166,7 @@ components:
           example: ["a", "e", "r", "s", "t"]
         hints:
           type: array
+          maxItems: 31
           items:
             $ref: "#/components/schemas/Hint"
           default: []
@@ -172,18 +185,17 @@ components:
         - letters
       properties:
         lang:
-          type: string
-          default: fr
-          description: Language code — selects the dictionary to search.
-          example: fr
+          $ref: "#/components/schemas/Lang"
         letters:
           type: string
+          maxLength: 32
           description: >
             Available letters as a single string. The longest word searched has
             as many characters as `letters`; every shorter length is scanned too.
           example: "artes"
         hints:
           type: array
+          maxItems: 31
           items:
             $ref: "#/components/schemas/Hint"
           default: []
