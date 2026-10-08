@@ -81,7 +81,8 @@ jobs:
           cache: npm
           cache-dependency-path: nest/package-lock.json
       - run: npm ci
-      - run: npm run generate
+      # prebuild runs generate; dist/ is needed by the integration specs' imports
+      - run: npm run build
       - run: npx tsc -p tsconfig.json --noEmit
       - run: npm test
       - run: npm run test:integration
