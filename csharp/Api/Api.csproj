@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <PackageReference Include="NSwag.MSBuild" Version="14.7.1" PrivateAssets="all" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.17.13" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.17.14" />
     <PackageReference Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 
