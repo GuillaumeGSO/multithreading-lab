@@ -1,6 +1,6 @@
 # Build stage — the repo layout is mirrored (/build/openapi.yaml + /build/java)
 # so the pom's ../openapi.yaml resolves to the API contract.
-FROM maven:3.9-eclipse-temurin-25 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /build/java
 COPY java/pom.xml .
 RUN mvn dependency:go-offline -q
