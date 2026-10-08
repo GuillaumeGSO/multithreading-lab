@@ -15,12 +15,10 @@ comparing concurrency models on this workload, on one machine. The
 
 Measured on 2026-10-08 on a 4-core, 8 GB laptop, with Docker Desktop given 3 CPUs and 4 GB.
 Every service ran alone under its 2-CPU limit. Full reports:
-[in-process benchmark](benchmarks/compare.html)
-([rendered](https://htmlpreview.github.io/?https://github.com/GuillaumeGSO/multithreading-lab/blob/master/benchmarks/compare.html),
-[summary](benchmarks/summary.md)) and
-[load test](load-tests/compare-report.html)
-([rendered](https://htmlpreview.github.io/?https://github.com/GuillaumeGSO/multithreading-lab/blob/master/load-tests/compare-report.html),
-[summary](load-tests/summary.md)).
+[in-process benchmark](https://guillaumegso.github.io/multithreading-lab/benchmarks/compare.html)
+([source](benchmarks/compare.html), [summary](benchmarks/summary.md)) and
+[load test](https://guillaumegso.github.io/multithreading-lab/load-tests/compare-report.html)
+([source](load-tests/compare-report.html), [summary](load-tests/summary.md)).
 
 ### In-process: the search itself, no HTTP
 

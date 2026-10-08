@@ -264,7 +264,9 @@ function chart(id, labels, datasets, yTitle, log) {
 }
 
 function render() {
-  const profile = profileSel.value, metric = metricSel.value, log = document.getElementById('log').checked;
+  // Read the selection by index into DATA/METRICS, not as DOM text, since profile ends up in innerHTML.
+  const profile = DATA.profiles[profileSel.selectedIndex], metric = METRICS[metricSel.selectedIndex];
+  const log = document.getElementById('log').checked;
   chart('latencyChart', DATA.endpoints, DATA.languages.map(l => ({
     label: l.label, backgroundColor: l.color,
     data: DATA.endpoints.map(ep => (stat(profile, l.id, ep, metric) || {}).med ?? null),

@@ -153,6 +153,10 @@ Keep it green: run the matching local command before changing a language, and re
 `api.gen.go` whenever `openapi.yaml` changes. Dependabot (`.github/dependabot.yml`) opens weekly
 updates for every ecosystem.
 
+`.github/workflows/pages.yml` publishes the committed `benchmarks/compare.html` and
+`load-tests/compare-report.html` to GitHub Pages when either changes on `master` (the root
+README links to the Pages URLs). Regenerate and commit a report to update its page.
+
 ## Concurrency models by implementation
 
 | Implementation   | `parallel` mode uses |

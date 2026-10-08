@@ -1,0 +1,58 @@
+name: Pages
+
+# Publishes the committed comparison reports as a static site, so they open as
+# pages instead of as source.
+on:
+  push:
+    branches: [master]
+    paths:
+      - benchmarks/compare.html
+      - load-tests/compare-report.html
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish reports
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble site
+        run: |
+          mkdir -p _site/benchmarks _site/load-tests
+          cp benchmarks/compare.html _site/benchmarks/
+          cp load-tests/compare-report.html _site/load-tests/
+          cat > _site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>multithreading-lab reports</title></head>
+          <body style="font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem;">
+          <h1>multithreading-lab reports</h1>
+          <ul>
+            <li><a href="benchmarks/compare.html">In-process benchmark</a></li>
+            <li><a href="load-tests/compare-report.html">Load test (API/HTTP)</a></li>
+          </ul>
+          <p><a href="https://github.com/GuillaumeGSO/multithreading-lab">Source on GitHub</a></p>
+          </body>
+          </html>
+          EOF
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
