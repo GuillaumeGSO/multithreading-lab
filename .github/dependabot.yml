@@ -19,6 +19,10 @@ updates:
   - package-ecosystem: npm
     directories: [/nest, /load-tests]
     schedule: { interval: weekly }
+    # Nest packages share peer ranges (TypeScript, @fastify/static); bump them in one PR.
+    groups:
+      nestjs:
+        patterns: ["@nestjs/*", "typescript", "@fastify/static"]
   - package-ecosystem: nuget
     directory: /csharp
     schedule: { interval: weekly }

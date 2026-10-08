@@ -162,7 +162,7 @@ multithreading-lab/
 ├── python/               # FastAPI + uvicorn --workers 2 (Python 3.13)
 ├── java/                 # Spring Boot 4 + virtual threads (Java 25)
 ├── go/                   # net/http + goroutines
-├── nest/                 # NestJS/Fastify + worker_threads pool (Node 22)
+├── nest/                 # NestJS/Fastify + worker_threads pool (Node 26)
 ├── csharp/               # ASP.NET Core Minimal API + ThreadPool (.NET 10)
 └── docker-compose.yml    # One service per implementation, 2 CPUs / 512 MB each
 ```

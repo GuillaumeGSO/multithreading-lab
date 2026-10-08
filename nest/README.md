@@ -2,7 +2,7 @@
 
 NestJS implementation of the multithreading lab word-search API.
 
-**Stack**: NestJS 11 · Fastify · `worker_threads` pool · Node 22
+**Stack**: NestJS 11 · Fastify · `worker_threads` pool · Node 26
 
 ## Concurrency model
 
@@ -101,7 +101,7 @@ spec change is picked up by the next build or test run.
 
 ## Local development
 
-Requires Node 22+.
+Requires Node 26+.
 
 > The repo lives on an exFAT volume; `npm install` into `nest/node_modules` may
 > be slow or emit warnings there. The Docker build installs dependencies inside
