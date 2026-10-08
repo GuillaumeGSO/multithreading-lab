@@ -8,10 +8,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	unidecode "github.com/mozillazg/go-unidecode"
 )
@@ -36,7 +36,26 @@ type Hint struct {
 	Excluded bool
 }
 
-// wordCache holds word lists keyed by "lang/length". Each key is written once
+// entry is one dictionary word with the data the scan needs, computed once when
+// the word list is loaded: the accent-free form (for the letter-pool check) and
+// its a–z letter counts (for strict mode). The scan itself allocates nothing.
+type entry struct {
+	word string
+	norm string
+	freq [26]uint8
+}
+
+func newEntry(word string) entry {
+	e := entry{word: word, norm: unidecode.Unidecode(word)}
+	for _, r := range e.norm {
+		if r >= 'a' && r <= 'z' {
+			e.freq[r-'a']++
+		}
+	}
+	return e
+}
+
+// wordCache holds entry lists keyed by "lang/length". Each key is written once
 // and then read by many request goroutines, so sync.Map is a good fit. Stored
 // slices are treated as immutable.
 var wordCache sync.Map
@@ -61,21 +80,21 @@ func ValidLang(lang string) bool {
 // loadWords returns the word list for (lang, length), reading it from disk on
 // the first call and caching it afterwards. A missing file yields an empty list.
 // An unsafe lang yields an empty list and is never cached.
-func loadWords(lang string, length int) []string {
+func loadWords(lang string, length int) []entry {
 	if !ValidLang(lang) {
-		return []string{}
+		return []entry{}
 	}
 	key := fmt.Sprintf("%s/%d", lang, length)
 	if cached, ok := wordCache.Load(key); ok {
-		return cached.([]string)
+		return cached.([]entry)
 	}
 
-	words := []string{}
+	words := []entry{}
 	path := filepath.Join(assetsRoot(), lang, fmt.Sprintf("%d.txt", length))
 	if data, err := os.ReadFile(path); err == nil {
 		for _, line := range strings.Split(string(data), "\n") {
 			if line = strings.TrimSpace(line); line != "" {
-				words = append(words, line)
+				words = append(words, newEntry(line))
 			}
 		}
 	}
@@ -104,23 +123,89 @@ func noHints(hints []Hint) bool {
 	return true
 }
 
-// matchesContent reports whether word can be built from the letter pool. In
-// strict mode each letter is consumed at most once. The caller must pass a copy
-// of letters, since strict mode mutates the slice.
-func matchesContent(word string, letters []string, strict bool) bool {
-	if word == "" || noLetters(letters) {
+// letterPool is a query's available letters, prepared once per search: a
+// membership table for the pool check and a–z counts for strict mode.
+type letterPool struct {
+	empty  bool
+	ascii  [utf8.RuneSelf]bool
+	other  map[rune]bool
+	freq   [26]int
+	strict bool
+}
+
+// newLetterPool prepares letters for matching. Each element is one character;
+// an element of several characters can never match a single letter.
+func newLetterPool(letters []string, strict bool) *letterPool {
+	p := &letterPool{empty: true, strict: strict}
+	for _, l := range letters {
+		r, size := utf8.DecodeRuneInString(l)
+		if l == "" || size != len(l) {
+			continue
+		}
+		p.empty = false
+		if r < utf8.RuneSelf {
+			p.ascii[r] = true
+		} else {
+			if p.other == nil {
+				p.other = map[rune]bool{}
+			}
+			p.other[r] = true
+		}
+		if r >= 'a' && r <= 'z' {
+			p.freq[r-'a']++
+		}
+	}
+	return p
+}
+
+// matches reports whether the word can be built from the pool: every letter of
+// its accent-free form is in the pool, and in strict mode no a–z letter is
+// needed more often than the pool holds it.
+func (p *letterPool) matches(e *entry) bool {
+	if e.norm == "" || p.empty {
 		return false
 	}
-	for _, r := range unidecode.Unidecode(word) {
-		idx := slices.Index(letters, string(r))
-		if idx == -1 {
+	for _, r := range e.norm {
+		if r < utf8.RuneSelf {
+			if !p.ascii[r] {
+				return false
+			}
+		} else if !p.other[r] {
 			return false
 		}
-		if strict {
-			letters = slices.Delete(letters, idx, idx+1)
+	}
+	if p.strict {
+		for i, n := range e.freq {
+			if int(n) > p.freq[i] {
+				return false
+			}
 		}
 	}
 	return true
+}
+
+// matchesContent reports whether word can be built from the letter pool. In
+// strict mode each letter is consumed at most once. Convenience form of
+// letterPool.matches for a single word (the scan prepares both once instead).
+func matchesContent(word string, letters []string, strict bool) bool {
+	e := newEntry(word)
+	return newLetterPool(letters, strict).matches(&e)
+}
+
+// runeAt returns the character at 1-indexed position pos, walking the string
+// without allocating. ok is false when pos is outside the word.
+func runeAt(word string, pos int) (r rune, ok bool) {
+	if pos < 1 {
+		return 0, false
+	}
+	i := 0
+	for _, c := range word {
+		i++
+		if i == pos {
+			return c, true
+		}
+	}
+	return 0, false
 }
 
 // matchesHints reports whether word satisfies every positional hint.
@@ -131,47 +216,46 @@ func matchesHints(word string, hints []Hint) bool {
 	if noHints(hints) {
 		return true
 	}
-	runes := []rune(word)
 	for _, h := range hints {
 		if h.Letter == "" {
 			continue
 		}
-		// Positions are 1-indexed; one below 1 is out of range like one past
-		// the end (indexing runes[-1] would panic).
-		if h.Position < 1 || h.Position > len(runes) {
+		letter, _ := utf8.DecodeRuneInString(h.Letter)
+		c, ok := runeAt(word, h.Position)
+		if !ok {
+			// A pinned hint outside the word can never match; an excluded
+			// hint is trivially satisfied.
 			if !h.Excluded {
 				return false
 			}
 			continue
 		}
-		letter := []rune(h.Letter)[0]
-		if h.Excluded {
-			if runes[h.Position-1] == letter {
-				return false
-			}
-		} else if runes[h.Position-1] != letter {
+		if h.Excluded == (c == letter) {
 			return false
 		}
 	}
 	return true
 }
 
-// scanWords filters a slice of words by the letter pool and/or hints, in order.
-// It is the single per-word predicate shared by the sequential and parallel
-// search paths, so they always agree on which words match and in what order.
-func scanWords(words, letters []string, hints []Hint, strict, emptyLetters, emptyHints bool) []string {
+// scanWords filters entries by the letter pool and/or hints, in order. It is
+// the single per-word predicate shared by the sequential and parallel search
+// paths, so they always agree on which words match and in what order. Only the
+// predicates the query needs are evaluated.
+func scanWords(words []entry, pool *letterPool, hints []Hint, emptyLetters, emptyHints bool) []string {
 	result := []string{}
-	for _, word := range words {
-		// matchesContent mutates its slice in strict mode, so clone per word.
-		byContent := matchesContent(word, slices.Clone(letters), strict)
-		byHint := matchesHints(word, hints)
+	for i := range words {
+		e := &words[i]
+		var ok bool
 		switch {
-		case byContent && emptyHints:
-			result = append(result, word)
-		case emptyLetters && byHint:
-			result = append(result, word)
-		case byContent && byHint:
-			result = append(result, word)
+		case emptyHints:
+			ok = pool.matches(e)
+		case emptyLetters:
+			ok = matchesHints(e.word, hints)
+		default:
+			ok = pool.matches(e) && matchesHints(e.word, hints)
+		}
+		if ok {
+			result = append(result, e.word)
 		}
 	}
 	return result
@@ -224,7 +308,7 @@ func InFile(lang string, length int, letters []string, hints []Hint, strict bool
 	if err := validateFilters(lang, length, emptyLetters, emptyHints); err != nil {
 		return nil, err
 	}
-	return scanWords(loadWords(lang, length), letters, hints, strict, emptyLetters, emptyHints), nil
+	return scanWords(loadWords(lang, length), newLetterPool(letters, strict), hints, emptyLetters, emptyHints), nil
 }
 
 // InFileSplit is InFile with intra-file parallelism (axis B): the word list is
@@ -237,6 +321,7 @@ func InFileSplit(lang string, length int, letters []string, hints []Hint, strict
 		return nil, err
 	}
 	words := loadWords(lang, length)
+	pool := newLetterPool(letters, strict)
 	n := threads
 	if n < 1 {
 		n = 1
@@ -245,7 +330,7 @@ func InFileSplit(lang string, length int, letters []string, hints []Hint, strict
 		n = len(words)
 	}
 	if n <= 1 {
-		return scanWords(words, letters, hints, strict, emptyLetters, emptyHints), nil
+		return scanWords(words, pool, hints, emptyLetters, emptyHints), nil
 	}
 
 	chunk := (len(words) + n - 1) / n // ceil keeps chunks contiguous
@@ -263,7 +348,7 @@ func InFileSplit(lang string, length int, letters []string, hints []Hint, strict
 		wg.Add(1)
 		go func(idx, start, end int) {
 			defer wg.Done()
-			partials[idx] = scanWords(words[start:end], letters, hints, strict, emptyLetters, emptyHints)
+			partials[idx] = scanWords(words[start:end], pool, hints, emptyLetters, emptyHints)
 		}(idx, start, end)
 	}
 	wg.Wait()

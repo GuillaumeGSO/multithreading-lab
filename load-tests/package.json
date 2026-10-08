@@ -5,7 +5,6 @@
     "run:python":          "artillery run --environment python artillery.yml",
     "run:java":            "artillery run --environment java artillery.yml",
     "run:go":              "artillery run --environment go artillery.yml",
-    "run:cpp":             "artillery run --environment cpp artillery.yml",
     "run:nest":            "artillery run --environment nest artillery.yml",
     "run:csharp":          "artillery run --environment csharp artillery.yml"
   }

@@ -3,7 +3,6 @@ load-tests/results/
 load-tests/artillery-report.*
 load-tests/node_modules/
 java/target/
-cpp/build/
 benchmarks/results/
 .DS_Store
 load-tests/._compare-report.html

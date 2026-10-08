@@ -4,7 +4,6 @@ config:
     python:          { target: "http://localhost:8007" }
     java:            { target: "http://localhost:8002" }
     go:              { target: "http://localhost:8003" }
-    cpp:             { target: "http://localhost:8004" }
     nest:            { target: "http://localhost:8006" }
     csharp:          { target: "http://localhost:8005" }
   # Goal: compare per-request speed across languages, not saturation behavior.

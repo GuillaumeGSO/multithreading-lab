@@ -18,17 +18,24 @@ Concurrency appears at two independent levels:
 
 The word-list cache is a `sync.Map`, safe for the concurrent requests above.
 
-The search algorithm itself is a plain brute-force scan — no indexing — so the
-concurrency model is the only variable.
+The search algorithm itself is a plain scan, with no index. Each word list is loaded once
+into entries holding the word, its accent-free form and its a–z letter counts. A query
+prepares its letter pool once, and the per-word check allocates nothing.
 
 ### Parallel modes & in-process benchmark
 
 Beyond per-length fan-out, `search` adds an **intra-file split** (`InFileSplit` —
 goroutines over contiguous word-list chunks) and a **nested** mode
 (`InManyFilesNested` — fan-out where each length is also split, i.e. goroutines
-spawning goroutines). Selected by `SEARCH_MODE` (`parallel` default routes
-`/search/file` → split and `/search/many` → nested; `baseline` restores the
-original). `GOMAXPROCS` is pinned to **2** (via `docker-compose.yml`) to match the
+spawning goroutines). `SEARCH_MODE` picks what the API serves (`mode.go`):
+
+| Mode | `/search/file` | `/search/many` |
+|---|---|---|
+| `baseline` | single-threaded scan (`InFile`) | lengths one after another (`InManyFilesSeq`) |
+| `parallel` (default) | split into `SPLIT_DEGREE` chunks (`InFileSplit`) | per-length fan-out, each length split (`InManyFilesNested`) |
+
+There is no index here, so any other value, including `indexed`, stops the server at
+startup. `GOMAXPROCS` is pinned to **2** (via `docker-compose.yml`) to match the
 CPU budget — otherwise it defaults to the *host* core count and ignores the cgroup
 limit — so the runtime multiplexes the per-length × split goroutines onto 2 OS
 threads for a fair 2-core comparison. Output is identical to baseline
@@ -194,6 +201,6 @@ than 32 letters or 31 hints), and a request with neither `letters` nor `hints`:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ASSETS_ROOT` | `assets` (relative) | Path to the word list directory |
-| `SEARCH_MODE` | `parallel` | `parallel` routes the API through split/nested; `baseline` restores the original fan-out |
+| `SEARCH_MODE` | `parallel` | `baseline` or `parallel` (see [Parallel modes](#parallel-modes--in-process-benchmark)) |
 | `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |
 | `OPENAPI_PATH` | `/app/openapi.yaml` | API contract served at `/openapi.yaml` and `/openapi.json` |

@@ -17,9 +17,35 @@ export interface Hint {
   excluded: boolean;
 }
 
+// WordList is one length's dictionary with the data the scan needs, computed
+// once at load: each word, its accent-free form (for the letter-pool check)
+// and its a–z letter counts (26 bytes per word in one flat array, for strict
+// mode). Parallel arrays keep it compact — every worker holds its own copy.
+export interface WordList {
+  words: string[];
+  norms: string[];
+  freq: Uint8Array;
+}
+
+const EMPTY_LIST: WordList = { words: [], norms: [], freq: new Uint8Array(0) };
+
+function buildWordList(words: string[]): WordList {
+  const norms = new Array<string>(words.length);
+  const freq = new Uint8Array(words.length * 26);
+  words.forEach((word, i) => {
+    const norm = unidecode(word);
+    norms[i] = norm === word ? word : norm;
+    for (let k = 0; k < norm.length; k++) {
+      const c = norm.charCodeAt(k) - 97;
+      if (c >= 0 && c < 26) freq[i * 26 + c]++;
+    }
+  });
+  return { words, norms, freq };
+}
+
 // wordCache holds word lists keyed by "lang/length". Each key is written once
-// and then read by many searches; stored arrays are treated as immutable.
-const wordCache = new Map<string, string[]>();
+// and then read by many searches; stored lists are treated as immutable.
+const wordCache = new Map<string, WordList>();
 
 // assetsRoot resolves the word-list directory, defaulting to a relative path.
 function assetsRoot(): string {
@@ -35,12 +61,17 @@ export function isValidLang(lang: string): boolean {
   return LANG_PATTERN.test(lang);
 }
 
-// loadWords returns the word list for (lang, length), reading it from disk on
-// the first call and caching it afterwards. A missing file yields an empty list.
-// An unsafe `lang` yields an empty list and is never cached.
+// loadWords returns the words for (lang, length); see loadWordList.
 export function loadWords(lang: string, length: number): string[] {
+  return loadWordList(lang, length).words;
+}
+
+// loadWordList returns the word list for (lang, length), reading it from disk
+// on the first call and caching it afterwards. A missing file yields an empty
+// list. An unsafe `lang` yields an empty list and is never cached.
+export function loadWordList(lang: string, length: number): WordList {
   if (!isValidLang(lang)) {
-    return [];
+    return EMPTY_LIST;
   }
   const key = `${lang}/${length}`;
   const cached = wordCache.get(key);
@@ -59,8 +90,9 @@ export function loadWords(lang: string, length: number): string[] {
     words = [];
   }
 
-  wordCache.set(key, words);
-  return words;
+  const list = buildWordList(words);
+  wordCache.set(key, list);
+  return list;
 }
 
 // noLetters reports whether the letter pool imposes no constraint.
@@ -73,29 +105,78 @@ export function noHints(hints: Hint[]): boolean {
   return hints.every((h) => h.letter == null || h.letter === '');
 }
 
+// LetterPool is a query's available letters, prepared once per search: a
+// membership table for the pool check and a–z counts for strict mode. Each
+// element of `letters` is one character; an element of several characters can
+// never match a single letter.
+export class LetterPool {
+  private readonly ascii = new Uint8Array(128);
+  private readonly other = new Set<number>();
+  private readonly freq = new Int32Array(26);
+  private readonly empty: boolean;
+
+  constructor(letters: string[], private readonly strict: boolean) {
+    let any = false;
+    for (const l of letters) {
+      if (!l) continue;
+      const cp = l.codePointAt(0)!;
+      if (String.fromCodePoint(cp).length !== l.length) continue;
+      any = true;
+      if (cp < 128) this.ascii[cp] = 1;
+      else this.other.add(cp);
+      if (cp >= 97 && cp <= 122) this.freq[cp - 97]++;
+    }
+    this.empty = !any;
+  }
+
+  // matches reports whether word `i` of `list` can be built from the pool:
+  // every letter of its accent-free form is in the pool, and in strict mode no
+  // a–z letter is needed more often than the pool holds it.
+  matches(list: WordList, i: number): boolean {
+    const norm = list.norms[i];
+    if (norm === '' || this.empty) return false;
+    for (let k = 0; k < norm.length; k++) {
+      const c = norm.charCodeAt(k);
+      if (c < 128) {
+        if (!this.ascii[c]) return false;
+      } else {
+        const cp = norm.codePointAt(k)!;
+        if (cp > 0xffff) k++;
+        if (!this.other.has(cp)) return false;
+      }
+    }
+    if (this.strict) {
+      const base = i * 26;
+      for (let c = 0; c < 26; c++) {
+        if (list.freq[base + c] > this.freq[c]) return false;
+      }
+    }
+    return true;
+  }
+}
+
 // matchesContent reports whether `word` can be built from the letter pool. In
-// strict mode each letter is consumed at most once. The caller must pass a copy
-// of `letters`, since strict mode mutates the array.
+// strict mode each letter is consumed at most once. Convenience form of
+// LetterPool.matches for one word; the scan prepares both once instead.
 export function matchesContent(
   word: string,
   letters: string[],
   strict: boolean,
 ): boolean {
-  if (word === '' || noLetters(letters)) {
-    return false;
+  return new LetterPool(letters, strict).matches(buildWordList([word]), 0);
+}
+
+// codePointAtPosition returns the code point at 1-indexed `position`, walking
+// the string without allocating; undefined when outside the word.
+function codePointAtPosition(word: string, position: number): number | undefined {
+  if (position < 1) return undefined;
+  let n = 0;
+  for (let k = 0; k < word.length; k++) {
+    const cp = word.codePointAt(k)!;
+    if (cp > 0xffff) k++;
+    if (++n === position) return cp;
   }
-  // Iterate code points of the transliterated word so accented characters
-  // match their plain-ASCII equivalents (compared code point by code point after Unidecode).
-  for (const r of unidecode(word)) {
-    const idx = letters.indexOf(r);
-    if (idx === -1) {
-      return false;
-    }
-    if (strict) {
-      letters.splice(idx, 1);
-    }
-  }
-  return true;
+  return undefined;
 }
 
 // matchesHints reports whether `word` satisfies every positional hint.
@@ -106,13 +187,12 @@ export function matchesHints(word: string, hints: Hint[]): boolean {
   if (noHints(hints)) {
     return true;
   }
-  // Spread into code points so multi-byte characters index correctly.
-  const runes = [...word];
   for (const h of hints) {
     if (h.letter == null || h.letter === '') {
       continue;
     }
-    if (h.position < 1 || h.position > runes.length) {
+    const actual = codePointAtPosition(word, h.position);
+    if (actual === undefined) {
       // A pinned hint outside the word can never match; an excluded hint is
       // trivially satisfied (the character is absent). Positions are 1-indexed.
       if (!h.excluded) {
@@ -120,12 +200,7 @@ export function matchesHints(word: string, hints: Hint[]): boolean {
       }
       continue;
     }
-    const letter = [...h.letter][0];
-    if (h.excluded) {
-      if (runes[h.position - 1] === letter) {
-        return false;
-      }
-    } else if (runes[h.position - 1] !== letter) {
+    if (h.excluded === (actual === h.letter.codePointAt(0))) {
       return false;
     }
   }
@@ -156,7 +231,9 @@ export function inFileRange(
     throw new Error('letters and hints cannot both be empty');
   }
 
-  const words = loadWords(lang, length);
+  const list = loadWordList(lang, length);
+  const words = list.words;
+  const pool = new LetterPool(letters, strict);
   let start = 0;
   let end = words.length;
   if (chunkCount > 1) {
@@ -165,19 +242,16 @@ export function inFileRange(
     end = Math.min(start + chunk, words.length);
   }
 
+  // Only the predicates the query needs are evaluated.
   const result: string[] = [];
   for (let i = start; i < end; i++) {
     const word = words[i];
-    // matchesContent mutates its array in strict mode, so clone per word.
-    const byContent = matchesContent(word, [...letters], strict);
-    const byHint = matchesHints(word, hints);
-    if (byContent && emptyHints) {
-      result.push(word);
-    } else if (emptyLetters && byHint) {
-      result.push(word);
-    } else if (byContent && byHint) {
-      result.push(word);
-    }
+    const ok = emptyHints
+      ? pool.matches(list, i)
+      : emptyLetters
+        ? matchesHints(word, hints)
+        : pool.matches(list, i) && matchesHints(word, hints);
+    if (ok) result.push(word);
   }
   return result;
 }

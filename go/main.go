@@ -23,11 +23,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// parallelMode routes /search through the threaded variants (intra-file split
-// for /file, nested per-length fan-out for /many) unless SEARCH_MODE=baseline,
-// which restores the original per-endpoint behavior.
-var parallelMode = os.Getenv("SEARCH_MODE") != "baseline"
-
 // openAPISpec holds the raw YAML bytes of openapi.yaml, loaded once at startup.
 var openAPISpec []byte
 
@@ -238,12 +233,7 @@ func (server) SearchFile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	var words []string
-	if parallelMode {
-		words, err = search.InFileSplit(defaultLang(req.Lang), req.WordLength, req.Letters, toSearchHints(req.Hints), req.Strict, search.SplitDegree())
-	} else {
-		words, err = search.InFile(defaultLang(req.Lang), req.WordLength, req.Letters, toSearchHints(req.Hints), req.Strict)
-	}
+	words, err := mode.file(defaultLang(req.Lang), req.WordLength, req.Letters, toSearchHints(req.Hints), req.Strict)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -262,12 +252,7 @@ func (server) SearchMany(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	var words []string
-	if parallelMode {
-		words, err = search.InManyFilesNested(defaultLang(req.Lang), req.Letters, toSearchHints(req.Hints), search.SplitDegree())
-	} else {
-		words, err = search.InManyFiles(defaultLang(req.Lang), req.Letters, toSearchHints(req.Hints))
-	}
+	words, err := mode.many(defaultLang(req.Lang), req.Letters, toSearchHints(req.Hints))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -277,11 +262,17 @@ func (server) SearchMany(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	m, err := resolveMode(os.Getenv("SEARCH_MODE"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	mode = m
+	log.Printf("SEARCH_MODE=%s", mode.name)
+
 	specPath := os.Getenv("OPENAPI_PATH")
 	if specPath == "" {
 		specPath = "/app/openapi.yaml"
 	}
-	var err error
 	openAPISpec, err = os.ReadFile(specPath)
 	if err != nil {
 		log.Printf("warning: could not load openapi.yaml from %s: %v — /openapi.yaml will return 503", specPath, err)

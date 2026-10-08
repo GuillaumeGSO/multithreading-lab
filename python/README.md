@@ -1,17 +1,24 @@
 # python
 
-The consolidated Python implementation. It holds **both** word-search algorithms as
-explicit strategies and picks the faster one **per query**, from the query shape alone.
+The Python implementation, on port **8007**. It holds two word-search algorithms as
+explicit strategies: a **scan** and a **positional index**. `SEARCH_MODE` picks what the
+API serves:
 
-> The single Python implementation. It consolidates three earlier experiments — a
-> brute-force baseline, an on-load index, and a positional/frequency index — into one
-> dispatcher. Runs on **8007**.
+| `SEARCH_MODE` | `/search/file` | `/search/many` |
+|---|---|---|
+| `baseline` | single-threaded scan | single-threaded scan, lengths one after another |
+| `parallel` (default) | scan split into `SPLIT_DEGREE` chunks on threads | one thread per length, each length also split |
+| `indexed` | dispatcher: index when a pinned hint exists, scan otherwise | single-threaded scan |
+
+Threads here share the GIL, so `parallel` cannot use a second core for this CPU-bound scan.
+It usually adds overhead instead. That is a result this implementation demonstrates, not a
+bug. The process-level `uvicorn --workers 2` is what uses both CPUs under HTTP load.
 
 ## The two strategies
 
 | Strategy | Cached structure | Per-word cost | Best at |
 |---|---|---|---|
-| **ScanStrategy** ([strategy_scan.py](strategy_scan.py)) | **none** — iterates the shared base | derive membership from the normalized string (strict builds a `Counter` on demand) | letters-only / excluded-hint-only, and **strict** without a pinned hint |
+| **ScanStrategy** ([strategy_scan.py](strategy_scan.py)) | **none** beyond the shared base | membership test on the precomputed accent-free form; strict compares the precomputed 26-letter counts | letters-only / excluded-hint-only, and **strict** without a pinned hint |
 | **IndexedStrategy** ([strategy_indexed.py](strategy_indexed.py)) | positional index `pos→char→frozenset(words)` only | set intersection to seed candidates; availability derived from the base per query | a **pinned** hint to seed from |
 
 Both return **byte-identical** results to the original brute-force reference (guarded by
@@ -19,11 +26,10 @@ Both return **byte-identical** results to the original brute-force reference (gu
 That equivalence is what makes per-query dispatch *safe*: it only changes speed, never
 output.
 
-Neither strategy caches anything *per word*: both derive what they need from the shared
-`common.load_base` `(word, normalized)`, and `IndexedStrategy` additionally caches the
-**positional index** (its whole reason to exist). This keeps the footprint small enough
-that two `uvicorn` workers fit inside the 512 MB container budget — the property that
-makes the dispatcher viable as the live default (see [Memory](#memory-why-nothing-is-cached-per-word)).
+Both read the shared `common.load_base` `(word, normalized, freq)` tuples, computed once per
+word list. `IndexedStrategy` additionally caches the **positional index**, which is its
+whole reason to exist and is only built in `indexed` mode. This keeps two `uvicorn` workers
+inside the 512 MB container budget (see [Memory](#memory-why-nothing-is-cached-per-word)).
 
 ## Dispatch rule
 
@@ -62,8 +68,8 @@ crossword/no-pool, and large-pool cases). Measured winners — zero misclassific
 
 > Historical note: an earlier version also routed **strict-without-pinned** to indexed,
 > because indexed then cached a `Counter` per word that beat the scan's per-word rebuild.
-> Those Counters were dropped to fit the memory budget (below), so strict no longer tips
-> the rule — both strategies rebuild the `Counter` on demand now.
+> Both strategies now share a 26-byte letter-count array per word, computed once at load,
+> so strict no longer tips the rule.
 
 Terms: a **pinned** hint says *the letter IS at this position* (`excluded=False`); an
 **excluded** hint says *the letter is NOT at this position* (`excluded=True`).
@@ -72,14 +78,13 @@ Terms: a **pinned** hint says *the letter IS at this position* (`excluded=False`
 
 The live API runs **2 `uvicorn` workers** in a **512 MB** container, so per-worker memory
 is the binding constraint. Both strategies read each word file once and `unidecode`-normalise
-it once, via the shared `common.load_base` (`(word, normalized)` cached per `(lang, length)`).
-From there:
+it once, via the shared `common.load_base` (`(word, normalized, freq)` cached per
+`(lang, length)`, where `freq` is a 26-byte letter count). From there:
 
-- **ScanStrategy caches nothing** — it iterates the base and derives letter membership
-  from the normalized string per query (≈ base, ~74 MB for all FR lengths).
+- **ScanStrategy caches nothing more** — it iterates the base and tests letter membership
+  on the normalized string per query.
 - **IndexedStrategy caches only `pos_index`** — the positional inverted index it cannot
-  derive cheaply — and gets iteration order + letter availability from the base, building
-  a `Counter` on the fly only for the rare strict path.
+  derive cheaply — and gets iteration order and letter counts from the base.
 
 Caching only the irreducible index (and only for the `/file` lengths that actually receive
 a pinned query) keeps each worker well under its share of the 512 MB budget. The earlier
@@ -93,8 +98,10 @@ design cached a `frozenset` *and* a `Counter` per word in two parallel structure
 - `strategy_scan.py` / `strategy_indexed.py` — the two strategies.
 - `seek_words.py` — `SearchStrategy` Protocol, the dispatcher, public `search_in_file` /
   `search_in_many_files` (same signatures the API and benchmark expect).
-- `parallel.py` — threaded `split`/`fanout`/`nested` modes (GIL demo; runs on the scan
-  path), selected by `SEARCH_MODE=parallel` and `SPLIT_DEGREE`.
+- `parallel.py` — threaded `split`/`fanout`/`nested` variants of the scan (the `parallel`
+  mode; `SPLIT_DEGREE` sets the chunk count).
+- `modes.py` — maps `SEARCH_MODE` to the functions the API calls; an unknown value fails at
+  startup.
 - `api.py` — FastAPI: `/health`, `/search/file`, `/search/many`, plus `/openapi.json`,
   `/openapi.yaml` and `/docs` serving the API contract.
 - `generated/models.py` — Pydantic models generated from `openapi.yaml` (gitignored; see
@@ -102,13 +109,13 @@ design cached a `frozenset` *and* a `Counter` per word in two parallel structure
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SEARCH_MODE` | *(dispatcher)* | unset → the index-aware dispatcher (the fastest path); `parallel` → the GIL-bound threaded variants; `baseline` → the same single-threaded dispatcher |
+| `SEARCH_MODE` | `parallel` | `baseline`, `parallel` or `indexed` (table at the top); anything else stops the server at startup |
 | `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |
 | `OPENAPI_PATH` | `../openapi.yaml` | API contract served at `/openapi.json` and `/openapi.yaml` (`/app/openapi.yaml` in Docker) |
 
-Threads here are GIL-bound overhead for a CPU-bound scan, so the live API **defaults to the
-dispatcher, not `parallel`**. (`SEARCH_MODE=parallel` is kept as the deliberate "threads
-don't help a CPU-bound scan under the GIL" demonstration.)
+The default is `parallel` even though it is slower here than `baseline`. The point is to run
+the same mode as every other implementation of this API, so the GIL's effect is visible
+rather than hidden. `indexed` is the fastest path for `/search/file`.
 
 ## API contract (spec-first)
 

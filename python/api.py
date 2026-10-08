@@ -17,15 +17,12 @@ from generated.models import (
     SearchManyRequest,
     SearchResponse,
 )
-from parallel import search_in_file_parallel, search_in_many_parallel
-from seek_words import Hint, search_in_file, search_in_many_files
+from modes import resolve_mode
+from seek_words import Hint
 
-# The live default is the index-aware dispatcher (seek_words): the positional index
-# serves pinned-hint queries in O(result), and caching nothing per word keeps two
-# uvicorn workers inside the 512 MB budget. SEARCH_MODE=parallel opts into the
-# GIL-bound threaded variants (the deliberate "threads don't help a CPU-bound scan
-# under the GIL" demo); SEARCH_MODE=baseline is the same dispatcher path.
-_PARALLEL = os.environ.get("SEARCH_MODE", "dispatcher").lower() == "parallel"
+# SEARCH_MODE (baseline | parallel | indexed, default parallel) picks the
+# implementation; see modes.py. An unknown value fails here, at startup.
+_MODE = resolve_mode()
 
 # The API contract is the repository's openapi.yaml, served verbatim. Request and
 # response models in generated/models.py are generated from that same file.
@@ -86,8 +83,7 @@ def _to_hints(hints) -> list[Hint]:
 
 @app.post("/search/file", response_model=SearchResponse)
 def search_file(req: SearchFileRequest) -> SearchResponse:
-    search = search_in_file_parallel if _PARALLEL else search_in_file
-    words = list(search(
+    words = list(_MODE.search_file(
         lang=req.lang or "fr",
         word_length=req.word_length,
         letters=req.letters or [],
@@ -99,8 +95,7 @@ def search_file(req: SearchFileRequest) -> SearchResponse:
 
 @app.post("/search/many", response_model=SearchResponse)
 def search_many(req: SearchManyRequest) -> SearchResponse:
-    search = search_in_many_parallel if _PARALLEL else search_in_many_files
-    words = list(search(
+    words = list(_MODE.search_many(
         lang=req.lang or "fr",
         letters=req.letters,
         hints=_to_hints(req.hints),

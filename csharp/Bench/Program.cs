@@ -76,7 +76,7 @@ foreach (var c in casesJson)
         var letters = ToLetters(c?["letters"]?.AsArray());
         bool strict = c?["strict"]?.GetValue<bool>() ?? false;
         modes["baseline"] = () => dispatcher.FileBaseline(lang, wordLength, letters, hints, strict);
-        modes["indexed"] = () => dispatcher.FileIndexed(lang, wordLength, letters, hints, strict);
+        modes["indexed"] = () => dispatcher.FileDispatch(lang, wordLength, letters, hints, strict);
         modes["split"] = () => parallel.FileSplitAsync(lang, wordLength, letters, hints, strict, degree).GetAwaiter().GetResult();
     }
     else

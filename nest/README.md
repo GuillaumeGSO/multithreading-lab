@@ -18,10 +18,12 @@ Concurrency appears at two independent levels:
 
 The word-list cache lives inside each worker, so it is **per-thread**. Each
 worker warms its own cache over its lifetime; no cache is shared across threads
-and no `SharedArrayBuffer` is used (the word lists are strings).
+and no `SharedArrayBuffer` is used.
 
-The search algorithm itself is a plain brute-force scan — no indexing — so the
-concurrency model is the only variable.
+The search algorithm itself is a plain scan, with no index. Each worker loads a word list
+once into parallel arrays: the words, their accent-free forms, and one flat byte array of
+a–z letter counts. A query prepares its letter pool once, and the per-word check allocates
+nothing.
 
 ### Parallel modes & in-process benchmark
 
@@ -29,7 +31,10 @@ A worker task can scan a contiguous **chunk** of a file (`inFileRange` +
 `chunkIndex`/`chunkCount` on the task), enabling an **intra-file split** and a
 **nested** mode (per-length × per-chunk tasks). `SEARCH_MODE=parallel` (default)
 routes `/search/file` → split (`SPLIT_DEGREE` chunks) and `/search/many` →
-nested; `SEARCH_MODE=baseline` keeps one task per length. No thread is ever
+nested; `SEARCH_MODE=baseline` runs one task at a time per request: one whole-file
+task for `/search/file`, and the lengths one after another for `/search/many`. There
+is no index here, so any other value, including `indexed`, stops the server at
+startup. No thread is ever
 spawned per task: the extra `nested` tasks just **queue on the fixed pool**
 rather than oversubscribing. Output is identical to baseline (`worker-pool.spec.ts` asserts it).
 
@@ -202,6 +207,6 @@ than 32 letters or 31 hints), and a request with neither `letters` nor `hints`:
 | `ASSETS_ROOT`      | `assets` (relative) | Path to the word list directory              |
 | `PORT`             | `8006`              | HTTP port to listen on                       |
 | `WORKER_POOL_SIZE` | `2`                 | Number of persistent search worker threads   |
-| `SEARCH_MODE`      | `parallel`          | `parallel` routes the API through split/nested; `baseline` is one task per length |
+| `SEARCH_MODE`      | `parallel`          | `baseline` or `parallel` (see [Parallel modes](#parallel-modes--in-process-benchmark)) |
 | `SPLIT_DEGREE`     | `2`                 | Intra-file chunk count for `split`/`nested`  |
 | `OPENAPI_PATH`     | `../openapi.yaml` (relative to `dist/`, i.e. the repo root) | API contract served at `/openapi.json`, `/openapi.yaml`, `/docs` |

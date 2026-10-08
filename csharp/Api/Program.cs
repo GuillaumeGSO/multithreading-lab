@@ -16,6 +16,11 @@ builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 64 * 1024);
 
 var app = builder.Build();
 
+// Resolve the search service now, so an unknown SEARCH_MODE fails at startup
+// rather than on the first request.
+var searchService = app.Services.GetRequiredService<ParallelSearchService>();
+app.Logger.LogInformation("SEARCH_MODE={Mode}", searchService.Mode.ToString().ToLowerInvariant());
+
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8005";
 app.Urls.Add($"http://0.0.0.0:{port}");
 

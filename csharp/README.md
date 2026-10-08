@@ -1,8 +1,7 @@
 # C# / .NET 10 implementation
 
 ASP.NET Core 10 Minimal API. Uses `Task.WhenAll` + `Task.Run` (ThreadPool) for CPU-bound
-parallelism, with a per-query strategy dispatcher (positional index ↔ lean scan) for the
-single-threaded path.
+parallelism. A positional index is available as a separate `indexed` mode.
 
 Port: **8005**
 
@@ -31,8 +30,8 @@ Nothing about the contract is hand-written here: no model classes, no `.WithSumm
   which the spec changed. It writes `obj/Generated/Contracts.g.cs` (namespace
   `WordSearch.Api.Contracts`): `SearchFileRequest`, `SearchManyRequest`,
   `SearchResponse`, `Hint`, `HealthResponse`, `ErrorResponse`. Properties are PascalCase
-  with `[JsonPropertyName]` carrying the spec's camelCase names, and defaults such as
-  `Lang = "fr"` come from the schema.
+  with `[JsonPropertyName]` carrying the spec's camelCase names. `lang` becomes the
+  generated `Lang` enum.
 - **Documentation in code** — NSwag copies every spec `description` into `/// <summary>`
   on the generated DTOs. `GenerateDocumentationFile` stays on, so IntelliSense shows the
   contract text. In short, the spec documents the API and the generated XML docs
@@ -99,17 +98,18 @@ answers `400` with `ErrorResponse` `{"error": "letters and hints cannot both be 
 | `ASSETS_ROOT` | repo `assets/` (local) / `/app/assets` (Docker) | Word list directory |
 | `OPENAPI_PATH` | repo `openapi.yaml` (local) / `/app/openapi.yaml` (Docker) | API contract served at `/openapi.*` and `/docs` |
 | `PORT` | `8005` | HTTP listen port |
-| `SEARCH_MODE` | `parallel` | `parallel` = Task.WhenAll fan-out; `baseline` = strategy dispatcher |
+| `SEARCH_MODE` | `parallel` | `baseline`, `parallel` or `indexed` (see below); anything else stops the app at startup |
 | `SPLIT_DEGREE` | `2` | Chunks per file for intra-file split (axis B) |
 | `DOTNET_PROCESSOR_COUNT` | host CPUs | Pin thread pool to N cores (set to `2` in docker-compose) |
 
-## Concurrency modes
+## Modes (`SEARCH_MODE`)
 
-| Mode | Axis | Description |
-|------|------|-------------|
-| `baseline` | — | Strategy dispatcher: IndexedStrategy (pinned hints) or ScanStrategy |
-| `split` | B | Intra-file split into `SPLIT_DEGREE` contiguous chunks, each scanned on a thread pool task |
-| `fanout` | A | Per-length fan-out for `/search/many`, one `Task.Run` per word length |
-| `nested` | A+B | Fan-out + per-length split (default for `SEARCH_MODE=parallel`) |
+| Mode | `/search/file` | `/search/many` |
+|------|----------------|----------------|
+| `baseline` | single-threaded scan | single-threaded scan, lengths one after another |
+| `parallel` (default) | split into `SPLIT_DEGREE` chunks, one ThreadPool task each | one task per length, each length also split |
+| `indexed` | dispatcher: `IndexedStrategy` when a pinned hint exists, `ScanStrategy` otherwise | single-threaded scan |
 
-Output is byte-identical across all modes (chunks and lengths merged in order).
+The in-process benchmark names the parallel pieces separately: `split` (file chunks),
+`fanout` (one task per length) and `nested` (both). Output is byte-identical across all
+modes, because chunks and lengths are merged in order (`SearchModeTests` asserts it).

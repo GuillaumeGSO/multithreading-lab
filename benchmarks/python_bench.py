@@ -17,7 +17,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from seek_words import Hint, search_in_file, search_in_many_files
+from seek_words import SCAN, Hint, search_in_file
 from parallel import search_in_file_parallel, search_in_many_parallel, split_degree
 
 
@@ -88,14 +88,17 @@ def build_modes(case):
         letters = case.get("letters", [])
         strict = case.get("strict", False)
         return {
-            "baseline": lambda: list(search_in_file(
+            "baseline": lambda: list(SCAN.search_in_file(
                 lang=lang, word_length=word_length, letters=letters, hints=hints, strict=strict)),
             "split": lambda: search_in_file_parallel(
                 lang=lang, word_length=word_length, letters=letters, hints=hints, strict=strict),
+            # Algorithm comparison, not concurrency: the positional-index dispatcher.
+            "indexed": lambda: list(search_in_file(
+                lang=lang, word_length=word_length, letters=letters, hints=hints, strict=strict)),
         }
     letters = case.get("letters", "")
     return {
-        "baseline": lambda: list(search_in_many_files(lang=lang, letters=letters, hints=hints)),
+        "baseline": lambda: list(SCAN.search_in_many_files(lang=lang, letters=letters, hints=hints)),
         "fanout": lambda: search_in_many_parallel(lang=lang, letters=letters, hints=hints, threads=1),
         "nested": lambda: search_in_many_parallel(lang=lang, letters=letters, hints=hints),
     }
@@ -106,7 +109,7 @@ def run_throughput():
     aggregate ops/sec and median per-op latency under load."""
     def op(_):
         start = time.perf_counter()
-        r = list(search_in_file(lang=TP_LANG, word_length=TP_WORD_LENGTH, letters=TP_LETTERS,
+        r = list(SCAN.search_in_file(lang=TP_LANG, word_length=TP_WORD_LENGTH, letters=TP_LETTERS,
                                 hints=TP_HINTS, strict=TP_STRICT))
         return (time.perf_counter() - start) * 1000.0, len(r)
 

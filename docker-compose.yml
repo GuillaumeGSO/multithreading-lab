@@ -1,3 +1,6 @@
+# SEARCH_MODE (baseline | parallel, plus indexed for python/java/csharp) means the
+# same thing in every implementation; see the root README. It defaults to
+# parallel; load-tests/run-all.sh sets it per profile.
 services:
   python:
     build:
@@ -5,6 +8,8 @@ services:
       dockerfile: python/Dockerfile
     # Already pinned to 2 via `uvicorn --workers 2` (Dockerfile); threads are
     # GIL-bound, so there is no host-core auto-sizing to cap here.
+    environment:
+      SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8007:8007"
     deploy:
@@ -21,6 +26,7 @@ services:
     # JAVA_TOOL_OPTIONS is honored by every JVM launch (live API + benchmark).
     environment:
       JAVA_TOOL_OPTIONS: "-XX:ActiveProcessorCount=2"
+      SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8002:8002"
     deploy:
@@ -37,24 +43,9 @@ services:
     # so pin it to 2 to match the budget (the main fairness fix).
     environment:
       GOMAXPROCS: "2"
+      SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8003:8003"
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 512m
-
-  cpp:
-    build:
-      context: .
-      dockerfile: cpp/Dockerfile
-    # cpuBudget() reads the cgroup quota (→2) but CPU_BUDGET makes it explicit and
-    # independent of whether the limit is applied during `docker compose run`.
-    environment:
-      CPU_BUDGET: "2"
-    ports:
-      - "8004:8004"
     deploy:
       resources:
         limits:
@@ -68,6 +59,7 @@ services:
     # Worker pool already defaults to 2; set it explicitly to match the budget.
     environment:
       WORKER_POOL_SIZE: "2"
+      SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8006:8006"
     deploy:
@@ -84,6 +76,7 @@ services:
     # (equivalent to GOMAXPROCS=2 — .NET reads host core count, not the cgroup).
     environment:
       DOTNET_PROCESSOR_COUNT: "2"
+      SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8005:8005"
     deploy:
