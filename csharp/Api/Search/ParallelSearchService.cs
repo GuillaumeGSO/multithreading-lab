@@ -4,16 +4,19 @@ namespace WordSearch.Api.Search;
 public sealed class ParallelSearchService
 {
     private readonly SearchDispatcher _dispatcher = new();
-    private readonly bool _parallel;
     private readonly int _splitDegree;
 
     public int SplitDegree => _splitDegree;
 
+    /// <summary>What the API entry points run (see <see cref="SearchMode"/>).</summary>
+    public SearchMode Mode { get; }
+
     public ParallelSearchService()
+        : this(SearchModes.Parse(Environment.GetEnvironmentVariable("SEARCH_MODE"))) { }
+
+    public ParallelSearchService(SearchMode mode)
     {
-        _parallel = !string.Equals(
-            Environment.GetEnvironmentVariable("SEARCH_MODE"), "baseline",
-            StringComparison.OrdinalIgnoreCase);
+        Mode = mode;
         _splitDegree = ParseSplitDegree();
     }
 
@@ -22,17 +25,20 @@ public sealed class ParallelSearchService
         string lang, int wordLength, IReadOnlyList<string>? letters,
         IReadOnlyList<Hint>? hints, bool strict)
     {
-        if (_parallel)
-            return FileSplitAsync(lang, wordLength, letters, hints, strict, _splitDegree);
-        return Task.FromResult(_dispatcher.FileDispatch(lang, wordLength, letters, hints, strict));
+        return Mode switch
+        {
+            SearchMode.Parallel => FileSplitAsync(lang, wordLength, letters, hints, strict, _splitDegree),
+            SearchMode.Indexed => Task.FromResult(_dispatcher.FileDispatch(lang, wordLength, letters, hints, strict)),
+            _ => Task.FromResult(_dispatcher.FileBaseline(lang, wordLength, letters, hints, strict)),
+        };
     }
 
     public Task<IReadOnlyList<string>> SearchInManyAsync(
         string lang, string letters, IReadOnlyList<Hint>? hints)
     {
-        if (_parallel)
-            return ManyNestedAsync(lang, letters, hints, _splitDegree);
-        return Task.FromResult(_dispatcher.ManyBaseline(lang, letters, hints));
+        return Mode == SearchMode.Parallel
+            ? ManyNestedAsync(lang, letters, hints, _splitDegree)
+            : Task.FromResult(_dispatcher.ManyBaseline(lang, letters, hints));
     }
 
     // Axis B: intra-file split — used by bench and the parallel API path

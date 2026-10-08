@@ -9,26 +9,28 @@ Java implementation of the multithreading lab word-search API.
 Virtual threads are used at two independent levels:
 
 1. **HTTP layer** — `spring.threads.virtual.enabled=true` makes Tomcat dispatch each incoming request on its own virtual thread, so all endpoints handle concurrent requests without a fixed thread pool
-2. **Search layer** — `WordSearchService.searchInManyFiles` spawns one virtual thread per word length via `Executors.newVirtualThreadPerTaskExecutor()`, so all file scans for a single `/search/many` request run in parallel and results are collected in longest-first order
+2. **Search layer** — in the `parallel` mode, `/search/file` splits the word list into `SPLIT_DEGREE` chunks (`fileSplit`), and `/search/many` runs one virtual thread per word length, each length also split (`manyNested`), all on `Executors.newVirtualThreadPerTaskExecutor()`. Results are merged in word-list and longest-first order.
 
-### Algorithm dispatch (baseline mode)
+### Modes (`SEARCH_MODE`)
 
-`SEARCH_MODE=baseline` also selects the search algorithm per request:
+| Mode | `/search/file` | `/search/many` |
+|---|---|---|
+| `baseline` | single-threaded scan (`fileBaseline`) | single-threaded scan, lengths one after another (`manyBaseline`) |
+| `parallel` (default) | split across virtual threads (`fileSplit`) | per-length fan-out, each length split (`manyNested`) |
+| `indexed` | dispatcher (`fileDispatch`): `IndexedStrategy` when a pinned hint exists, `ScanStrategy` otherwise | single-threaded scan (`manyBaseline`) |
 
-- **`IndexedStrategy`** — builds a positional inverted index (`position → letter → Set<word>`) per `(lang, wordLength)` on first use. For queries with at least one pinned hint (non-excluded, non-null `letter`), it seeds a tight candidate set by intersecting index buckets — O(result) instead of O(vocabulary). Wins 3–38× over scan when pinned hints are present.
-- **`ScanStrategy`** — iterates the full word list on every query. Wins 1.4–2.4× when no pinned hints are present (no index overhead, zero caching).
+`SearchMode` parses the value; anything else stops the application at startup. Every mode
+returns the same words in the same order (`SearchModeTest` asserts it).
 
-The dispatch rule: `IndexedStrategy` is chosen when any `Hint` has `letter != null && !excluded`; `ScanStrategy` otherwise. `/search/many` always uses scan (building an index per length would be wasteful).
+### Scan and index
 
-### Parallel modes & in-process benchmark
+- **Scan** — each word list is loaded once into `WordEntry` records (word, accent-free form,
+  26-letter count). A query builds one immutable `LetterPool` and tests each entry against
+  it, so the per-word check allocates nothing.
+- **`IndexedStrategy`** — builds a positional inverted index (`position → letter → Set<word>`) per `(lang, wordLength)` on first use. For queries with at least one pinned hint (non-excluded, non-null `letter`), it seeds a tight candidate set by intersecting index buckets — O(result) instead of O(vocabulary).
 
-`WordSearchService` also adds an **intra-file split** (`fileSplit` — virtual
-threads over contiguous chunks) and a **nested** mode (`manyNested` — per-length
-fan-out where each length is also split). `SEARCH_MODE=parallel` (default) routes
-`/search/file` → split and `/search/many` → nested; `SEARCH_MODE=baseline`
-restores the original fan-out with algorithm dispatch. Virtual threads are cheap,
-so `nested` is absorbed by the carrier pool rather than exploding. Output is
-identical to baseline (`WordSearchServiceTest` asserts it).
+Virtual threads are cheap, so `nested` work is absorbed by the carrier pool rather than
+exploding.
 
 ```bash
 # Cross-language chart (from repo root)
@@ -193,15 +195,5 @@ than 32 letters or 31 hints), and a request with neither `letters` nor `hints`:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ASSETS_ROOT` | `assets` (relative) | Path to the word list directory |
-| `SEARCH_MODE` | `parallel` | `parallel` routes `/search/file` → split and `/search/many` → nested; `baseline` uses algorithm dispatch (indexed or scan based on hints) |
+| `SEARCH_MODE` | `parallel` | `baseline`, `parallel` or `indexed` (see [Modes](#modes-search_mode)) |
 | `SPLIT_DEGREE` | `2` | Intra-file chunk count for `split`/`nested` |
-
-## Load test results (2026-05-15)
-
-| Endpoint | p50 | p95 | p99 |
-|----------|-----|-----|-----|
-| `/health` | 2 ms | 144 ms | 147 ms |
-| `/search/file` | 17 ms | 150 ms | 206 ms |
-| `/search/many` | 219 ms | 327 ms | 424 ms |
-
-0 failures across 1880 requests at up to 20 req/s. See [compare-report.html](../load-tests/compare-report.html) for the full comparison.

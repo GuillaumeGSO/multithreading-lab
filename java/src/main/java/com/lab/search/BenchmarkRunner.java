@@ -140,7 +140,7 @@ public final class BenchmarkRunner {
                 boolean strict = c.path("strict").asBoolean(false);
                 final String fl = lang;
                 modes.put("baseline", () -> service.fileBaseline(fl, wordLength, letters, hints, strict));
-                modes.put("indexed", () -> service.fileIndexed(fl, wordLength, letters, hints, strict));
+                modes.put("indexed", () -> service.fileDispatch(fl, wordLength, letters, hints, strict));
                 modes.put("split", () -> service.fileSplit(fl, wordLength, letters, hints, strict, degree));
             } else {
                 String letters = c.path("letters").asText();

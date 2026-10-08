@@ -5,7 +5,13 @@
 # Each runner prints ONLY its JSON report to stdout (logs go to stderr), so we
 # redirect stdout to the result file. Override pacing/degree from the host env:
 #   BENCH_WARMUP=20 BENCH_ITERS=100 SPLIT_DEGREE=2 bash run-all.sh
-#   bash run-all.sh go cpp        # only the named services
+#   bash run-all.sh go java       # only the named services
+#   ROUNDS=5 bash run-all.sh      # repeat the whole sweep (default 3)
+#
+# Each round benches every service once, in turn, so slow drift on the host
+# spreads across languages instead of landing on one. Round k of a service is
+# saved as results/<service>.r<k>.json; aggregate.py reports the median across
+# rounds with the min–max range.
 set -uo pipefail
 
 cd "$(dirname "$0")"
@@ -30,6 +36,7 @@ trap cleanup EXIT INT TERM
 : "${BENCH_WARMUP:=10}"
 : "${BENCH_ITERS:=50}"
 : "${THROUGHPUT_OPS:=100}"
+: "${ROUNDS:=3}"
 
 # Forward pacing knobs into the containers when set on the host.
 ENVPASS=()
@@ -40,7 +47,7 @@ done
 # bench <service> <out-name> [docker-compose-run args... -- ] <command...>
 # Runs `docker compose run --rm -T <env> <args> <service> <command>` and saves stdout.
 bench() {
-  local svc="$1" out="$2"; shift 2
+  local svc="$1" out="$2.r${ROUND:-1}"; shift 2
   echo "... running $svc" >&2
   if $COMPOSE run --rm -T ${ENVPASS[@]+"${ENVPASS[@]}"} "$@" >"results/${out}.json" 2>>"results/${out}.log"; then
     echo "    wrote results/${out}.json" >&2
@@ -61,8 +68,6 @@ run_service() {
         --entrypoint .venv/bin/python python bench.py ;;
     go)
       bench go go --entrypoint /app/bench go ;;
-    cpp)
-      bench cpp cpp --entrypoint /app/bench cpp ;;
     java)
       bench java java --entrypoint java java \
         -XX:+UseCompactObjectHeaders -Xmx380m \
@@ -76,7 +81,7 @@ run_service() {
   esac
 }
 
-ALL=(python go cpp java nest csharp)
+ALL=(python go java nest csharp)
 TARGETS=("$@")
 [ "${#TARGETS[@]}" -eq 0 ] && TARGETS=("${ALL[@]}")
 
@@ -88,8 +93,16 @@ find .. -name '._*' -delete 2>/dev/null || true
 echo "Building images..." >&2
 $COMPOSE build "${TARGETS[@]}"
 
+# Fresh results for the services being benched (others are kept).
 for svc in "${TARGETS[@]}"; do
-  run_service "$svc"
+  rm -f "results/${svc}.json" "results/${svc}".r*.json "results/${svc}".r*.log
+done
+
+for round in $(seq 1 "$ROUNDS"); do
+  echo "=== round $round/$ROUNDS" >&2
+  for svc in "${TARGETS[@]}"; do
+    ROUND="$round" run_service "$svc"
+  done
 done
 
 echo "Aggregating -> compare.html" >&2

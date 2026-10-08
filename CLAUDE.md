@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-A personal learning project implementing the same word-search logic across Python, Java, Go, C++, NestJS, and C# to compare concurrency models and performance under HTTP load. Each language exposes the same REST API in its own Docker container. Artillery load tests (`load-tests/artillery.yml`) are container-agnostic — only `--target` changes per language.
+A personal learning project implementing the same word-search logic across Python, Java, Go, NestJS, and C# to compare concurrency models under the same algorithm, the same modes and a fair 2-CPU budget. (A C++ version existed and was removed; it is in git history.) Each language exposes the same REST API in its own Docker container. Artillery load tests (`load-tests/artillery.yml`) are container-agnostic — only `--target` changes per language.
 
 ## Core Problem
 
@@ -33,7 +33,6 @@ Wire format is camelCase (`wordLength`, `letters`, `hints`, `Hint.position|lette
 | Python | datamodel-code-generator (`[tool.datamodel-codegen]` in pyproject) | `python/generated/models.py` (no) | `uv run --group codegen datamodel-codegen` |
 | Java | openapi-generator-maven-plugin, `spring`, `interfaceOnly` | `java/target/generated-sources/openapi` (no) | any Maven build |
 | Go | oapi-codegen v2 (models + std-http `ServerInterface`) | `go/api/api.gen.go` (**yes**) | `cd go && go generate ./...` |
-| C++ | in-repo `cpp/codegen/gen_models.py` (needs PyYAML) | `cpp/build/generated/models.gen.h` (no) | any CMake build |
 | NestJS | openapi-typescript (`--default-non-nullable false`) | `nest/src/generated/api.d.ts` (no) | `npm run generate` (auto on build/test) |
 | C# | NSwag.MSBuild (`Net100`), DTOs only | `csharp/Api/obj/Generated/Contracts.g.cs` (no) | any `dotnet build` |
 
@@ -57,14 +56,16 @@ Wire format is camelCase (`wordLength`, `letters`, `hints`, `Hint.position|lette
 
 ```
 multithreading-lab/
+├── openapi.yaml        # API contract — single source of truth
 ├── assets/             # Shared word lists
-├── load-tests/
-│   └── artillery.yml   # Single test file, environments select the target
-├── python/             # Python — strategy dispatcher (positional index ⟷ lean scan, both derive per-word data on the fly), uvicorn --workers 2
-├── cpp/                # C++17, cpp-httplib, std::thread fan-out
-├── nest/               # Node/NestJS, Fastify, worker_threads pool
-├── csharp/             # C#/.NET 10, ASP.NET Core Minimal API, Task.WhenAll fan-out
-├── docker-compose.yml  # Python=8007, Java=8002, Go=8003, C++=8004, Nest=8006, C#=8005
+├── benchmarks/         # In-process benchmark (no HTTP), rounds + compare.html + summary.md
+├── load-tests/         # Artillery; one artillery.yml, environments select the target
+├── python/             # FastAPI/uvicorn --workers 2; scan + positional-index dispatcher
+├── java/               # Spring Boot 4, virtual threads; scan + positional-index dispatcher
+├── go/                 # net/http, goroutines; scan only
+├── nest/               # NestJS/Fastify, worker_threads pool; scan only
+├── csharp/             # ASP.NET Core Minimal API, Task.WhenAll/ThreadPool; scan + positional-index dispatcher
+├── docker-compose.yml  # Python=8007, Java=8002, Go=8003, Nest=8006, C#=8005
 └── CLAUDE.md
 ```
 
@@ -72,7 +73,8 @@ multithreading-lab/
 
 Each directory has its own README covering local dev, Docker, and API details:
 - [`python/README.md`](python/README.md)
-- [`cpp/README.md`](cpp/README.md)
+- [`java/README.md`](java/README.md)
+- [`go/README.md`](go/README.md)
 - [`nest/README.md`](nest/README.md)
 - [`csharp/README.md`](csharp/README.md)
 
@@ -81,7 +83,7 @@ Each directory has its own README covering local dev, Docker, and API details:
 `load-tests/artillery.yml` is the single test file for all implementations. Environments map names to ports — do not create per-language YAML files.
 
 ```bash
-# Run all reachable containers and generate compare-report.html
+# Every service under SEARCH_MODE=baseline, then parallel; builds compare-report.html + summary.md
 cd load-tests && bash run-all.sh
 
 # Run a single environment manually (requires npm install in load-tests/ first)
@@ -93,7 +95,8 @@ cd load-tests && npm run run:python
 Artillery measures HTTP handling; [`benchmarks/`](benchmarks/) measures the language
 implementation itself by calling the search functions directly **inside each container**
 (no HTTP). All languages run the shared [`benchmarks/cases.json`](benchmarks/cases.json)
-with warmup + median-of-N timing, per concurrency mode, and `aggregate.py` builds `compare.html`.
+with warmup + median-of-N timing, per concurrency mode, repeated for `ROUNDS` rounds (default 3).
+`aggregate.py` builds `compare.html` and `summary.md` (median across rounds + min–max range).
 
 ```bash
 cd benchmarks && bash run-all.sh        # build images, bench every service, build compare.html
@@ -101,20 +104,32 @@ cd benchmarks && bash run-all.sh        # build images, bench every service, bui
 
 Two concurrency axes, exposed as named modes: **A** = per-length fan-out (`/search/many`),
 **B** = intra-file split into `SPLIT_DEGREE` contiguous chunks (default 2). Modes: `baseline`
-(neither), `split` (B, `/file`), `fanout` (A), `nested` (A+B). All modes return byte-identical
-output to baseline (chunks/lengths merged in order — guarded by each impl's parallel unit tests).
+(neither), `split` (B, `/file`), `fanout` (A), `nested` (A+B), plus `indexed` (`/file`, an
+algorithm comparison, Python/Java/C# only). All modes return byte-identical output to baseline.
 
-The same parallel paths are **wired into the live API** via `SEARCH_MODE` and `SPLIT_DEGREE`.
-Go/C++/Java/Nest/C# default to `parallel` (real threads = their best path); `baseline` restores
-original behavior. **Python is the exception:** its threads are GIL-bound, so it defaults to
-the **index-aware dispatcher** (not `parallel`) — serving each language via its best path keeps
-the HTTP comparison fair, and the dispatcher caches nothing per word so two `uvicorn` workers
-fit the 512 MB budget. See [`benchmarks/README.md`](benchmarks/README.md).
+### Rules for a fair comparison
+
+- **Same algorithm.** Every implementation's scan precomputes, per word at load time, the
+  accent-free form and the a–z letter counts; a query prepares its letter pool once; only the
+  predicates a query needs are evaluated. Python's `common.load_base` + `strategy_scan.py` is
+  the reference. Never add an optimisation to one language's scan without the others.
+- **Same mode.** `SEARCH_MODE` means the same thing everywhere, and the default is `parallel`
+  for every implementation (Python included):
+
+  | `SEARCH_MODE` | `/search/file` | `/search/many` |
+  |---|---|---|
+  | `baseline` | single-threaded scan | single-threaded scan, lengths in sequence |
+  | `parallel` | split into `SPLIT_DEGREE` chunks | per-length fan-out, each length split |
+  | `indexed` (Python/Java/C#) | index dispatcher (index iff a pinned hint) | single-threaded scan |
+
+  An unknown value must stop the server at startup. Charts and tables only ever compare
+  languages within one mode; the index is reported separately as scan-vs-index.
 
 ## Unit tests
 
 Each implementation has its own unit suite (Python `pytest`, Go `go test`, Java `mvn test`,
-C++ doctest via `ctest`, Nest `jest`, C# `dotnet test`). Run the Python suite with:
+Nest `jest` — `npm test` plus `npm run test:integration` — C# `dotnet test`). Each also has
+HTTP-level validation tests and mode-equivalence tests. Run the Python suite with:
 
 ```bash
 cd python && uv run pytest -v
@@ -127,29 +142,23 @@ languages mirror these expected results.
 
 ## Concurrency models by implementation
 
-| Implementation   | Model |
+| Implementation   | `parallel` mode uses |
 |-----------------|-------|
-| Python          | Strategy dispatcher: `/search/file` runs the faster of a positional index (O(result) — used when a pinned hint can seed candidates) or a lean scan (O(vocabulary), cheap per-word); `/search/many` always scans (the index barely helps it but would cost pos_index for every length). Both strategies cache nothing per word — they derive letter data on the fly from the shared base — so two `uvicorn --workers 2` processes fit the 512 MB budget. Threads are GIL-bound (the `split`/`nested` modes demonstrate this) |
-| Java            | Strategy dispatcher (mirrors Python): `SEARCH_MODE=baseline` routes `/search/file` to `IndexedStrategy` (positional index, O(result) with pinned hints) or `ScanStrategy` (O(vocabulary)); `/search/many` always scans. `SEARCH_MODE=parallel` (default) routes through virtual-thread fan-out (`ExecutorService.newVirtualThreadPerTaskExecutor`) — per-length fan-out for `/search/many`, intra-file split for `/search/file` |
-| Go              | Goroutines + `sync.WaitGroup` (per-length fan-out in `/search/many`) |
-| C++             | `std::thread` fan-out per length + `std::mutex` for word cache |
-| Node/NestJS     | `worker_threads` pool — N persistent workers; per-length fan-out in `/search/many` |
-| C#/.NET         | `Task.WhenAll` + `Task.Run` (ThreadPool) — per-length fan-out in `/search/many`, intra-file split in `/search/file`; `SEARCH_MODE=parallel` (default); `DOTNET_PROCESSOR_COUNT=2` pins the thread pool to the 2-CPU budget |
+| Python          | `threading` — GIL-bound, so it cannot use the second core; `uvicorn --workers 2` is the process-level parallelism under HTTP load |
+| Java            | Virtual threads (`Executors.newVirtualThreadPerTaskExecutor`) |
+| Go              | Goroutines + `sync.WaitGroup`, scheduled on `GOMAXPROCS=2` |
+| Node/NestJS     | A fixed `worker_threads` pool; split and fan-out tasks queue on it |
+| C#/.NET         | `Task.Run` on the ThreadPool + `Task.WhenAll`, `DOTNET_PROCESSOR_COUNT=2` |
 
-Each implementation additionally exposes an **intra-file split** (axis B) and a **nested** mode
-(see the in-process benchmark section). The split uses each language's native primitive
-(Python `threading` — GIL-bound; Go goroutines; C++ `std::thread`; Java virtual threads; Nest
-worker-pool tasks; C# `Task.Run` / ThreadPool). `nested` deliberately stacks A+B, producing more
-concurrent work than cores; each runtime caps it differently (C++ a permit pool, Go the
-`GOMAXPROCS` scheduler, Nest a fixed worker pool, Java the virtual-thread carrier pool, C# the
-ThreadPool with `DOTNET_PROCESSOR_COUNT=2`).
+`nested` deliberately stacks A+B, producing more concurrent work than cores; each runtime
+caps it differently (Go the `GOMAXPROCS` scheduler, Nest a fixed worker pool, Java the
+virtual-thread carrier pool, C# the ThreadPool with `DOTNET_PROCESSOR_COUNT=2`).
 
 ### Fair 2-CPU budget
 
 Every container runs under a uniform **2-CPU budget** so the cross-language comparison is
 apples-to-apples. Beyond the `cpus: "2.0"` cgroup limit, each runtime is pinned **explicitly**
 (in `docker-compose.yml`), because several size their parallelism from the *host* core count and
-ignore the cgroup: `GOMAXPROCS=2` (Go — the key one), `CPU_BUDGET=2` (C++), `WORKER_POOL_SIZE=2`
-(Nest), `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2` (Java), `DOTNET_PROCESSOR_COUNT=2` (C#).
+ignore the cgroup: `GOMAXPROCS=2` (Go — the key one), `WORKER_POOL_SIZE=2` (Nest), `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2` (Java), `DOTNET_PROCESSOR_COUNT=2` (C#).
 Python is already pinned via `uvicorn --workers 2` (and threads are GIL-bound). These env vars
 apply to both `docker compose up` (live API) and `docker compose run` (the in-process benchmark).

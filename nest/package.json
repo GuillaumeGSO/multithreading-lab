@@ -11,7 +11,7 @@
     "start:dev": "nest start --watch",
     "pretest": "npm run generate",
     "test": "jest test/search.spec.ts",
-    "test:integration": "npm run build && jest test/worker-pool.spec.ts test/api.spec.ts"
+    "test:integration": "npm run build && jest test/worker-pool.spec.ts test/api.spec.ts test/modes.spec.ts"
   },
   "dependencies": {
     "@fastify/static": "^9.3.0",

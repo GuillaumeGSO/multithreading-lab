@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Hint, planLengths } from './search';
 import { WorkerPool } from './worker-pool';
+import { SearchMode, parseSearchMode } from './search.mode';
 import {
   HintRequest,
   SearchFileRequest,
@@ -25,18 +26,17 @@ function toHints(hints: HintRequest[] = []): Hint[] {
 
 @Injectable()
 export class SearchService {
-  // chunkCount is the intra-file split degree (axis B). SEARCH_MODE=baseline
-  // pins it to 1, restoring the original one-task-per-length fan-out;
-  // SEARCH_MODE=parallel (default) uses SPLIT_DEGREE chunks per file, so
-  // /search/file splits and /search/many nests (per-length × per-chunk tasks,
-  // which queue on the fixed pool rather than spawning new threads).
+  // mode comes from SEARCH_MODE (see search.mode.ts); an unknown value throws
+  // here, while Nest instantiates providers at startup. chunkCount is the
+  // intra-file split degree (axis B): SPLIT_DEGREE chunks in parallel mode, 1 in
+  // baseline.
+  readonly mode: SearchMode;
   private readonly chunkCount: number;
 
   constructor(private readonly pool: WorkerPool) {
-    const parallel =
-      (process.env.SEARCH_MODE || 'parallel').toLowerCase() !== 'baseline';
+    this.mode = parseSearchMode(process.env.SEARCH_MODE);
     const degree = Math.max(1, parseInt(process.env.SPLIT_DEGREE || '', 10) || 2);
-    this.chunkCount = parallel ? degree : 1;
+    this.chunkCount = this.mode === 'parallel' ? degree : 1;
   }
 
   // runChunks dispatches `chunkCount` chunk-tasks for one length and merges
@@ -78,9 +78,9 @@ export class SearchService {
     return { words, count: words.length };
   }
 
-  // searchMany fans out per word length across the pool (axis A), each length
-  // further split into chunkCount chunks (axis B), then concatenates the
-  // results longest-first.
+  // searchMany scans every length longest-first. In parallel mode the lengths
+  // fan out across the pool (axis A), each further split into chunkCount chunks
+  // (axis B); in baseline mode they run one after another, one task at a time.
   async searchMany(req: SearchManyRequest): Promise<SearchResponse> {
     const lang = defaultLang(req.lang);
     const hints = toHints(req.hints);
@@ -93,11 +93,19 @@ export class SearchService {
     for (let length = maxLen; length >= minLen; length--) {
       lengths.push(length);
     }
-    const perLength = await Promise.all(
-      lengths.map((length) =>
-        this.runChunks(lang, length, pool, hints, false),
-      ),
-    );
+    let perLength: string[][];
+    if (this.mode === 'parallel') {
+      perLength = await Promise.all(
+        lengths.map((length) =>
+          this.runChunks(lang, length, pool, hints, false),
+        ),
+      );
+    } else {
+      perLength = [];
+      for (const length of lengths) {
+        perLength.push(await this.runChunks(lang, length, pool, hints, false));
+      }
+    }
     const words = perLength.flat();
     return { words, count: words.length };
   }

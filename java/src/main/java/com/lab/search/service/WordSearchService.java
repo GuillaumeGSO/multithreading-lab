@@ -24,8 +24,8 @@ import java.util.regex.Pattern;
 public class WordSearchService {
 
     private final Path assetsRoot;
-    private final ConcurrentHashMap<String, List<String>> wordCache = new ConcurrentHashMap<>();
-    private final boolean parallel;
+    private final ConcurrentHashMap<String, List<WordEntry>> wordCache = new ConcurrentHashMap<>();
+    private final SearchMode mode;
     private final int splitDegree;
     private final ScanStrategy    scanStrategy    = new ScanStrategy();
     private final IndexedStrategy indexedStrategy = new IndexedStrategy();
@@ -35,12 +35,19 @@ public class WordSearchService {
     }
 
     WordSearchService(Path assetsRoot) {
+        // SEARCH_MODE picks what the API entry points run (see SearchMode). The
+        // benchmark calls each variant explicitly regardless.
+        this(assetsRoot, SearchMode.parse(System.getenv("SEARCH_MODE")));
+    }
+
+    WordSearchService(Path assetsRoot, SearchMode mode) {
         this.assetsRoot = assetsRoot;
-        // SEARCH_MODE=parallel (default) routes the API through the threaded
-        // variants; SEARCH_MODE=baseline restores the original per-length
-        // fan-out behavior. The benchmark calls the modes explicitly regardless.
-        this.parallel = !"baseline".equalsIgnoreCase(System.getenv("SEARCH_MODE"));
+        this.mode = mode;
         this.splitDegree = parseSplitDegree();
+    }
+
+    public SearchMode mode() {
+        return mode;
     }
 
     private static String envOr(String key, String def) {
@@ -65,21 +72,24 @@ public class WordSearchService {
     // --- API entry points (controller) ---
 
     public List<String> searchInFile(String lang, int wordLength, List<String> letters, List<Hint> hints, boolean strict) {
-        return parallel
-                ? fileSplit(lang, wordLength, letters, hints, strict, splitDegree)
-                : fileDispatch(lang, wordLength, letters, hints, strict);
+        return switch (mode) {
+            case BASELINE -> fileBaseline(lang, wordLength, letters, hints, strict);
+            case PARALLEL -> fileSplit(lang, wordLength, letters, hints, strict, splitDegree);
+            case INDEXED -> fileDispatch(lang, wordLength, letters, hints, strict);
+        };
     }
 
     public List<String> searchInManyFiles(String lang, String letters, List<Hint> hints) {
-        return parallel
-                ? manyNested(lang, letters, hints, splitDegree)
-                : manyFanout(lang, letters, hints);
+        return switch (mode) {
+            case BASELINE, INDEXED -> manyBaseline(lang, letters, hints);
+            case PARALLEL -> manyNested(lang, letters, hints, splitDegree);
+        };
     }
 
     // --- strategy dispatch (baseline path for /search/file) ---
 
     /// Routes to IndexedStrategy when a pinned hint is present, ScanStrategy otherwise.
-    /// Used by searchInFile() when parallel=false; also callable directly (tests, benchmark).
+    /// Used by searchInFile() in the indexed mode; also callable directly (tests, benchmark).
     public List<String> fileDispatch(String lang, int wordLength, List<String> letters, List<Hint> hints, boolean strict) {
         if (wordLength <= 0 || (isEffectivelyEmpty(letters) && hasNoLetterHints(hints))) {
             throw new IllegalArgumentException("letters and hints cannot both be empty");
@@ -114,18 +124,17 @@ public class WordSearchService {
 
     /// scan filters words[from, to) by the letter pool and/or hints, in order.
     /// Single per-word predicate shared by sequential and parallel paths, so
-    /// they always agree on matches and ordering. Thread-safe over a shared
-    /// letters (matchesContent copies internally for strict mode).
-    private List<String> scan(List<String> words, int from, int to, List<String> letters,
-                              List<Hint> hints, boolean strict, boolean emptyLetters, boolean emptyHints) {
+    /// they always agree on matches and ordering. The pool is immutable, so one
+    /// instance is shared by every chunk. Only the predicates the query needs run.
+    static List<String> scan(List<WordEntry> words, int from, int to, LetterPool pool,
+                             List<Hint> hints, boolean emptyLetters, boolean emptyHints) {
         List<String> results = new ArrayList<>();
         for (int i = from; i < to; i++) {
-            String word = words.get(i);
-            boolean contentOk = emptyLetters || matchesContent(word, letters, strict);
-            boolean hintOk = emptyHints || matchesHints(word, hints);
-            if (contentOk && hintOk) {
-                results.add(word);
-            }
+            WordEntry e = words.get(i);
+            boolean ok = emptyHints ? pool.matches(e)
+                    : emptyLetters ? matchesHints(e.word(), hints)
+                    : pool.matches(e) && matchesHints(e.word(), hints);
+            if (ok) results.add(e.word());
         }
         return results;
     }
@@ -136,7 +145,7 @@ public class WordSearchService {
             throw new IllegalArgumentException("letters and hints cannot both be empty");
         }
         var words = loadWords(lang, wordLength);
-        return scan(words, 0, words.size(), letters, hints, strict,
+        return scan(words, 0, words.size(), new LetterPool(letters, strict), hints,
                 isEffectivelyEmpty(letters), hasNoLetterHints(hints));
     }
 
@@ -147,11 +156,12 @@ public class WordSearchService {
             throw new IllegalArgumentException("letters and hints cannot both be empty");
         }
         var words = loadWords(lang, wordLength);
+        var pool = new LetterPool(letters, strict);
         boolean emptyLetters = isEffectivelyEmpty(letters);
         boolean emptyHints = hasNoLetterHints(hints);
         int n = Math.max(1, Math.min(threads, Math.max(1, words.size())));
         if (n <= 1) {
-            return scan(words, 0, words.size(), letters, hints, strict, emptyLetters, emptyHints);
+            return scan(words, 0, words.size(), pool, hints, emptyLetters, emptyHints);
         }
         int chunk = (words.size() + n - 1) / n; // ceil keeps chunks contiguous
         var futures = new ArrayList<Future<List<String>>>();
@@ -160,7 +170,7 @@ public class WordSearchService {
                 final int start = Math.min(idx * chunk, words.size());
                 final int end = Math.min(start + chunk, words.size());
                 futures.add(executor.submit(() ->
-                        scan(words, start, end, letters, hints, strict, emptyLetters, emptyHints)));
+                        scan(words, start, end, pool, hints, emptyLetters, emptyHints)));
             }
         }
         return drain(futures, false);
@@ -263,7 +273,7 @@ public class WordSearchService {
 
     /// Word list for (lang, wordLength), cached. A missing file yields an empty
     /// list; an unsafe lang is rejected before any path is built.
-    private List<String> loadWords(String lang, int wordLength) {
+    private List<WordEntry> loadWords(String lang, int wordLength) {
         if (!isValidLang(lang)) {
             throw new IllegalArgumentException("invalid lang: " + lang);
         }
@@ -271,7 +281,11 @@ public class WordSearchService {
         return wordCache.computeIfAbsent(key, k -> {
             var file = assetsRoot.resolve(lang).resolve(wordLength + ".txt");
             try {
-                return Files.readAllLines(file);
+                return Files.readAllLines(file).stream()
+                        .map(String::strip)
+                        .filter(w -> !w.isEmpty())
+                        .map(WordEntry::of)
+                        .toList();
             } catch (NoSuchFileException e) {
                 return List.of();
             } catch (IOException e) {
@@ -281,30 +295,16 @@ public class WordSearchService {
     }
 
     /// Normalize accents: "éàü" → "eau" (NFD + strip combining marks).
-    private static String normalize(String s) {
+    static String normalize(String s) {
         return Normalizer.normalize(s, Normalizer.Form.NFD)
                 .replaceAll("\\p{InCombiningDiacriticalMarks}", "");
     }
 
+    /// Whether `word` can be built from `letters` (each used once in strict mode).
+    /// Convenience form of LetterPool.matches for one word; the scans prepare the
+    /// entry and the pool once instead.
     public static boolean matchesContent(String word, List<String> letters, boolean strict) {
-        String normalized = normalize(word);
-        if (normalized.isEmpty() || letters.isEmpty()) return false;
-        if (strict) {
-            // Each letter must be consumed exactly once — work on a mutable copy
-            List<String> available = new ArrayList<>(letters);
-            for (char c : normalized.toCharArray()) {
-                String ch = String.valueOf(c);
-                int idx = available.indexOf(ch);
-                if (idx == -1) return false;
-                available.remove(idx);
-            }
-            return true;
-        } else {
-            for (char c : normalized.toCharArray()) {
-                if (!letters.contains(String.valueOf(c))) return false;
-            }
-            return true;
-        }
+        return new LetterPool(letters, strict).matches(WordEntry.of(word));
     }
 
     public static boolean matchesHints(String word, List<Hint> hints) {

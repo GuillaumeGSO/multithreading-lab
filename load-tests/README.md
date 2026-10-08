@@ -13,8 +13,8 @@ Artillery load tests for comparing all language implementations against the same
 | `generate_queries.py` | Generates `queries.csv` with 500 diverse randomized search queries |
 | `queries.csv` | Generated payload file consumed by Artillery (do not edit manually) |
 | `payload-processor.js` | Artillery hook that builds the JSON request body from a CSV row |
-| `run-all.sh` | Runs the test against all reachable containers and produces `compare-report.html` |
-| `compare.py` | Aggregates Artillery JSON results into `compare-report.html` |
+| `run-all.sh` | Runs the test against every service under each `SEARCH_MODE` profile and produces `compare-report.html` |
+| `compare.py` | Aggregates Artillery JSON results into `compare-report.html` and `summary.md` |
 
 ## Setup
 
@@ -32,22 +32,33 @@ npm install -g artillery
 ## Running tests
 
 ```bash
-# Run against a single implementation
-npm run run:python
-
-# Run against all reachable containers and generate compare-report.html
+# Every service, under SEARCH_MODE=baseline and then SEARCH_MODE=parallel
 ./run-all.sh
+
+# Only some services, one profile, or several rounds
+./run-all.sh go java
+PROFILES=parallel ./run-all.sh
+ROUNDS=3 ./run-all.sh
+
+# One implementation, whatever mode it is currently running
+npm run run:python
 ```
 
-Available environments: `python`, `java`, `go`, `cpp`, `nest`.
+`run-all.sh` recreates each container with the profile's `SEARCH_MODE`, runs the same
+`artillery.yml` against it, waits for its CPU to settle, and moves on. One service is
+tested at a time. Results land in `results/<profile>/<service>.r<round>.json`, and the
+services are restored to the default mode at the end. `compare.py` then builds
+`compare-report.html` and `summary.md`. Languages are only ever compared within one
+profile; with several rounds each value is the median across rounds with the min–max
+range.
 
 | npm script | Port |
 |---|---|
 | `npm run run:python` | 8007 |
 | `npm run run:java` | 8002 |
 | `npm run run:go` | 8003 |
-| `npm run run:cpp` | 8004 |
 | `npm run run:nest` | 8006 |
+| `npm run run:csharp` | 8005 |
 
 ## How randomized payloads work
 

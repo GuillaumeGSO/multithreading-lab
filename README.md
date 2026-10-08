@@ -1,194 +1,161 @@
 # Multithreading Lab
 
-A personal learning project to experiment with multithreading across multiple languages using the **same logic and assets** in each implementation.
+The same word search implemented five times, in **Python, Java, Go, Node/NestJS and C#**,
+behind one OpenAPI contract. The goal is to see how each runtime expresses and runs
+concurrent, CPU-bound work, under conditions kept as equal as possible.
 
-## Goal
+This is a learning lab, not a ranking of languages. The numbers below are useful for
+comparing concurrency models on this workload, on one machine. The
+[limits](#limits-read-before-quoting-a-number) section says what they cannot tell you.
 
-Implement, then progressively optimize, identical concurrent programs in:
+<!-- RESULTS -->
 
-- **Python** ✅ (strategy dispatcher: positional index ⟷ lean scan)
-- **Java** ✅ (virtual threads)
-- **Go** ✅ (goroutines)
-- **C++** ✅ (`std::thread` + bounded pool)
-- **NestJS** ✅ (`worker_threads` pool)
-- **C#** ✅ (`Task.WhenAll` + `Task.Run` / ThreadPool)
+## The problem
 
-The intent is to observe and compare how each language expresses concurrency, what primitives it provides, and how performance characteristics differ — not to build something production-ready.
+Each service filters a dictionary (`assets/{lang}/{length}.txt`, about 425,000 French and
+416,000 English words) by available letters, positional hints and word length.
 
-## Problem
+- **`POST /search/file`** searches one word length.
+- **`POST /search/many`** searches every length up to the number of letters, longest first.
+- **`GET /health`** is a liveness check.
 
-Each implementation exposes a word-search API over a shared dictionary dataset (`assets/`). Queries filter words by available letters, positional hints, and word length. The workload is CPU-bound filtering over in-memory data — a good fit for observing threading models under load.
+Each search is a CPU-bound filter over in-memory data. Work splits naturally two ways,
+across word lengths and within one word list, which makes it a good subject for
+comparing concurrency models.
 
-## Approach
+## How the comparison is kept fair
 
-Each language has one implementation wrapping the same search logic behind the same HTTP API, applying its own concurrency techniques (thread pools, virtual threads, goroutines, worker pools, etc.). Python and Java route `/search/file` through a **strategy dispatcher** that runs whichever algorithm is faster for each query — a positional index when a pinned hint can seed candidates, otherwise a lean scan; `/search/many` always scans.
+- **One contract.** [`openapi.yaml`](openapi.yaml) defines the API, including input bounds.
+  Every implementation generates its models from it and serves it unchanged.
+- **One algorithm.** Every implementation runs the same scan. Each word's accent-free form
+  and a–z letter counts are computed once when a word list loads. A query prepares its
+  letter pool once, and only the checks the query needs are run. Python's scan is the
+  reference.
+- **One meaning per mode.** `SEARCH_MODE` selects the same strategy everywhere, and every
+  service defaults to `parallel`:
 
-Every container runs under the same **2-CPU budget**: a `cpus: "2.0"` limit in `docker-compose.yml`, plus an explicit per-runtime pin (several runtimes size their parallelism from the host core count and ignore the cgroup):
+  | `SEARCH_MODE` | `/search/file` | `/search/many` |
+  |---|---|---|
+  | `baseline` | single-threaded scan | single-threaded scan, lengths one after another |
+  | `parallel` | scan split into 2 chunks on 2 threads | one thread or task per length, each also split |
+  | `indexed` | positional index when a hint pins a letter, scan otherwise | single-threaded scan |
 
-| Implementation | Pin |
-|---|---|
-| Python | `uvicorn --workers 2` (threads are GIL-bound) |
-| Java | `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2` |
-| Go | `GOMAXPROCS=2` |
-| C++ | `CPU_BUDGET=2` |
-| NestJS | `WORKER_POOL_SIZE=2` |
-| C# | `DOTNET_PROCESSOR_COUNT=2` |
+  `indexed` exists only in Python, Java and C#. It is reported separately, as an algorithm
+  comparison, and never mixed into the concurrency results. An unknown mode stops the
+  server at startup.
+- **One CPU budget.** Every container is limited to 2 CPUs and 512 MB. Several runtimes
+  size their thread pools from the host's core count rather than the container's limit, so
+  each is also pinned explicitly in [`docker-compose.yml`](docker-compose.yml):
 
-## Results
+  | Implementation | Concurrency in `parallel` mode | Pin |
+  |---|---|---|
+  | Python | `threading` (the GIL lets one thread run Python code at a time) | `uvicorn --workers 2` |
+  | Java | virtual threads | `-XX:ActiveProcessorCount=2` |
+  | Go | goroutines + `sync.WaitGroup` | `GOMAXPROCS=2` |
+  | Node/NestJS | a fixed pool of 2 `worker_threads` | `WORKER_POOL_SIZE=2` |
+  | C# | `Task.Run` on the ThreadPool + `Task.WhenAll` | `DOTNET_PROCESSOR_COUNT=2` |
 
-| Report | Measures | Local file | Rendered |
-|---|---|---|---|
-| In-process benchmark | Algorithm + concurrency modes, no HTTP | [`benchmarks/compare.html`](benchmarks/compare.html) | [view](https://htmlpreview.github.io/?https://github.com/GuillaumeGSO/multithreading-lab/blob/master/benchmarks/compare.html) |
-| Load test (Artillery) | API/HTTP handling under load | [`load-tests/compare-report.html`](load-tests/compare-report.html) | [view](https://htmlpreview.github.io/?https://github.com/GuillaumeGSO/multithreading-lab/blob/master/load-tests/compare-report.html) |
+- **One set of inputs.** Every benchmark runs the same generated
+  [`benchmarks/cases.json`](benchmarks/cases.json), and every load test the same
+  [`load-tests/queries.csv`](load-tests/queries.csv). The benchmark report checks that every
+  language returns the same number of words for every case.
 
-## Structure
+## Limits: read before quoting a number
+
+- **HTTP results measure the whole stack.** A search takes a few milliseconds, so the web
+  framework, JSON handling and request scheduling are a large share of each request. The
+  load test compares FastAPI/uvicorn, Spring/Tomcat, `net/http`, Fastify and Kestrel as much
+  as it compares languages.
+- **The code reflects its author.** I know some of these languages better than others. None
+  of the implementations was tuned by an expert in that language.
+- **Accent stripping differs slightly.** Python, Go and Node use a `unidecode` library;
+  Java and C# use Unicode decomposition. The cross-language word-count check catches any case
+  where this changes a result.
+- **The machine is shared.** On macOS, Docker Desktop runs containers in a virtual machine,
+  and the load generator runs on the same host. Numbers vary between runs; the reports show
+  the spread across rounds.
+- **One machine, one dataset.** The results compare models on this workload. They are not a
+  general statement about the languages.
+- **Python's `parallel` mode is slower than its `baseline` on purpose.** It runs the same mode
+  as everyone else, so the GIL's effect is visible rather than hidden behind a different
+  default.
+
+## Repository layout
 
 ```
 multithreading-lab/
-├── openapi.yaml             # API contract — single source of truth (spec-first)
-├── assets/                  # Shared word lists: assets/{lang}/{nb_letters}.txt
-├── load-tests/              # Artillery — measures API/HTTP handling
-│   ├── artillery.yml        # Single test file, environments select the target
-│   ├── queries.csv          # Query payloads (generated by generate_queries.py)
-│   ├── run-all.sh           # Runs Artillery against all reachable containers
-│   ├── compare.py           # Generates compare-report.html from results/
-│   ├── compare-report.html  # Comparative report (committed)
-│   └── results/             # Per-run JSON outputs (gitignored)
-├── benchmarks/              # In-process bench — measures algorithm + concurrency (no HTTP)
-│   ├── cases.json           # Shared, generated case set (single source of truth)
-│   ├── gen_cases.py         # Deterministic case generator
-│   ├── run-all.sh           # Benches every container, builds compare.html
-│   ├── aggregate.py         # Chart generator
-│   ├── compare.html         # Comparative report (committed)
-│   └── results/             # Per-service JSON + logs (gitignored)
-├── python/                  # FastAPI/uvicorn — strategy dispatcher (index ⟷ scan), --workers 2 (Python 3.13)
-├── java/                    # Spring Boot 4 + virtual threads (Java 25)
-├── go/                      # net/http + goroutines (Go 1.23)
-├── cpp/                     # cpp-httplib + std::thread + bounded pool (C++17)
-├── nest/                    # NestJS/Fastify + worker_threads pool (Node 22)
-├── csharp/                  # ASP.NET Core Minimal API + Task.WhenAll / ThreadPool (.NET 10)
-└── docker-compose.yml       # One service per implementation
+├── openapi.yaml          # API contract, single source of truth (spec-first)
+├── assets/               # Word lists: assets/{lang}/{length}.txt
+├── benchmarks/           # In-process benchmark (no HTTP): rounds → compare.html, summary.md
+├── load-tests/           # Artillery load test per SEARCH_MODE → compare-report.html, summary.md
+├── python/               # FastAPI + uvicorn --workers 2 (Python 3.13)
+├── java/                 # Spring Boot 4 + virtual threads (Java 25)
+├── go/                   # net/http + goroutines
+├── nest/                 # NestJS/Fastify + worker_threads pool (Node 22)
+├── csharp/               # ASP.NET Core Minimal API + ThreadPool (.NET 10)
+└── docker-compose.yml    # One service per implementation, 2 CPUs / 512 MB each
 ```
 
-## API contract
+Each implementation has its own README: [Python](python/README.md), [Java](java/README.md),
+[Go](go/README.md), [Node/NestJS](nest/README.md), [C#](csharp/README.md).
 
-All containers expose the same three endpoints:
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/health` | Liveness check |
-| `POST` | `/search/file` | Search words of a fixed length |
-| `POST` | `/search/many` | Search words across all lengths |
-
-See [`openapi.yaml`](openapi.yaml) for the full schema, or browse the interactive UI for any running container (see table below).
-
-## API Documentation (OpenAPI)
-
-The root [`openapi.yaml`](openapi.yaml) is the **single source of truth** for the API
-contract: paths, schemas, descriptions and examples are written there once, and every
-implementation is **spec-first**. Each one generates its request/response models from the
-spec, serves the file unchanged, and contains no hand-written OpenAPI metadata.
-
-Wire format: camelCase JSON (`wordLength`, `letters`, `hints[].position|letter|excluded`);
-each language maps it to its own naming convention in the generated code.
-
-| Implementation | Model generation | Generated output | Committed? | UI at `/docs` |
-|---|---|---|---|---|
-| Python | datamodel-code-generator → Pydantic v2 | `python/generated/models.py` | no (Docker `codegen` stage) | [Swagger UI](http://localhost:8007/docs) |
-| Java | openapi-generator (`spring`, interfaces + models) | `java/target/generated-sources/openapi` | no (Maven `generate-sources`) | [Swagger UI](http://localhost:8002/docs) |
-| Go | oapi-codegen (models + `ServerInterface`) | `go/api/api.gen.go` | **yes** (`go generate ./...`) | [Swagger UI](http://localhost:8003/docs) |
-| C++ | in-repo `cpp/codegen/gen_models.py` → structs + nlohmann JSON | `cpp/build/generated/models.gen.h` | no (CMake step) | [Swagger UI](http://localhost:8004/docs) |
-| NestJS | openapi-typescript → TS types | `nest/src/generated/api.d.ts` | no (`prebuild` / `pretest`) | [Swagger UI](http://localhost:8006/docs) |
-| C# | NSwag (MSBuild) → DTO classes | `csharp/Api/obj/Generated/Contracts.g.cs` | no (MSBuild target) | [Scalar](http://localhost:8005/docs) |
-
-Every implementation serves the same document at `/openapi.yaml` and, converted to JSON,
-at `/openapi.json`, so swapping the backend requires no tooling changes. Each
-implementation's README has an **API contract (spec-first)** section describing its
-generator and how to regenerate.
-
-## Running containers
+## Running it
 
 ```bash
-# Start all implemented containers
-docker compose up --build
-
-# Start a specific implementation
-docker compose up <service-name>
+docker compose up --build                      # all five services, SEARCH_MODE=parallel
+SEARCH_MODE=baseline docker compose up -d go   # one service in another mode
 ```
 
-| Implementation | Service | Port |
-|---|---|---|
-| Python | `python` | 8007 |
-| Java | `java` | 8002 |
-| Go | `go` | 8003 |
-| C++ | `cpp` | 8004 |
-| NestJS | `nest` | 8006 |
-| C# | `csharp` | 8005 |
+| Implementation | Service | Port | API docs |
+|---|---|---|---|
+| Python | `python` | 8007 | [Swagger UI](http://localhost:8007/docs) |
+| Java | `java` | 8002 | [Swagger UI](http://localhost:8002/docs) |
+| Go | `go` | 8003 | [Swagger UI](http://localhost:8003/docs) |
+| Node/NestJS | `nest` | 8006 | [Swagger UI](http://localhost:8006/docs) |
+| C# | `csharp` | 8005 | [Scalar](http://localhost:8005/docs) |
 
-## Load testing
+Every service also serves the contract at `/openapi.yaml` and `/openapi.json`.
 
-Artillery runs the same scenarios against every container. Results are collected and compared in a single HTML report: [compare-report.html](load-tests/compare-report.html).
+## Measuring
 
 ```bash
-# Run against all reachable containers and generate the comparative report
-cd load-tests && bash run-all.sh
-# → load-tests/compare-report.html
-
-# Run against a single implementation (environment names match service names)
-npx artillery run --environment <service-name> load-tests/artillery.yml
+cd benchmarks && bash run-all.sh   # in-process, 3 rounds → compare.html + summary.md
+cd load-tests && bash run-all.sh   # HTTP, baseline then parallel → compare-report.html + summary.md
 ```
 
-The scenario mix is weighted `/health` : `search/file` : `search/many` = 1 : 12 : 24, biasing load toward the multi-length `search/many` queries.
+The [benchmark README](benchmarks/README.md) and the [load-test README](load-tests/README.md)
+describe the cases, the options and how to read the charts.
 
-## In-process benchmark
+## API contract (spec-first)
 
-Artillery measures **API/HTTP handling**. [`benchmarks/`](benchmarks/) measures the
-other half — the **language implementation itself** — by calling the search functions
-directly inside each container (no HTTP). Every language runs the same generated
-[`benchmarks/cases.json`](benchmarks/cases.json) with warmup + median-of-N timing, per
-concurrency mode, plus a concurrent-load throughput test. `aggregate.py` builds
-[`compare.html`](benchmarks/compare.html).
+The root [`openapi.yaml`](openapi.yaml) is the single source of truth. Each implementation
+generates its models from it, serves it unchanged, and contains no hand-written OpenAPI
+metadata. The wire format is camelCase JSON (`wordLength`, `letters`, `hints[].position`).
+The contract also bounds every input: `lang` is `fr` or `en`, `wordLength` and hint
+positions are 1–31, and requests carry at most 32 letters and 31 hints. Anything else is
+answered with `400` and `{"error": "..."}`.
 
-```bash
-cd benchmarks && bash run-all.sh        # build images, bench every service, build compare.html
-```
+| Implementation | Model generation | Generated output | Committed? |
+|---|---|---|---|
+| Python | datamodel-code-generator → Pydantic v2 (enforces the bounds) | `python/generated/models.py` | no |
+| Java | openapi-generator (`spring`, bean validation) | `java/target/generated-sources/openapi` | no |
+| Go | oapi-codegen (models + `ServerInterface`) | `go/api/api.gen.go` | **yes** |
+| Node/NestJS | openapi-typescript → TS types | `nest/src/generated/api.d.ts` | no |
+| C# | NSwag (MSBuild) → DTOs with data annotations | `csharp/Api/obj/Generated/Contracts.g.cs` | no |
 
-Two concurrency axes are exposed as named modes — **A** per-length fan-out (`/search/many`),
-**B** intra-file split into `SPLIT_DEGREE` chunks: `baseline`, `split` (B), `fanout` (A),
-`nested` (A+B). All modes return byte-identical output to baseline. The same parallel paths
-are wired into the live API via `SEARCH_MODE` (`parallel` default, `baseline` to restore
-original). See [`benchmarks/README.md`](benchmarks/README.md).
+## Tests
 
-## Unit tests
+Each implementation has a unit suite for the search logic, HTTP-level tests for request
+validation, and tests asserting that every `SEARCH_MODE` returns exactly the baseline's
+words. The Python suite is the correctness reference.
 
-Each implementation has its own test suite covering the core search logic, including
-equivalence tests that assert every parallel mode returns byte-identical output to
-baseline. The Python suite is the correctness reference; the others mirror its expected
-results. See each README for setup and options.
-
-| Implementation | Framework | README |
-|---|---|---|
-| Python | pytest | [`python/README.md`](python/README.md) |
-| Java | JUnit (`mvn test`) | [`java/README.md`](java/README.md) |
-| Go | `go test` | [`go/README.md`](go/README.md) |
-| C++ | doctest via `ctest` | [`cpp/README.md`](cpp/README.md) |
-| NestJS | Jest | [`nest/README.md`](nest/README.md) |
-| C# | `dotnet test` | [`csharp/README.md`](csharp/README.md) |
-
-## Languages & threading models
-
-| Implementation | Concurrency model | Live API default |
-|---|---|---|
-| Python | `uvicorn --workers 2` (process-level); threaded split/nested available but GIL-bound | strategy dispatcher (index ⟷ scan per query) |
-| Java | Virtual threads (`newVirtualThreadPerTaskExecutor`) — per-length fan-out + intra-file split | `parallel` (`baseline` = strategy dispatcher) |
-| Go | Goroutines + `sync.WaitGroup` — per-length fan-out + intra-file split | `parallel` |
-| C++ | `std::thread` split + bounded `SearchPool` fan-out; `std::mutex`-guarded word cache | `parallel` |
-| NestJS | `worker_threads` pool — fan-out + split tasks queue on the fixed pool | `parallel` |
-| C# | `Task.WhenAll` + `Task.Run` (ThreadPool) — per-length fan-out + intra-file split | `parallel` |
-
-Each implementation exposes the same `baseline` / `split` / `fanout` / `nested` modes via
-`SEARCH_MODE` + `SPLIT_DEGREE`; the in-process benchmark charts them (see above). All run
-under the 2-CPU budget described in [Approach](#approach).
+| Implementation | Command |
+|---|---|
+| Python | `cd python && uv run pytest` |
+| Java | `cd java && mvn test` |
+| Go | `cd go && go test ./...` |
+| Node/NestJS | `cd nest && npm test && npm run test:integration` |
+| C# | `cd csharp && dotnet test Tests/Tests.csproj` |
 
 ## Dataset
 
@@ -238,62 +205,21 @@ Regenerate after changing the word lists:
 for l in assets/*/; do for f in "$l"*.txt; do printf '%s\t%s\n' "$f" "$(wc -l < "$f")"; done; done
 ```
 
-## TODO — OpenAPI hardening
+## History
 
-The `openapi.yaml` at the repo root is declared the single source of truth, but nothing currently enforces it. Below are concrete steps to make that claim verifiable.
+A C++ implementation (cpp-httplib, `std::thread`) was part of the project and was removed:
+I could not review it with the same confidence as the others. It remains in the git history (tag v1.1.0)
 
-### 1. Spec linting in CI
+Earlier versions compared each language "at its best path": Python and Java served queries
+from a positional index while the others scanned, and the scan itself was optimised in some
+languages and not others. Those results mostly measured the algorithm differences. The
+current setup runs the same algorithm and mode everywhere, and reports the index separately.
 
-Catch style violations, broken `$ref`s, and missing required fields before they merge.
+## Possible next steps
 
-```bash
-npm install -g @stoplight/spectral-cli
-spectral lint openapi.yaml
-```
-
-Integrate as a CI step; fail the build on any error.
-
-### 2. Contract testing against live containers
-
-[Schemathesis](https://schemathesis.readthedocs.io) generates requests automatically from the spec and validates every response against it. Run it against each container to guarantee the implementation matches the contract.
-
-```bash
-pip install schemathesis
-st run openapi.yaml --url http://localhost:8007 --checks all
-```
-
-Add one `st run` step per service in CI, after `docker compose up`.
-
-### 3. Served-spec check
-
-Every container serves `openapi.yaml` verbatim, so a CI step can assert it after
-`docker compose up` (guards against packaging a stale copy):
-
-```bash
-curl -s http://localhost:8007/openapi.json | jq --sort-keys . > served.json
-python -c "import yaml,json; print(json.dumps(yaml.safe_load(open('openapi.yaml'))))" \
-  | jq --sort-keys . > canonical.json
-diff canonical.json served.json
-```
-
-Go's generated file is committed, so also run `cd go && go generate ./... && git diff --exit-code`.
-
-### 4. Breaking-change detection on PRs
-
-Prevent accidental breaking changes when `openapi.yaml` evolves.
-
-```bash
-npm install -g @oasdiff/oasdiff
-oasdiff breaking openapi-before.yaml openapi.yaml
-```
-
-In CI: compare the spec on the PR branch against the spec on `master`; fail on any breaking change (removed field, changed type, removed endpoint).
-
-### 5. Mock server for consumer-driven development
-
-Spin up a mock server from the spec so consumers (e.g. a frontend) can develop before any backend is running.
-
-```bash
-npx @stoplight/prism-cli mock openapi.yaml
-# → mock server on http://localhost:4010
-```
+- Run the unit suites, spec linting ([Spectral](https://github.com/stoplightio/spectral)) and a
+  `docker compose` smoke test in CI.
+- Contract-test every service against `openapi.yaml` with
+  [Schemathesis](https://schemathesis.readthedocs.io).
+- Detect breaking spec changes on pull requests with [oasdiff](https://github.com/oasdiff/oasdiff).
+- Run the load generator on a separate machine, to remove it from the measurement.

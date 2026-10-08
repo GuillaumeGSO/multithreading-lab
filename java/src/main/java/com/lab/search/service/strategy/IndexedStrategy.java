@@ -1,6 +1,8 @@
 package com.lab.search.service.strategy;
 
 import com.lab.search.service.Hint;
+import com.lab.search.service.LetterPool;
+import com.lab.search.service.WordEntry;
 import com.lab.search.service.WordSearchService;
 
 import java.util.*;
@@ -23,13 +25,14 @@ public final class IndexedStrategy implements SearchStrategy {
     @Override
     public String name() { return "indexed"; }
 
-    private Map<Integer, Map<String, Set<String>>> ensureIndex(String lang, int wordLength, List<String> words) {
+    private Map<Integer, Map<String, Set<String>>> ensureIndex(String lang, int wordLength, List<WordEntry> words) {
         return indexCache.computeIfAbsent(lang + "/" + wordLength, k -> buildIndex(words));
     }
 
-    private static Map<Integer, Map<String, Set<String>>> buildIndex(List<String> words) {
+    private static Map<Integer, Map<String, Set<String>>> buildIndex(List<WordEntry> entries) {
         Map<Integer, Map<String, Set<String>>> idx = new HashMap<>();
-        for (String word : words) {
+        for (WordEntry entry : entries) {
+            String word = entry.word();
             for (int pos = 1; pos <= word.length(); pos++) {
                 String ch = String.valueOf(word.charAt(pos - 1));
                 idx.computeIfAbsent(pos, k -> new HashMap<>())
@@ -49,7 +52,7 @@ public final class IndexedStrategy implements SearchStrategy {
     }
 
     @Override
-    public List<String> searchInFile(String lang, int wordLength, List<String> words,
+    public List<String> searchInFile(String lang, int wordLength, List<WordEntry> words,
                                      List<String> letters, List<Hint> hints,
                                      boolean strict, boolean emptyLetters, boolean emptyHints) {
         Set<String> candidates = null; // null = "all words"
@@ -85,10 +88,12 @@ public final class IndexedStrategy implements SearchStrategy {
         }
 
         // Step 3: iterate original word-list order for byte-identical output
+        var pool = new LetterPool(letters, strict);
         List<String> results = new ArrayList<>();
-        for (String word : words) {
+        for (WordEntry entry : words) {
+            String word = entry.word();
             if (candidates != null && !candidates.contains(word)) continue;
-            if (!emptyLetters && !WordSearchService.matchesContent(word, letters, strict)) continue;
+            if (!emptyLetters && !pool.matches(entry)) continue;
             // Fallback: excluded-only hints with no pinned hints (e.g. direct fileIndexed call)
             if (candidates == null && !emptyHints && !WordSearchService.matchesHints(word, hints)) continue;
             results.add(word);

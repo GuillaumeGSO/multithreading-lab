@@ -18,6 +18,7 @@ import {
   noLetters,
   planLengths,
 } from '../src/search/search';
+import { parseSearchMode } from '../src/search/search.mode';
 
 // h builds a Hint that is pinned (not excluded) by default.
 const h = (position: number, letter: string | null, excluded = false): Hint => ({
@@ -195,6 +196,20 @@ describe('input guards', () => {
     for (const lang of ['../../etc', '/etc', 'fr/../en', '']) {
       expect(loadWords(lang, 5)).toEqual([]);
       expect(() => inFile(lang, 5, ['a'], [], false)).toThrow('invalid lang');
+    }
+  });
+});
+
+describe('parseSearchMode', () => {
+  it('defaults to parallel and accepts known modes in any case', () => {
+    expect(parseSearchMode(undefined)).toBe('parallel');
+    expect(parseSearchMode(' ')).toBe('parallel');
+    expect(parseSearchMode(' Baseline ')).toBe('baseline');
+  });
+
+  it('rejects unknown modes, including indexed (no index here)', () => {
+    for (const value of ['indexed', 'dispatcher', 'fast']) {
+      expect(() => parseSearchMode(value)).toThrow('unknown SEARCH_MODE');
     }
   });
 });
