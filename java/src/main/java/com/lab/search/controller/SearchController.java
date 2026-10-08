@@ -8,6 +8,7 @@ import com.lab.search.api.model.Lang;
 import com.lab.search.api.model.SearchFileRequest;
 import com.lab.search.api.model.SearchManyRequest;
 import com.lab.search.api.model.SearchResponse;
+import com.lab.search.config.BodySizeLimitFilter;
 import com.lab.search.service.Hint;
 import com.lab.search.service.WordSearchService;
 import org.slf4j.Logger;
@@ -85,6 +86,10 @@ public class SearchController implements HealthApi, SearchApi {
     /// own message names internal classes, so it is not echoed to the client.
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException e) {
+        if (e.getMostSpecificCause() instanceof BodySizeLimitFilter.BodyTooLargeException) {
+            return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE)
+                    .body(new ErrorResponse("request body is too large"));
+        }
         return ResponseEntity.badRequest().body(new ErrorResponse(
                 "malformed JSON body, wrong field type or unknown enum value (lang: fr, en)"));
     }

@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Comparative load test report — API/HTTP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Load test report — API/HTTP</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 1100px; margin: 2rem auto; color: #1c1c1c; padding: 0 1rem; }
@@ -11,165 +12,132 @@
   .controls label { font-weight: 600; }
   .note { background: #f6f8fa; border-left: 4px solid #c0c7d0; padding: .8rem 1rem; font-size: .9rem; line-height: 1.5; }
   .chart-box { margin: 1.5rem 0 2.5rem; }
+  .scroll { overflow-x: auto; }
   table { border-collapse: collapse; width: 100%; font-size: .82rem; margin-bottom: 2rem; }
-  th, td { border: 1px solid #ddd; padding: 5px 8px; text-align: right; }
+  th, td { border: 1px solid #ddd; padding: 5px 8px; text-align: right; white-space: nowrap; }
   th:first-child, td:first-child { text-align: left; }
-  th { background: #f4f4f4; position: sticky; top: 0; }
+  th { background: #f4f4f4; }
   caption { text-align: left; font-weight: 600; margin-bottom: .4rem; }
   code { background: #eef; padding: 0 .25rem; border-radius: 3px; }
   .fail { color: #c0392b; font-weight: 600; }
 </style>
 </head>
 <body>
-<h1>Comparative load test report</h1>
-<p><em>API/HTTP (Artillery) · generated <span id="gen"></span> · lower latency / higher throughput is better</em></p>
+<h1>Load test report (API/HTTP)</h1>
+<p><em>Artillery · generated <span id="gen"></span> · lower latency is better</em></p>
 
 <div class="note">
-  This measures <strong>API/HTTP handling</strong> under concurrent load — request
-  routing, serialization and the server's concurrency model end-to-end — not the
-  raw search algorithm (that is what <code>benchmarks/compare.html</code> covers
-  in-process). Latencies are wall-clock per request; throughput is the sustained
-  request rate. All implementations run the same <code>artillery.yml</code> against
-  the three endpoints; only the target port changes per language.
+  End-to-end HTTP: the web framework, JSON handling and the server's concurrency model are
+  part of every number, and a large share of short requests. Every service runs the same
+  <code>artillery.yml</code> at the same constant arrival rate, chosen so each should keep
+  up; a median rising to seconds means a service is saturated, not just slower. Languages
+  are compared within one <code>SEARCH_MODE</code> profile: <code>baseline</code> runs a
+  single-threaded scan per request; <code>parallel</code> splits each file scan into
+  chunks, and <code>/search/many</code> also runs one task per word length.
+  With several rounds, bars show the median and whiskers the min–max across rounds.
 </div>
 
 <div class="controls">
+  <span><label for="profile">Profile (SEARCH_MODE):</label> <select id="profile"></select></span>
   <span><label for="metric">Latency metric:</label> <select id="metric"></select></span>
   <span><label><input type="checkbox" id="log"> log scale</label></span>
 </div>
 
 <div class="chart-box"><h3>Latency by endpoint</h3><canvas id="latencyChart" height="120"></canvas></div>
-
-<h2>Throughput</h2>
-<div class="note">
-  Sustained request rate (req/sec) achieved during the run, bounded by the
-  container's CPUs. Higher is better.
-</div>
-<div class="chart-box"><canvas id="tputChart" height="90"></canvas></div>
-
-<div id="tables"></div>
+<div class="chart-box"><h3>Same language, baseline vs parallel (<code>/search/many</code>, selected metric)</h3><canvas id="modeChart" height="90"></canvas></div>
+<div id="tables" class="scroll"></div>
 
 <script>
-const DATA = {"generated": "2026-10-06", "languages": [{"id": "python", "color": "#3776ab"}, {"id": "java", "color": "#e76f00"}, {"id": "go", "color": "#00add8"}, {"id": "cpp", "color": "#9b4f96"}, {"id": "nest", "color": "#e0234e"}, {"id": "csharp", "color": "#512bd4"}], "endpoints": ["/health", "/search/file", "/search/many"], "byLang": {"python": {"overall": {"requests": 1230, "responses": 1230, "success_2xx": 1230, "failed": 0, "errors": {}, "rps": 9}, "endpoints": {"/health": {"count": 35, "p50": 2671, "p90": 7709.8, "p95": 8692.8, "p99": 8868.4, "max": 8966, "mean": 3683.2}, "/search/file": {"count": 393, "p50": 3328.3, "p90": 8692.8, "p95": 9416.8, "p99": 10617.5, "max": 12061, "mean": 4133.3}, "/search/many": {"count": 802, "p50": 5826.9, "p90": 12459.8, "p95": 14048.5, "p99": 17859.2, "max": 22192, "mean": 6535.5}}}, "java": {"overall": {"requests": 1230, "responses": 1230, "success_2xx": 1230, "failed": 0, "errors": {}, "rps": 9}, "endpoints": {"/health": {"count": 31, "p50": 308, "p90": 5487.5, "p95": 5826.9, "p99": 9230.4, "max": 9848, "mean": 1769.7}, "/search/file": {"count": 389, "p50": 3197.8, "p90": 10407.3, "p95": 12968.3, "p99": 16159.7, "max": 16819, "mean": 4151.5}, "/search/many": {"count": 810, "p50": 7117, "p90": 17505.6, "p95": 18588.1, "p99": 25598.5, "max": 26509, "mean": 7757.3}}}, "go": {"overall": {"requests": 1230, "responses": 1230, "success_2xx": 1230, "failed": 0, "errors": {}, "rps": 10}, "endpoints": {"/health": {"count": 31, "p50": 3, "p90": 1249.1, "p95": 1939.5, "p99": 1978.7, "max": 2040, "mean": 320.8}, "/search/file": {"count": 411, "p50": 257.3, "p90": 4403.8, "p95": 5711.5, "p99": 7407.5, "max": 9657, "mean": 1351.7}, "/search/many": {"count": 788, "p50": 518.1, "p90": 5598.4, "p95": 6838, "p99": 10201.2, "max": 12750, "mean": 1837.9}}}, "cpp": {"overall": {"requests": 1230, "responses": 1230, "success_2xx": 1230, "failed": 0, "errors": {}, "rps": 10}, "endpoints": {"/health": {"count": 39, "p50": 2, "p90": 5, "p95": 18, "p99": 22, "max": 23, "mean": 3.6}, "/search/file": {"count": 396, "p50": 4, "p90": 13.1, "p95": 16, "p99": 24.8, "max": 88, "mean": 6.2}, "/search/many": {"count": 795, "p50": 8.9, "p90": 22, "p95": 34.8, "p99": 76, "max": 424, "mean": 13.1}}}, "nest": {"overall": {"requests": 1230, "responses": 1230, "success_2xx": 1230, "failed": 0, "errors": {}, "rps": 10}, "endpoints": {"/health": {"count": 35, "p50": 3, "p90": 4, "p95": 7, "p99": 7, "max": 7, "mean": 3}, "/search/file": {"count": 406, "p50": 19.1, "p90": 98.5, "p95": 144, "p99": 273.2, "max": 427, "mean": 38.3}, "/search/many": {"count": 789, "p50": 74.4, "p90": 210.6, "p95": 273.2, "p99": 441.5, "max": 625, "mean": 95.9}}}, "csharp": {"overall": {"requests": 1230, "responses": 1230, "success_2xx": 1230, "failed": 0, "errors": {}, "rps": 10}, "endpoints": {"/health": {"count": 33, "p50": 3, "p90": 4, "p95": 5, "p99": 7.9, "max": 43, "mean": 4.1}, "/search/file": {"count": 391, "p50": 6, "p90": 12.1, "p95": 16, "p99": 62.2, "max": 656, "mean": 9.2}, "/search/many": {"count": 806, "p50": 12.1, "p90": 30.9, "p95": 46.1, "p99": 106.7, "max": 766, "mean": 18}}}}};
+const DATA = {"generated": "2026-10-08", "profiles": ["baseline", "parallel"], "languages": [{"id": "python", "label": "Python", "color": "#3776ab"}, {"id": "java", "label": "Java", "color": "#e76f00"}, {"id": "go", "label": "Go", "color": "#00add8"}, {"id": "nest", "label": "Node/NestJS", "color": "#e0234e"}, {"id": "csharp", "label": "C#", "color": "#512bd4"}], "endpoints": ["/health", "/search/file", "/search/many"], "data": {"baseline": {"csharp": {"rounds": 1, "rps": {"med": 10, "lo": 10, "hi": 10, "n": 1}, "requests": 1230, "success_2xx": 1230, "failed": 0, "endpoints": {"/health": {"p50": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p90": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p95": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p99": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "mean": {"med": 2.7, "lo": 2.7, "hi": 2.7, "n": 1}, "max": {"med": 6, "lo": 6, "hi": 6, "n": 1}, "count": 35}, "/search/file": {"p50": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p90": {"med": 6, "lo": 6, "hi": 6, "n": 1}, "p95": {"med": 8.9, "lo": 8.9, "hi": 8.9, "n": 1}, "p99": {"med": 45.2, "lo": 45.2, "hi": 45.2, "n": 1}, "mean": {"med": 5.6, "lo": 5.6, "hi": 5.6, "n": 1}, "max": {"med": 232, "lo": 232, "hi": 232, "n": 1}, "count": 390}, "/search/many": {"p50": {"med": 7, "lo": 7, "hi": 7, "n": 1}, "p90": {"med": 16, "lo": 16, "hi": 16, "n": 1}, "p95": {"med": 19.9, "lo": 19.9, "hi": 19.9, "n": 1}, "p99": {"med": 74.4, "lo": 74.4, "hi": 74.4, "n": 1}, "mean": {"med": 10.3, "lo": 10.3, "hi": 10.3, "n": 1}, "max": {"med": 227, "lo": 227, "hi": 227, "n": 1}, "count": 805}}}, "go": {"rounds": 1, "rps": {"med": 10, "lo": 10, "hi": 10, "n": 1}, "requests": 1230, "success_2xx": 1230, "failed": 0, "endpoints": {"/health": {"p50": {"med": 2, "lo": 2, "hi": 2, "n": 1}, "p90": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p95": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p99": {"med": 7, "lo": 7, "hi": 7, "n": 1}, "mean": {"med": 2.2, "lo": 2.2, "hi": 2.2, "n": 1}, "max": {"med": 7, "lo": 7, "hi": 7, "n": 1}, "count": 46}, "/search/file": {"p50": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p90": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p95": {"med": 5, "lo": 5, "hi": 5, "n": 1}, "p99": {"med": 13.9, "lo": 13.9, "hi": 13.9, "n": 1}, "mean": {"med": 3.5, "lo": 3.5, "hi": 3.5, "n": 1}, "max": {"med": 213, "lo": 213, "hi": 213, "n": 1}, "count": 373}, "/search/many": {"p50": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p90": {"med": 7.9, "lo": 7.9, "hi": 7.9, "n": 1}, "p95": {"med": 10.1, "lo": 10.1, "hi": 10.1, "n": 1}, "p99": {"med": 19.9, "lo": 19.9, "hi": 19.9, "n": 1}, "mean": {"med": 5.5, "lo": 5.5, "hi": 5.5, "n": 1}, "max": {"med": 203, "lo": 203, "hi": 203, "n": 1}, "count": 811}}}, "java": {"rounds": 1, "rps": {"med": 10, "lo": 10, "hi": 10, "n": 1}, "requests": 1230, "success_2xx": 1230, "failed": 0, "endpoints": {"/health": {"p50": {"med": 6, "lo": 6, "hi": 6, "n": 1}, "p90": {"med": 16, "lo": 16, "hi": 16, "n": 1}, "p95": {"med": 22.9, "lo": 22.9, "hi": 22.9, "n": 1}, "p99": {"med": 30.3, "lo": 30.3, "hi": 30.3, "n": 1}, "mean": {"med": 9.6, "lo": 9.6, "hi": 9.6, "n": 1}, "max": {"med": 55, "lo": 55, "hi": 55, "n": 1}, "count": 42}, "/search/file": {"p50": {"med": 8.9, "lo": 8.9, "hi": 8.9, "n": 1}, "p90": {"med": 23.8, "lo": 23.8, "hi": 23.8, "n": 1}, "p95": {"med": 36.2, "lo": 36.2, "hi": 36.2, "n": 1}, "p99": {"med": 113.3, "lo": 113.3, "hi": 113.3, "n": 1}, "mean": {"med": 18.8, "lo": 18.8, "hi": 18.8, "n": 1}, "max": {"med": 1450, "lo": 1450, "hi": 1450, "n": 1}, "count": 419}, "/search/many": {"p50": {"med": 10.9, "lo": 10.9, "hi": 10.9, "n": 1}, "p90": {"med": 41.7, "lo": 41.7, "hi": 41.7, "n": 1}, "p95": {"med": 74.4, "lo": 74.4, "hi": 74.4, "n": 1}, "p99": {"med": 186.8, "lo": 186.8, "hi": 186.8, "n": 1}, "mean": {"med": 32.3, "lo": 32.3, "hi": 32.3, "n": 1}, "max": {"med": 2501, "lo": 2501, "hi": 2501, "n": 1}, "count": 769}}}, "nest": {"rounds": 1, "rps": {"med": 10, "lo": 10, "hi": 10, "n": 1}, "requests": 1230, "success_2xx": 1230, "failed": 0, "endpoints": {"/health": {"p50": {"med": 2, "lo": 2, "hi": 2, "n": 1}, "p90": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p95": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p99": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "mean": {"med": 2.5, "lo": 2.5, "hi": 2.5, "n": 1}, "max": {"med": 7, "lo": 7, "hi": 7, "n": 1}, "count": 30}, "/search/file": {"p50": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p90": {"med": 7, "lo": 7, "hi": 7, "n": 1}, "p95": {"med": 10.1, "lo": 10.1, "hi": 10.1, "n": 1}, "p99": {"med": 29.1, "lo": 29.1, "hi": 29.1, "n": 1}, "mean": {"med": 5, "lo": 5, "hi": 5, "n": 1}, "max": {"med": 44, "lo": 44, "hi": 44, "n": 1}, "count": 387}, "/search/many": {"p50": {"med": 7.9, "lo": 7.9, "hi": 7.9, "n": 1}, "p90": {"med": 16, "lo": 16, "hi": 16, "n": 1}, "p95": {"med": 22.9, "lo": 22.9, "hi": 22.9, "n": 1}, "p99": {"med": 71.5, "lo": 71.5, "hi": 71.5, "n": 1}, "mean": {"med": 12.3, "lo": 12.3, "hi": 12.3, "n": 1}, "max": {"med": 672, "lo": 672, "hi": 672, "n": 1}, "count": 813}}}, "python": {"rounds": 1, "rps": {"med": 5, "lo": 5, "hi": 5, "n": 1}, "requests": 1230, "success_2xx": 1230, "failed": 0, "endpoints": {"/health": {"p50": {"med": 2566.3, "lo": 2566.3, "hi": 2566.3, "n": 1}, "p90": {"med": 7117, "lo": 7117, "hi": 7117, "n": 1}, "p95": {"med": 7557.1, "lo": 7557.1, "hi": 7557.1, "n": 1}, "p99": {"med": 7709.8, "lo": 7709.8, "hi": 7709.8, "n": 1}, "mean": {"med": 2896.9, "lo": 2896.9, "hi": 2896.9, "n": 1}, "max": {"med": 8334, "lo": 8334, "hi": 8334, "n": 1}, "count": 37}, "/search/file": {"p50": {"med": 3395.5, "lo": 3395.5, "hi": 3395.5, "n": 1}, "p90": {"med": 8186.6, "lo": 8186.6, "hi": 8186.6, "n": 1}, "p95": {"med": 8868.4, "lo": 8868.4, "hi": 8868.4, "n": 1}, "p99": {"med": 9999.2, "lo": 9999.2, "hi": 9999.2, "n": 1}, "mean": {"med": 3589.8, "lo": 3589.8, "hi": 3589.8, "n": 1}, "max": {"med": 10582, "lo": 10582, "hi": 10582, "n": 1}, "count": 398}, "/search/many": {"p50": {"med": 5168, "lo": 5168, "hi": 5168, "n": 1}, "p90": {"med": 11274.1, "lo": 11274.1, "hi": 11274.1, "n": 1}, "p95": {"med": 12459.8, "lo": 12459.8, "hi": 12459.8, "n": 1}, "p99": {"med": 14332.3, "lo": 14332.3, "hi": 14332.3, "n": 1}, "mean": {"med": 5229.4, "lo": 5229.4, "hi": 5229.4, "n": 1}, "max": {"med": 17605, "lo": 17605, "hi": 17605, "n": 1}, "count": 795}}}}, "parallel": {"csharp": {"rounds": 1, "rps": {"med": 10, "lo": 10, "hi": 10, "n": 1}, "requests": 1230, "success_2xx": 1230, "failed": 0, "endpoints": {"/health": {"p50": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p90": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p95": {"med": 5, "lo": 5, "hi": 5, "n": 1}, "p99": {"med": 5, "lo": 5, "hi": 5, "n": 1}, "mean": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "max": {"med": 7, "lo": 7, "hi": 7, "n": 1}, "count": 30}, "/search/file": {"p50": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p90": {"med": 5, "lo": 5, "hi": 5, "n": 1}, "p95": {"med": 10.1, "lo": 10.1, "hi": 10.1, "n": 1}, "p99": {"med": 21.1, "lo": 21.1, "hi": 21.1, "n": 1}, "mean": {"med": 4.5, "lo": 4.5, "hi": 4.5, "n": 1}, "max": {"med": 124, "lo": 124, "hi": 124, "n": 1}, "count": 388}, "/search/many": {"p50": {"med": 5, "lo": 5, "hi": 5, "n": 1}, "p90": {"med": 8.9, "lo": 8.9, "hi": 8.9, "n": 1}, "p95": {"med": 12.1, "lo": 12.1, "hi": 12.1, "n": 1}, "p99": {"med": 30.9, "lo": 30.9, "hi": 30.9, "n": 1}, "mean": {"med": 7.5, "lo": 7.5, "hi": 7.5, "n": 1}, "max": {"med": 423, "lo": 423, "hi": 423, "n": 1}, "count": 812}}}, "go": {"rounds": 1, "rps": {"med": 10, "lo": 10, "hi": 10, "n": 1}, "requests": 1230, "success_2xx": 1230, "failed": 0, "endpoints": {"/health": {"p50": {"med": 2, "lo": 2, "hi": 2, "n": 1}, "p90": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p95": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p99": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "mean": {"med": 2.2, "lo": 2.2, "hi": 2.2, "n": 1}, "max": {"med": 10, "lo": 10, "hi": 10, "n": 1}, "count": 30}, "/search/file": {"p50": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p90": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p95": {"med": 6, "lo": 6, "hi": 6, "n": 1}, "p99": {"med": 19.9, "lo": 19.9, "hi": 19.9, "n": 1}, "mean": {"med": 3.5, "lo": 3.5, "hi": 3.5, "n": 1}, "max": {"med": 68, "lo": 68, "hi": 68, "n": 1}, "count": 349}, "/search/many": {"p50": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p90": {"med": 6, "lo": 6, "hi": 6, "n": 1}, "p95": {"med": 8.9, "lo": 8.9, "hi": 8.9, "n": 1}, "p99": {"med": 23.8, "lo": 23.8, "hi": 23.8, "n": 1}, "mean": {"med": 4.9, "lo": 4.9, "hi": 4.9, "n": 1}, "max": {"med": 193, "lo": 193, "hi": 193, "n": 1}, "count": 851}}}, "java": {"rounds": 1, "rps": {"med": 10, "lo": 10, "hi": 10, "n": 1}, "requests": 1230, "success_2xx": 1230, "failed": 0, "endpoints": {"/health": {"p50": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p90": {"med": 6, "lo": 6, "hi": 6, "n": 1}, "p95": {"med": 7, "lo": 7, "hi": 7, "n": 1}, "p99": {"med": 8.9, "lo": 8.9, "hi": 8.9, "n": 1}, "mean": {"med": 4.1, "lo": 4.1, "hi": 4.1, "n": 1}, "max": {"med": 11, "lo": 11, "hi": 11, "n": 1}, "count": 40}, "/search/file": {"p50": {"med": 5, "lo": 5, "hi": 5, "n": 1}, "p90": {"med": 10.1, "lo": 10.1, "hi": 10.1, "n": 1}, "p95": {"med": 15, "lo": 15, "hi": 15, "n": 1}, "p99": {"med": 29.1, "lo": 29.1, "hi": 29.1, "n": 1}, "mean": {"med": 8.8, "lo": 8.8, "hi": 8.8, "n": 1}, "max": {"med": 501, "lo": 501, "hi": 501, "n": 1}, "count": 392}, "/search/many": {"p50": {"med": 7, "lo": 7, "hi": 7, "n": 1}, "p90": {"med": 13.1, "lo": 13.1, "hi": 13.1, "n": 1}, "p95": {"med": 18, "lo": 18, "hi": 18, "n": 1}, "p99": {"med": 83.9, "lo": 83.9, "hi": 83.9, "n": 1}, "mean": {"med": 11.6, "lo": 11.6, "hi": 11.6, "n": 1}, "max": {"med": 1296, "lo": 1296, "hi": 1296, "n": 1}, "count": 798}}}, "nest": {"rounds": 1, "rps": {"med": 10, "lo": 10, "hi": 10, "n": 1}, "requests": 1230, "success_2xx": 1230, "failed": 0, "endpoints": {"/health": {"p50": {"med": 3, "lo": 3, "hi": 3, "n": 1}, "p90": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p95": {"med": 5, "lo": 5, "hi": 5, "n": 1}, "p99": {"med": 12.1, "lo": 12.1, "hi": 12.1, "n": 1}, "mean": {"med": 4.5, "lo": 4.5, "hi": 4.5, "n": 1}, "max": {"med": 63, "lo": 63, "hi": 63, "n": 1}, "count": 39}, "/search/file": {"p50": {"med": 4, "lo": 4, "hi": 4, "n": 1}, "p90": {"med": 7.9, "lo": 7.9, "hi": 7.9, "n": 1}, "p95": {"med": 18, "lo": 18, "hi": 18, "n": 1}, "p99": {"med": 76, "lo": 76, "hi": 76, "n": 1}, "mean": {"med": 8.6, "lo": 8.6, "hi": 8.6, "n": 1}, "max": {"med": 923, "lo": 923, "hi": 923, "n": 1}, "count": 378}, "/search/many": {"p50": {"med": 7.9, "lo": 7.9, "hi": 7.9, "n": 1}, "p90": {"med": 15, "lo": 15, "hi": 15, "n": 1}, "p95": {"med": 22.9, "lo": 22.9, "hi": 22.9, "n": 1}, "p99": {"med": 74.4, "lo": 74.4, "hi": 74.4, "n": 1}, "mean": {"med": 12.1, "lo": 12.1, "hi": 12.1, "n": 1}, "max": {"med": 979, "lo": 979, "hi": 979, "n": 1}, "count": 813}}}, "python": {"rounds": 1, "rps": {"med": 7, "lo": 7, "hi": 7, "n": 1}, "requests": 1230, "success_2xx": 630, "failed": 600, "endpoints": {"/health": {"p50": {"med": 210.6, "lo": 210.6, "hi": 210.6, "n": 1}, "p90": {"med": 7407.5, "lo": 7407.5, "hi": 7407.5, "n": 1}, "p95": {"med": 8186.6, "lo": 8186.6, "hi": 8186.6, "n": 1}, "p99": {"med": 25598.5, "lo": 25598.5, "hi": 25598.5, "n": 1}, "mean": {"med": 3566.6, "lo": 3566.6, "hi": 3566.6, "n": 1}, "max": {"med": 29567, "lo": 29567, "hi": 29567, "n": 1}, "count": 28}, "/search/file": {"p50": {"med": 468.8, "lo": 468.8, "hi": 468.8, "n": 1}, "p90": {"med": 11734.2, "lo": 11734.2, "hi": 11734.2, "n": 1}, "p95": {"med": 26643.2, "lo": 26643.2, "hi": 26643.2, "n": 1}, "p99": {"med": 27730.6, "lo": 27730.6, "hi": 27730.6, "n": 1}, "mean": {"med": 4404, "lo": 4404, "hi": 4404, "n": 1}, "max": {"med": 29229, "lo": 29229, "hi": 29229, "n": 1}, "count": 218}, "/search/many": {"p50": {"med": 1064.4, "lo": 1064.4, "hi": 1064.4, "n": 1}, "p90": {"med": 12968.3, "lo": 12968.3, "hi": 12968.3, "n": 1}, "p95": {"med": 15218.6, "lo": 15218.6, "hi": 15218.6, "n": 1}, "p99": {"med": 29445.4, "lo": 29445.4, "hi": 29445.4, "n": 1}, "mean": {"med": 4599.1, "lo": 4599.1, "hi": 4599.1, "n": 1}, "max": {"med": 29886, "lo": 29886, "hi": 29886, "n": 1}, "count": 384}}}}}};
 document.getElementById('gen').textContent = DATA.generated;
+const METRICS = ['p50', 'p90', 'p95', 'p99', 'mean', 'max'];
 
-const METRICS = [
-  { id: 'p50', label: 'p50 (median)' },
-  { id: 'p90', label: 'p90' },
-  { id: 'p95', label: 'p95' },
-  { id: 'p99', label: 'p99' },
-  { id: 'mean', label: 'mean' },
-  { id: 'max', label: 'max' },
-];
-const metricSel = document.getElementById('metric');
-for (const m of METRICS) {
-  const o = document.createElement('option');
-  o.value = m.id; o.textContent = m.label; metricSel.appendChild(o);
+function fill(id, values, initial) {
+  const sel = document.getElementById(id);
+  for (const v of values) { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); }
+  if (initial && values.includes(initial)) sel.value = initial;
+  return sel;
 }
-metricSel.value = 'p95';
+const profileSel = fill('profile', DATA.profiles, 'parallel');
+const metricSel = fill('metric', METRICS, 'p95');
 
-function latency(langId, endpoint, metric) {
-  const ep = (DATA.byLang[langId] || {}).endpoints[endpoint];
-  return ep ? ep[metric] : null;
-}
+const whiskers = {
+  id: 'whiskers',
+  afterDatasetsDraw(chart) {
+    const scale = chart.scales.y, ctx = chart.ctx;
+    ctx.save(); ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+    chart.data.datasets.forEach((ds, i) => {
+      const meta = chart.getDatasetMeta(i);
+      if (!ds.ranges || meta.hidden) return;
+      meta.data.forEach((bar, j) => {
+        const r = ds.ranges[j];
+        if (!r || r[0] == null || r[0] === r[1]) return;
+        const a = scale.getPixelForValue(r[0]), b = scale.getPixelForValue(r[1]), w = Math.min(4, bar.width / 3);
+        ctx.beginPath();
+        ctx.moveTo(bar.x, a); ctx.lineTo(bar.x, b);
+        ctx.moveTo(bar.x - w, a); ctx.lineTo(bar.x + w, a);
+        ctx.moveTo(bar.x - w, b); ctx.lineTo(bar.x + w, b);
+        ctx.stroke();
+      });
+    });
+    ctx.restore();
+  },
+};
 
-function datasets(metric) {
-  return DATA.languages.map(l => ({
-    label: l.id,
-    data: DATA.endpoints.map(ep => latency(l.id, ep, metric)),
-    backgroundColor: l.color,
-  }));
-}
+const stat = (profile, lang, ep, metric) => {
+  const d = (DATA.data[profile] || {})[lang];
+  return d && d.endpoints[ep] ? d.endpoints[ep][metric] : null;
+};
 
-let latencyChart;
-function render() {
-  const metric = metricSel.value;
-  const log = document.getElementById('log').checked;
-  if (latencyChart) latencyChart.destroy();
-  latencyChart = new Chart(document.getElementById('latencyChart'), {
-    type: 'bar',
-    data: { labels: DATA.endpoints, datasets: datasets(metric) },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y == null ? 'n/a' : ctx.parsed.y.toFixed(1)} ms` } },
-      },
-      scales: { y: { type: log ? 'logarithmic' : 'linear', title: { display: true, text: 'ms (' + metric + ')' } } },
-    },
+const charts = {};
+function chart(id, labels, datasets, yTitle, log) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), {
+    type: 'bar', plugins: [whiskers], data: { labels, datasets },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } },
+      scales: { y: { type: log ? 'logarithmic' : 'linear', title: { display: true, text: yTitle } } } },
   });
 }
-metricSel.addEventListener('change', render);
-document.getElementById('log').addEventListener('change', render);
-render();
 
-// --- throughput chart ---
-new Chart(document.getElementById('tputChart'), {
-  type: 'bar',
-  data: {
-    labels: DATA.languages.map(l => l.id),
-    datasets: [{
-      label: 'req/sec',
-      data: DATA.languages.map(l => DATA.byLang[l.id].overall.rps),
-      backgroundColor: DATA.languages.map(l => l.color),
-    }],
-  },
-  options: {
-    indexAxis: 'y',
-    plugins: {
-      legend: { display: false },
-      tooltip: { callbacks: { label: ctx => ctx.parsed.x.toFixed(1) + ' req/sec' } },
-    },
-    scales: { x: { title: { display: true, text: 'req/sec (higher is better)' } } },
-  },
-});
+function render() {
+  const profile = profileSel.value, metric = metricSel.value, log = document.getElementById('log').checked;
+  chart('latencyChart', DATA.endpoints, DATA.languages.map(l => ({
+    label: l.label, backgroundColor: l.color,
+    data: DATA.endpoints.map(ep => (stat(profile, l.id, ep, metric) || {}).med ?? null),
+    ranges: DATA.endpoints.map(ep => { const s = stat(profile, l.id, ep, metric); return s ? [s.lo, s.hi] : null; }),
+  })), 'ms (' + metric + ', SEARCH_MODE=' + profile + ')', log);
 
-// --- tables ---
-const tables = document.getElementById('tables');
-function fmt(v, d) { return v == null ? '' : v.toFixed(d); }
+  const shades = ['#9aa5b1', '#3d4f63', '#c08b30'];
+  chart('modeChart', DATA.languages.map(l => l.label), DATA.profiles.map((p, i) => ({
+    label: p, backgroundColor: shades[i % shades.length],
+    data: DATA.languages.map(l => (stat(p, l.id, '/search/many', metric) || {}).med ?? null),
+    ranges: DATA.languages.map(l => { const s = stat(p, l.id, '/search/many', metric); return s ? [s.lo, s.hi] : null; }),
+  })), 'ms (' + metric + ')', log);
 
-// Overall table: metric rows x language columns.
-{
-  const t = document.createElement('table');
-  let head = '<caption>Overall</caption><tr><th>Metric</th>';
-  for (const l of DATA.languages) head += '<th>' + l.id + '</th>';
-  head += '</tr>';
-  const rows = [
-    ['Total requests', l => l.overall.requests],
-    ['2xx responses', l => l.overall.success_2xx],
-    ['Failures', l => l.overall.failed],
-    ['Req/sec', l => l.overall.rps.toFixed(1)],
-  ];
-  let body = '';
-  for (const [label, fn] of rows) {
-    body += '<tr><td>' + label + '</td>';
-    for (const l of DATA.languages) {
-      const v = fn(DATA.byLang[l.id]);
-      const cls = (label === 'Failures' && v > 0) ? ' class="fail"' : '';
-      body += '<td' + cls + '>' + v + '</td>';
-    }
-    body += '</tr>';
-  }
-  t.innerHTML = head + body;
-  tables.appendChild(t);
-}
-
-// One latency table per endpoint: language rows x percentile columns.
-for (const ep of DATA.endpoints) {
-  const t = document.createElement('table');
-  let head = '<caption><code>' + ep + '</code> latency (ms)</caption>' +
-    '<tr><th>Language</th><th>count</th><th>p50</th><th>p90</th><th>p95</th><th>p99</th><th>mean</th><th>max</th></tr>';
-  let body = '';
+  const fmt = (s, d = 1) => !s ? '' : s.med.toFixed(d) + (s.n > 1 ? ' <small>(' + s.lo.toFixed(d) + '–' + s.hi.toFixed(d) + ')</small>' : '');
+  let h = '<table><caption>Overall, SEARCH_MODE=' + profile + '</caption><tr><th>Language</th><th>rounds</th><th>requests</th><th>2xx</th><th>failures</th><th>req/sec</th></tr>';
   for (const l of DATA.languages) {
-    const e = DATA.byLang[l.id].endpoints[ep];
-    if (!e) continue;
-    body += '<tr><td>' + l.id + '</td><td>' + (e.count == null ? '' : e.count) + '</td><td>' +
-      fmt(e.p50, 1) + '</td><td>' + fmt(e.p90, 1) + '</td><td>' + fmt(e.p95, 1) + '</td><td>' +
-      fmt(e.p99, 1) + '</td><td>' + fmt(e.mean, 1) + '</td><td>' + fmt(e.max, 1) + '</td></tr>';
+    const d = (DATA.data[profile] || {})[l.id];
+    if (!d) continue;
+    h += '<tr><td>' + l.label + '</td><td>' + d.rounds + '</td><td>' + d.requests + '</td><td>' + d.success_2xx +
+      '</td><td' + (d.failed ? ' class="fail"' : '') + '>' + d.failed + '</td><td>' + fmt(d.rps) + '</td></tr>';
   }
-  t.innerHTML = head + body;
-  tables.appendChild(t);
+  h += '</table>';
+  for (const ep of DATA.endpoints) {
+    h += '<table><caption><code>' + ep + '</code> latency (ms), SEARCH_MODE=' + profile + '</caption><tr><th>Language</th><th>count</th>' +
+      METRICS.map(m => '<th>' + m + '</th>').join('') + '</tr>';
+    for (const l of DATA.languages) {
+      const d = (DATA.data[profile] || {})[l.id];
+      const e = d && d.endpoints[ep];
+      if (!e) continue;
+      h += '<tr><td>' + l.label + '</td><td>' + e.count + '</td>' + METRICS.map(m => '<td>' + fmt(e[m]) + '</td>').join('') + '</tr>';
+    }
+    h += '</table>';
+  }
+  document.getElementById('tables').innerHTML = h;
 }
+[profileSel, metricSel, document.getElementById('log')].forEach(e => e.addEventListener('change', render));
+render();
 </script>
 </body>
 </html>

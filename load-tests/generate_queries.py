@@ -1,5 +1,6 @@
 """Generate 500 diverse search queries for Artillery load testing."""
 import csv
+from pathlib import Path
 import json
 import random
 
@@ -47,9 +48,11 @@ for _ in range(500):
         'hints': json.dumps(hints),
     })
 
-with open('queries.csv', 'w', newline='') as f:
+# Always write next to this script, wherever it is run from.
+OUT = Path(__file__).parent / 'queries.csv'
+with open(OUT, 'w', newline='') as f:
     writer = csv.DictWriter(f, fieldnames=['wordLength', 'letters', 'strict', 'hints'])
     writer.writeheader()
     writer.writerows(rows)
 
-print(f"Generated {len(rows)} rows → queries.csv")
+print(f"Generated {len(rows)} rows → {OUT}")

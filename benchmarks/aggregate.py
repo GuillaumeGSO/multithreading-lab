@@ -270,13 +270,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   the same mode, so a chart compares runtimes, not algorithms:
   <ul>
     <li><code>baseline</code>: single-threaded scan.</li>
-    <li><code>split</code> (<code>/search/file</code>): one word list scanned in N contiguous chunks on N threads.</li>
+    <li><code>split</code> (<code>/search/file</code>): one word list scanned as N contiguous chunks that run concurrently.</li>
     <li><code>fanout</code> (<code>/search/many</code>): one thread or task per word length.</li>
     <li><code>nested</code> (<code>/search/many</code>): fan-out where each length is also split.</li>
   </ul>
   Each bar is the median across rounds; the whisker spans the fastest and slowest round.
   Python threads share the GIL, so its threaded modes cannot use the second core.
-  Most searches take well under a millisecond, so starting threads can cost more than it saves.
+  The shortest searches take about a millisecond, so on those, starting threads can cost more than it saves.
 </div>
 <div id="mismatch"></div>
 
@@ -305,14 +305,20 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 
 <h2>Throughput under concurrent load</h2>
 <div class="note">
-  Many single-threaded scans in flight at once, using each language's own way of running
-  concurrent work, bounded by 2 CPUs. Higher is better. Expect Python near one core,
-  because the GIL serializes its threads.
+  Many single-threaded scans in flight at once, bounded by 2 CPUs, each language using its
+  own concurrency model: Python threads, Java virtual threads, Go goroutines, C# ThreadPool
+  tasks and Node's worker pool. Higher ops/sec is better, and it is the number that compares
+  across runtimes. Expect Python near one core, because the GIL serializes its threads.
+  Median latency does not compare across runtimes. Python, Java, Go and C# time a scan from
+  when it starts running: Go, C# and Python switch between running scans, which stretches
+  each one, while Java's virtual threads run a scan to completion and make the others wait
+  to start, so Java's figure is close to one scan's own time. Node times from submission to
+  the worker pool, so its figure also includes the time spent queued.
 </div>
 <div class="chart-box"><canvas id="tputChart" height="80"></canvas></div>
 <div id="tputTable" class="scroll"></div>
 
-<details><summary>All cases, all modes (median [min–max] ms)</summary><div id="tables" class="scroll"></div></details>
+<details><summary>All cases, all modes (median (min–max) ms)</summary><div id="tables" class="scroll"></div></details>
 
 <script>
 const DATA = /*DATA*/;

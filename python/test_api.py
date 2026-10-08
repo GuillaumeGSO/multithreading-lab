@@ -69,3 +69,28 @@ def test_core_rejects_non_positive_hint_position():
     for position in (0, -1):
         with pytest.raises(ValueError):
             Hint(position, "a")
+
+
+def test_oversized_body_is_413():
+    res = client.post("/search/many", json={"letters": "a" * 70_000})
+    assert res.status_code == 413
+    assert res.json() == {"error": "request body is too large"}
+
+
+def test_oversized_chunked_body_is_413():
+    body = ('{"letters": "' + "a" * 70_000 + '"}').encode()
+
+    def chunks():  # an iterator has no known length, so httpx sends it chunked
+        for i in range(0, len(body), 8192):
+            yield body[i:i + 8192]
+
+    res = client.post("/search/many", content=chunks(),
+                      headers={"Content-Type": "application/json"})
+    assert res.status_code == 413
+    assert res.json() == {"error": "request body is too large"}
+
+
+def test_unknown_route_uses_error_shape():
+    res = client.get("/nope")
+    assert res.status_code == 404
+    assert isinstance(res.json()["error"], str)

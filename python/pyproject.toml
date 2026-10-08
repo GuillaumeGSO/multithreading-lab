@@ -16,6 +16,7 @@ codegen = [
 dev = [
     "httpx>=0.28.1",
     "pytest",
+    "ruff>=0.16.10",
 ]
 
 # Pydantic request/response models are generated from the repository's OpenAPI
@@ -35,3 +36,12 @@ use-standard-collections = true
 use-union-operator = true
 disable-timestamp = true
 formatters = ["builtin"]
+
+# Linting: `uv run ruff check` (also run in CI). Generated models are excluded.
+[tool.ruff]
+line-length = 100
+extend-exclude = ["generated"]
+
+[tool.ruff.lint]
+# C408: dict(a=1) reads better than {"a": 1} for keyword-style test cases.
+ignore = ["C408"]

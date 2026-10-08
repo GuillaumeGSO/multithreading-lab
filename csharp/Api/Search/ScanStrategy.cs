@@ -32,7 +32,7 @@ public sealed class ScanStrategy : ISearchStrategy
         IReadOnlyList<WordEntry> entries, int start, int end,
         IReadOnlyList<string>? letters, IReadOnlyList<Hint>? hints, bool strict,
         bool emptyLetters, bool emptyHints,
-        HashSet<string> availSet, byte[]? availFreq)
+        LetterSet availSet, byte[]? availFreq)
     {
         var results = new List<string>();
         for (int i = start; i < end; i++)
@@ -46,11 +46,11 @@ public sealed class ScanStrategy : ISearchStrategy
     }
 
     public static bool MatchesContent(
-        string normalized, HashSet<string> availSet,
+        string normalized, LetterSet availSet,
         byte[]? availFreq, bool strict, byte[] wordFreq)
     {
         foreach (var c in normalized)
-            if (!availSet.Contains(c.ToString()))
+            if (!availSet.Contains(c))
                 return false;
         if (!strict) return true;
         for (int i = 0; i < 26; i++)
@@ -94,10 +94,10 @@ public sealed class ScanStrategy : ISearchStrategy
     internal static List<string> BuildAvail(IReadOnlyList<string>? letters) =>
         letters?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? [];
 
-    internal static (HashSet<string> availSet, byte[]? availFreq) BuildAvailStructures(
+    internal static (LetterSet availSet, byte[]? availFreq) BuildAvailStructures(
         List<string> avail, bool strict)
     {
-        var availSet = new HashSet<string>(avail);
+        var availSet = new LetterSet(avail);
         byte[]? availFreq = null;
         if (strict)
         {

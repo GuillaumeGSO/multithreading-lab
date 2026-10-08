@@ -12,6 +12,12 @@ services:
       SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8007:8007"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8007/health', timeout=3)"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -29,6 +35,12 @@ services:
       SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8002:8002"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8002/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -46,6 +58,12 @@ services:
       SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8003:8003"
+    healthcheck:
+      test: ["CMD", "/app/search", "-healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -62,6 +80,12 @@ services:
       SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8006:8006"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8006/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -79,6 +103,12 @@ services:
       SEARCH_MODE: ${SEARCH_MODE:-parallel}
     ports:
       - "8005:8005"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8005/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:

@@ -30,7 +30,8 @@ is reserved for `/search/file`, where it wins most and costs only one length per
 `search_in_file`, `search_in_many_files` from here unchanged.
 """
 
-from typing import Iterable, List, Protocol
+from collections.abc import Iterable
+from typing import Protocol
 
 # Re-exported public surface (shared by both strategies).
 from common import (
@@ -44,8 +45,8 @@ from strategy_scan import ScanStrategy
 
 __all__ = [
     "Hint",
-    "is_list_empty_or_full_of_none",
     "is_hint_list_empty_or_full_of_none",
+    "is_list_empty_or_full_of_none",
     "is_search_by_hint",
     "search_in_file",
     "search_in_many_files",
@@ -54,34 +55,34 @@ __all__ = [
 
 class SearchStrategy(Protocol):
     name: str
-    def search_in_file(self, lang: str, word_length: int, letters: List[str],
-                       hints: List[Hint], strict: bool) -> Iterable[str]: ...
+    def search_in_file(self, lang: str, word_length: int, letters: list[str],
+                       hints: list[Hint], strict: bool) -> Iterable[str]: ...
     def search_in_many_files(self, lang: str, letters: str,
-                             hints: List[Hint]) -> Iterable[str]: ...
+                             hints: list[Hint]) -> Iterable[str]: ...
 
 
 INDEXED: SearchStrategy = IndexedStrategy()
 SCAN: SearchStrategy = ScanStrategy()
 
 
-def _has_pinned(hints: List[Hint] | None) -> bool:
+def _has_pinned(hints: list[Hint] | None) -> bool:
     """True iff there is at least one pinned (non-inverted) hint carrying a letter —
     the only hint kind the positional index can seed a candidate set from."""
     return any(h.letter and not h.excluded for h in (hints or []))
 
 
-def choose_strategy(hints: List[Hint] | None) -> SearchStrategy:
+def choose_strategy(hints: list[Hint] | None) -> SearchStrategy:
     """Strategy for a single-file (`/search/file`) query."""
     return INDEXED if _has_pinned(hints) else SCAN
 
 
-def search_in_file(lang="fr", word_length=0, letters: List[str] = None,
-                   hints: List[Hint] = None, strict=False):
+def search_in_file(lang="fr", word_length=0, letters: list[str] | None = None,
+                   hints: list[Hint] | None = None, strict=False):
     strategy = choose_strategy(hints)
     yield from strategy.search_in_file(lang, word_length, letters, hints, strict)
 
 
-def search_in_many_files(lang="fr", letters="", hints: List[Hint] = None):
+def search_in_many_files(lang="fr", letters="", hints: list[Hint] | None = None):
     # Always SCAN: the index's per-length re-seed barely beats the scan on /many, but
     # would build pos_index for every length — too costly for the 512 MB budget.
     yield from SCAN.search_in_many_files(lang, letters, hints)

@@ -1,5 +1,8 @@
 # Multithreading Lab
 
+[![CI](https://github.com/GuillaumeGSO/multithreading-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/GuillaumeGSO/multithreading-lab/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 The same word search implemented five times, in **Python, Java, Go, Node/NestJS and C#**,
 behind one OpenAPI contract. The goal is to see how each runtime expresses and runs
 concurrent, CPU-bound work, under conditions kept as equal as possible.
@@ -8,11 +11,77 @@ This is a learning lab, not a ranking of languages. The numbers below are useful
 comparing concurrency models on this workload, on one machine. The
 [limits](#limits-read-before-quoting-a-number) section says what they cannot tell you.
 
-<!-- RESULTS -->
+## Results
+
+Measured on 2026-10-08 on a 4-core, 8 GB laptop, with Docker Desktop given 3 CPUs and 4 GB.
+Every service ran alone under its 2-CPU limit. Full reports:
+[in-process benchmark](benchmarks/compare.html)
+([rendered](https://htmlpreview.github.io/?https://github.com/GuillaumeGSO/multithreading-lab/blob/master/benchmarks/compare.html),
+[summary](benchmarks/summary.md)) and
+[load test](load-tests/compare-report.html)
+([rendered](https://htmlpreview.github.io/?https://github.com/GuillaumeGSO/multithreading-lab/blob/master/load-tests/compare-report.html),
+[summary](load-tests/summary.md)).
+
+### In-process: the search itself, no HTTP
+
+Geometric mean over all benchmark cases, in ms (lower is better). Each value is the median of
+3 rounds. The spread between rounds is real: for these averages the slowest round is a median
+of 17% slower than the fastest, and up to twice as slow when one round was disturbed. The
+[summary](benchmarks/summary.md) gives every range. Below, a difference only counts as a
+finding when the two ranges do not overlap.
+
+| Language | file, `baseline` | file, `split` | many, `baseline` | many, `fanout` | many, `nested` | throughput (ops/s) |
+|---|---:|---:|---:|---:|---:|---:|
+| Python | 33.2 | 42.5 | 115.9 | 144.4 | 157.6 | 3.8 |
+| Java | 0.54 | 0.71 | 2.00 | 1.68 | 1.97 | 270 |
+| Go | 0.43 | 0.40 | 1.45 | 1.10 | 1.01 | 822 |
+| Node/NestJS | 0.61 | 0.97 | 2.04 | 2.43 | 3.54 | 401 |
+| C# | 0.50 | 0.72 | 2.34 | 2.03 | 1.45 | 470 |
+
+All five return the same number of words for every one of the 122 cases.
+
+### Over HTTP: Artillery at a constant 10 requests per second
+
+Median and 95th-percentile latency, in ms, for `/search/many`, the heavier endpoint. This is
+one round per mode, so treat the differences as indicative; `ROUNDS=3` gives ranges.
+
+| Language | `baseline` p50 | `baseline` p95 | `parallel` p50 | `parallel` p95 | failed requests (`parallel`) |
+|---|---:|---:|---:|---:|---:|
+| Python | 5,168 | 12,460 | 1,064 | 15,219 | 600 |
+| Java | 10.9 | 74.4 | 7.0 | 18.0 | 0 |
+| Go | 4.0 | 10.1 | 4.0 | 8.9 | 0 |
+| Node/NestJS | 7.9 | 22.9 | 7.9 | 22.9 | 0 |
+| C# | 7.0 | 19.9 | 5.0 | 12.1 | 0 |
+
+### What it shows
+
+- **Splitting a short search does not pay.** A single-file scan takes about half a millisecond
+  in the compiled and JIT runtimes. Splitting it in two makes Java and Node clearly slower,
+  and probably C#, because starting and joining the work costs more than it saves. Go comes
+  out about even.
+- **Fanning out across word lengths does pay, if starting work is cheap.** `/search/many`
+  does 1.4–2.3 ms of work. Go and C# gain clearly, with `nested` 30–38% faster than
+  `baseline`. Java's gain is within the noise. Node gets slower with each level, because every
+  task is a message to a worker thread.
+- **The GIL makes Python threads a cost, not a gain.** Python's threaded modes are 25–36%
+  slower than its single-threaded scan: the threads cannot run the scan in parallel, so they
+  only add switching.
+- **Interpreted Python is far slower on this loop.** Its scan is 60–70 times slower than the
+  others. Under HTTP load it cannot keep up with 10 requests per second: latencies reach
+  seconds, and in `parallel` mode 600 requests time out.
+- **Per-request parallelism mostly helps the tail under load.** At 10 requests per second the
+  other four answer `/search/many` in 4–11 ms at the median, which is mostly framework and
+  JSON work on top of a 1–2 ms search. `parallel` cuts Java's p95 from 74 to 18 ms and C#'s
+  from 20 to 12 ms; Go and Node barely change.
+- **The positional index only pays off where the scan is slow.** With a pinned hint, Python's
+  index is 5–24 times faster than its scan. In Java and C# it is about 2–5 times slower: all three
+  implementations still walk every word to keep results in order, which costs more than the
+  compiled scan's own check.
+
 
 ## The problem
 
-Each service filters a dictionary (`assets/{lang}/{length}.txt`, about 425,000 French and
+Each service filters a dictionary (`assets/{lang}/{length}.txt`, about 427,000 French and
 416,000 English words) by available letters, positional hints and word length.
 
 - **`POST /search/file`** searches one word length.
@@ -74,6 +143,10 @@ comparing concurrency models.
 - **The machine is shared.** On macOS, Docker Desktop runs containers in a virtual machine,
   and the load generator runs on the same host. Numbers vary between runs; the reports show
   the spread across rounds.
+- **The 2-CPU budget is a ceiling, not a reservation.** Each container may use up to 2 CPUs,
+  but they all share the Docker VM's CPUs. Both runners measure one service at a time; keep
+  everything else on Docker idle while they run. The results above used a 3-CPU VM, so the
+  load generator, on the host, still competed with the service for the laptop's 4 cores.
 - **One machine, one dataset.** The results compare models on this workload. They are not a
   general statement about the languages.
 - **Python's `parallel` mode is slower than its `baseline` on purpose.** It runs the same mode
@@ -165,6 +238,13 @@ length. Every implementation reads these same files, so the columns below are th
 per file; this is why the brute-force scan cost peaks around lengths 8–13 (each holds
 50k–65k words) and the in-process benchmark leans on those lengths.
 
+The English list comes from [dwyl/english-words](https://github.com/dwyl/english-words)
+(`words.txt`, released into the public domain under the
+[Unlicense](https://github.com/dwyl/english-words/blob/master/LICENSE.md)), lowercased,
+deduplicated and split by word length. The French list was collected from a public GitHub
+repository years ago and split the same way; its original source and license could not be
+traced.
+
 | Word length | en | fr |
 |--:|--:|--:|
 | 1 | 1 | 7 |
@@ -197,7 +277,7 @@ per file; this is why the brute-force scan cost peaks around lengths 8–13 (eac
 | 28 | 2 | — |
 | 29 | 2 | — |
 | 31 | 1 | — |
-| **Total** | **416,270** | **426,694** |
+| **Total** | **416,269** | **426,687** |
 
 Regenerate after changing the word lists:
 

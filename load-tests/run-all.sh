@@ -76,8 +76,11 @@ start_service() {
 echo "Building images..."
 $COMPOSE build "${TARGETS[@]}"
 
+# Fresh results for the services being tested (other services' results are kept).
 for profile in $PROFILES; do
-  rm -f "$RESULTS_DIR/$profile"/*.json
+  for svc in "${TARGETS[@]}"; do
+    rm -f "$RESULTS_DIR/$profile/$svc".r*.json
+  done
 done
 
 for round in $(seq 1 "$ROUNDS"); do

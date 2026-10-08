@@ -36,7 +36,7 @@ public class SeekWordsTests
     [Fact]
     public void MatchesContent_NonStrict_AllLettersInPool()
     {
-        var set = new HashSet<string> { "a", "i", "l", "e", "s" };
+        var set = new LetterSet(["a", "i", "l", "e", "s"]);
         var freq = WordBase.BuildFreq("ailes");
         Assert.True(ScanStrategy.MatchesContent("ailes", set, null, false, freq));
     }
@@ -44,7 +44,7 @@ public class SeekWordsTests
     [Fact]
     public void MatchesContent_NonStrict_MissingLetter()
     {
-        var set = new HashSet<string> { "a", "i", "l" };
+        var set = new LetterSet(["a", "i", "l"]);
         var freq = WordBase.BuildFreq("ailes");
         Assert.False(ScanStrategy.MatchesContent("ailes", set, null, false, freq));
     }
@@ -73,7 +73,7 @@ public class SeekWordsTests
     public void MatchesContent_AccentNormalized()
     {
         // "élan" normalizes to "elan"; pool contains e,l,a,n
-        var set = new HashSet<string> { "e", "l", "a", "n" };
+        var set = new LetterSet(["e", "l", "a", "n"]);
         var normalized = WordBase.Normalize("élan");
         var freq = WordBase.BuildFreq(normalized);
         Assert.True(ScanStrategy.MatchesContent(normalized, set, null, false, freq));

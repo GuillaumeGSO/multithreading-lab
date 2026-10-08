@@ -34,6 +34,8 @@ COPY openapi.yaml /app/openapi.yaml
 ENV ASSETS_ROOT=/app/assets
 ENV OPENAPI_PATH=/app/openapi.yaml
 ENV PORT=8005
+# Run as the image's unprivileged user; the app only reads its files.
+USER $APP_UID
 EXPOSE 8005
 
 ENTRYPOINT ["dotnet", "/app/Api.dll"]

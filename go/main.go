@@ -20,7 +20,7 @@ import (
 	"multithreading-lab/go/api"
 	"multithreading-lab/go/search"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // openAPISpec holds the raw YAML bytes of openapi.yaml, loaded once at startup.
@@ -61,6 +61,19 @@ const (
 // errBadRequest marks a request rejected by validation (answered with 400).
 var errBadRequest = errors.New("bad request")
 
+// errTooLarge marks a body over maxBodyBytes (answered with 413).
+var errTooLarge = errors.New("request body is too large")
+
+// writeRequestError answers a decoding or validation failure: 413 for an
+// oversized body, 400 otherwise.
+func writeRequestError(w http.ResponseWriter, err error) {
+	if errors.Is(err, errTooLarge) {
+		writeError(w, http.StatusRequestEntityTooLarge, err.Error())
+		return
+	}
+	writeError(w, http.StatusBadRequest, err.Error())
+}
+
 func badRequest(format string, args ...any) error {
 	return fmt.Errorf("%w: %s", errBadRequest, fmt.Sprintf(format, args...))
 }
@@ -69,8 +82,12 @@ func badRequest(format string, args ...any) error {
 // keys were present, so required fields can be told apart from zero values.
 func decodeBody(w http.ResponseWriter, r *http.Request, v any) (map[string]json.RawMessage, error) {
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBodyBytes))
+	var tooLarge *http.MaxBytesError
+	if errors.As(err, &tooLarge) {
+		return nil, errTooLarge
+	}
 	if err != nil {
-		return nil, badRequest("request body too large or unreadable")
+		return nil, badRequest("request body is unreadable")
 	}
 	var keys map[string]json.RawMessage
 	if json.Unmarshal(body, &keys) != nil || json.Unmarshal(body, v) != nil {
@@ -154,26 +171,6 @@ func (server) Health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, api.HealthResponse{Status: "ok"})
 }
 
-// convertYAMLValue recursively converts yaml.v2's map[interface{}]interface{}
-// to map[string]interface{} so encoding/json can marshal it.
-func convertYAMLValue(v interface{}) interface{} {
-	switch val := v.(type) {
-	case map[interface{}]interface{}:
-		out := make(map[string]interface{}, len(val))
-		for k, vv := range val {
-			out[fmt.Sprint(k)] = convertYAMLValue(vv)
-		}
-		return out
-	case []interface{}:
-		for i, item := range val {
-			val[i] = convertYAMLValue(item)
-		}
-		return val
-	default:
-		return v
-	}
-}
-
 // handleOpenAPISpec serves the repo-level openapi.yaml spec.
 // The file path is controlled by OPENAPI_PATH (default: /app/openapi.yaml).
 func handleOpenAPISpec(w http.ResponseWriter, _ *http.Request) {
@@ -203,11 +200,13 @@ const swaggerUIHTML = `<!DOCTYPE html>
   <title>Word Search API</title>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.33.1/swagger-ui.css"
+        integrity="sha384-Ov4/wv3j2bmct8cDc5X4ngJZohVPzEmc6uDPH8WeljUxO5vtoykvMEfbu9Vh6RaW" crossorigin="anonymous">
 </head>
 <body>
 <div id="swagger-ui"></div>
-<script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+<script src="https://unpkg.com/swagger-ui-dist@5.33.1/swagger-ui-bundle.js"
+        integrity="sha384-ZPehFMQommnnuaZ4rpxgkgTT2DKFVp4hZC/7pLit+9Lek9T1YGSo23eHFbvNkXkw" crossorigin="anonymous"></script>
 <script>
 window.onload = function() {
   SwaggerUIBundle({ url: "/openapi.json", dom_id: "#swagger-ui", presets: [SwaggerUIBundle.presets.apis], layout: "BaseLayout" });
@@ -230,7 +229,7 @@ func (server) SearchFile(w http.ResponseWriter, r *http.Request) {
 		err = validateFileRequest(req, keys)
 	}
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeRequestError(w, err)
 		return
 	}
 	words, err := mode.file(defaultLang(req.Lang), req.WordLength, req.Letters, toSearchHints(req.Hints), req.Strict)
@@ -249,7 +248,7 @@ func (server) SearchMany(w http.ResponseWriter, r *http.Request) {
 		err = validateManyRequest(req, keys)
 	}
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		writeRequestError(w, err)
 		return
 	}
 	words, err := mode.many(defaultLang(req.Lang), req.Letters, toSearchHints(req.Hints))
@@ -261,7 +260,49 @@ func (server) SearchMany(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, api.SearchResponse{Words: words, Count: len(words)})
 }
 
+// loadSpec reads openapi.yaml for /openapi.yaml and converts it once for
+// /openapi.json. On error the affected endpoint answers 503.
+func loadSpec(path string) error {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("could not load %s: %w", path, err)
+	}
+	openAPISpec = raw
+	var doc any
+	if err := yaml.Unmarshal(raw, &doc); err != nil {
+		return fmt.Errorf("could not parse %s as YAML: %w", path, err)
+	}
+	if openAPISpecJSON, err = json.Marshal(doc); err != nil {
+		return fmt.Errorf("could not convert %s to JSON: %w", path, err)
+	}
+	return nil
+}
+
+// listenAddr is where the server listens; healthcheck probes the same port.
+const listenAddr = "0.0.0.0:8003"
+
+// healthcheck GETs /health on the local server and reports success through the
+// exit code. The runtime image is `scratch` (no shell, curl or wget), so the
+// container health check runs the server binary itself: `search -healthcheck`.
+func healthcheck() int {
+	client := &http.Client{Timeout: 3 * time.Second}
+	res, err := client.Get("http://127.0.0.1:8003/health")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		fmt.Fprintln(os.Stderr, "health:", res.Status)
+		return 1
+	}
+	return 0
+}
+
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "-healthcheck" {
+		os.Exit(healthcheck())
+	}
 	m, err := resolveMode(os.Getenv("SEARCH_MODE"))
 	if err != nil {
 		log.Fatal(err)
@@ -273,19 +314,11 @@ func main() {
 	if specPath == "" {
 		specPath = "/app/openapi.yaml"
 	}
-	openAPISpec, err = os.ReadFile(specPath)
-	if err != nil {
-		log.Printf("warning: could not load openapi.yaml from %s: %v — /openapi.yaml will return 503", specPath, err)
-	} else {
-		var yamlDoc interface{}
-		if yerr := yaml.Unmarshal(openAPISpec, &yamlDoc); yerr == nil {
-			openAPISpecJSON, _ = json.Marshal(convertYAMLValue(yamlDoc))
-		} else {
-			log.Printf("warning: could not parse openapi.yaml as YAML: %v — /openapi.json will return 503", yerr)
-		}
+	if err := loadSpec(specPath); err != nil {
+		log.Printf("warning: %v — /openapi.yaml and /openapi.json may return 503", err)
 	}
 
-	srv := &http.Server{Addr: "0.0.0.0:8003", Handler: newMux()}
+	srv := &http.Server{Addr: listenAddr, Handler: newMux()}
 	srv.ReadHeaderTimeout = 5 * time.Second
 	srv.ReadTimeout = 10 * time.Second
 	srv.WriteTimeout = 30 * time.Second

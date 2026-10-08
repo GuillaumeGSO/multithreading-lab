@@ -69,6 +69,27 @@ class SearchControllerTest {
     }
 
     @Test
+    void oversizedBodyIs413() throws Exception {
+        var body = "{\"letters\":\"" + "a".repeat(70_000) + "\"}";
+        var res = post("/search/many", body);
+        assertEquals(413, res.statusCode(), res.body());
+        assertTrue(res.body().contains("\"error\""), res.body());
+    }
+
+    @Test
+    void oversizedChunkedBodyIs413() throws Exception {
+        var bytes = ("{\"letters\":\"" + "a".repeat(70_000) + "\"}").getBytes();
+        // ofInputStream has no known length, so the body is sent chunked.
+        var request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/search/many"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofInputStream(() -> new java.io.ByteArrayInputStream(bytes)))
+                .build();
+        var res = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        assertEquals(413, res.statusCode(), res.body());
+        assertTrue(res.body().contains("\"error\""), res.body());
+    }
+
+    @Test
     void validRequestsAtTheBoundsAre200() throws Exception {
         var file = post("/search/file", "{\"lang\":\"fr\",\"wordLength\":5,\"letters\":[\"e\",\"l\",\"i\",\"s\",\"a\"],"
                 + "\"hints\":[{\"position\":1,\"letter\":\"s\"}]}");

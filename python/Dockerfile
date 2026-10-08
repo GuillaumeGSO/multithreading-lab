@@ -1,6 +1,6 @@
 # Codegen stage — generate the Pydantic models from the API contract.
 FROM python:3.13-slim AS codegen
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /bin/uv
 WORKDIR /build/python
 COPY python/pyproject.toml python/uv.lock ./
 RUN uv sync --frozen --only-group codegen --no-install-project
@@ -9,7 +9,7 @@ RUN uv run --frozen --no-sync datamodel-codegen
 
 FROM python:3.13-slim
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /bin/uv
 
 WORKDIR /app
 
@@ -26,6 +26,10 @@ COPY openapi.yaml ./openapi.yaml
 
 ENV ASSETS_ROOT=/app/assets
 ENV OPENAPI_PATH=/app/openapi.yaml
+
+# Run as an unprivileged user; the app only reads its files.
+RUN useradd --system --no-create-home --shell /usr/sbin/nologin app
+USER app
 
 EXPOSE 8007
 # Check SEARCH_MODE before starting: with --workers, uvicorn's supervisor keeps
