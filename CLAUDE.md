@@ -157,6 +157,10 @@ updates for every ecosystem.
 `load-tests/compare-report.html` to GitHub Pages when either changes on `master` (the root
 README links to the Pages URLs). Regenerate and commit a report to update its page.
 
+`.github/workflows/images.yml` runs after CI succeeds on `master` (or manually) and pushes
+each service image (`linux/amd64`) to `ghcr.io/guillaumegso/multithreading-lab-<service>`,
+tagged `latest` and `sha-<short>`.
+
 ## Concurrency models by implementation
 
 | Implementation   | `parallel` mode uses |
