@@ -33,7 +33,7 @@
     "@types/node": "^26.6.4",
     "jest": "^30.5.2",
     "openapi-typescript": "^7.13.0",
-    "ts-jest": "^29.2.5",
+    "ts-jest": "^29.4.14",
     "typescript": "^5.7.0"
   }
 }
