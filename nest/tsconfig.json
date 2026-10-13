@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "nodenext",
     "target": "ES2021",
-    "moduleResolution": "node",
+    "types": [
+      "node",
+      "jest"
+    ],
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -11,12 +14,12 @@
     "esModuleInterop": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "rootDir": "."
   }
 }
