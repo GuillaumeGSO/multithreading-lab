@@ -1,0 +1,86 @@
+name: Deploy C#
+
+# Rolls the Azure Container App to the C# image that the Images workflow just
+# published (ghcr.io/<owner>/multithreading-lab-csharp:sha-<short>). The immutable
+# sha tag is what creates a new revision; `latest` would not.
+#
+# Required repository variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+# AZURE_SUBSCRIPTION_ID, AZURE_RESOURCE_GROUP, AZURE_CONTAINERAPP_NAME.
+# Auth is OIDC (federated credential on the `azure-prod` environment), no secret.
+on:
+  workflow_run:
+    workflows: [Images]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Image tag to deploy (e.g. sha-1a2b3c4)
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-csharp
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Azure Container Apps
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: azure-prod
+    timeout-minutes: 15
+    env:
+      RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+      APP: ${{ vars.AZURE_CONTAINERAPP_NAME }}
+    steps:
+      - name: Image reference
+        id: image
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="${{ inputs.tag }}"
+          else
+            sha="${{ github.event.workflow_run.head_sha }}"
+            tag="sha-${sha:0:7}"
+          fi
+          echo "ref=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/multithreading-lab-csharp:$tag" >> "$GITHUB_OUTPUT"
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Roll the app to the new image
+        run: |
+          az containerapp update -n "$APP" -g "$RG" --image "${{ steps.image.outputs.ref }}" -o none
+
+      - name: Wait for the new revision
+        run: |
+          revision=$(az containerapp show -n "$APP" -g "$RG" --query properties.latestRevisionName -o tsv)
+          echo "Latest revision: $revision"
+          for i in $(seq 1 30); do
+            read -r health running traffic < <(az containerapp revision show -n "$APP" -g "$RG" \
+              --revision "$revision" \
+              --query "[properties.healthState, properties.runningState, properties.trafficWeight]" -o tsv)
+            echo "[$i] health=$health running=$running traffic=$traffic"
+            if [ "$health" = "Healthy" ] && [[ "$running" == Running* ]] && [ "$traffic" = "100" ]; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Revision $revision did not become healthy with 100% traffic"
+          exit 1
+
+      - name: Check the deployed image and liveness
+        run: |
+          deployed=$(az containerapp show -n "$APP" -g "$RG" --query "properties.template.containers[0].image" -o tsv)
+          if [ "$deployed" != "${{ steps.image.outputs.ref }}" ]; then
+            echo "::error::Deployed image is $deployed, expected ${{ steps.image.outputs.ref }}"
+            exit 1
+          fi
+          fqdn=$(az containerapp show -n "$APP" -g "$RG" --query properties.configuration.ingress.fqdn -o tsv)
+          curl -fsS --retry 10 --retry-delay 5 --retry-all-errors "https://$fqdn/health"
