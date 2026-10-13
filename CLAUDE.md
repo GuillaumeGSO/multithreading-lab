@@ -161,6 +161,13 @@ README links to the Pages URLs). Regenerate and commit a report to update its pa
 each service image (`linux/amd64`) to `ghcr.io/guillaumegso/multithreading-lab-<service>`,
 tagged `latest` and `sha-<short>`.
 
+`.github/workflows/deploy-csharp.yml` runs after the Images workflow succeeds on `master` (or
+manually with a tag) and rolls the Azure Container App to
+`multithreading-lab-csharp:sha-<short>` via `az containerapp update` (OIDC login, `azure-prod`
+environment, config in repository variables). It then waits for the new revision to be healthy
+with 100% traffic and checks the deployed image and `/health`. The API contract is untouched:
+verification goes through Azure, not through a version field in `/health`.
+
 ## Concurrency models by implementation
 
 | Implementation   | `parallel` mode uses |

@@ -77,6 +77,23 @@ curl http://localhost:8005/health
 The runtime image installs `icu-libs` and disables globalization-invariant mode:
 accent stripping (`é` → `e`) relies on Unicode normalization (`FormD`), which needs ICU.
 
+## Deploying to Azure Container Apps
+
+`.github/workflows/deploy-csharp.yml` deploys the published image automatically after every
+successful image publish on `master`. To deploy a specific build by hand, run the workflow
+manually with the image tag (for example `sha-1a2b3c4`).
+
+One-time setup:
+
+1. Create a Microsoft Entra app registration with a federated credential for the GitHub
+   environment `azure-prod`, and grant it a role that can update the Container App on its
+   resource group.
+2. Set the repository variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
+   `AZURE_RESOURCE_GROUP` and `AZURE_CONTAINERAPP_NAME`.
+3. Make the GHCR package public, or register it with `az containerapp registry set`.
+4. Configure the app once: ingress target port `8005`, env `DOTNET_PROCESSOR_COUNT=2`,
+   `SEARCH_MODE=parallel` and `PORT=8005`, a probe on `/health`, single-revision mode.
+
 ## API
 
 The contract is the repository's [`openapi.yaml`](../openapi.yaml); browse it at
