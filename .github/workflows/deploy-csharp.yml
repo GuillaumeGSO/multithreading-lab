@@ -62,10 +62,12 @@ jobs:
         run: |
           revision=$(az containerapp show -n "$APP" -g "$RG" --query properties.latestRevisionName -o tsv)
           echo "Latest revision: $revision"
-          for i in $(seq 1 30); do
+          # A new revision can take several minutes to get its replica; poll for ~10.
+          for i in $(seq 1 60); do
+            # One line (join): `-o tsv` on a list would print one value per line.
             read -r health running traffic < <(az containerapp revision show -n "$APP" -g "$RG" \
               --revision "$revision" \
-              --query "[properties.healthState, properties.runningState, properties.trafficWeight]" -o tsv)
+              --query "join(' ', [properties.healthState, properties.runningState, to_string(properties.trafficWeight)])" -o tsv)
             echo "[$i] health=$health running=$running traffic=$traffic"
             if [ "$health" = "Healthy" ] && [[ "$running" == Running* ]] && [ "$traffic" = "100" ]; then
               exit 0
