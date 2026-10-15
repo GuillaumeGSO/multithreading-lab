@@ -30,7 +30,7 @@
     "@nestjs/schematics": "^12.0.6",
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^26.6.4",
+    "@types/node": "^26.6.5",
     "jest": "^30.5.2",
     "openapi-typescript": "^7.13.0",
     "ts-jest": "^29.4.14",
