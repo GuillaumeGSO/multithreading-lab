@@ -1,5 +1,5 @@
 # Codegen stage — generate the Pydantic models from the API contract.
-FROM python:3.13-slim AS codegen
+FROM python:3.14-slim AS codegen
 COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /bin/uv
 WORKDIR /build/python
 COPY python/pyproject.toml python/uv.lock ./
@@ -7,7 +7,7 @@ RUN uv sync --frozen --only-group codegen --no-install-project
 COPY openapi.yaml /build/openapi.yaml
 RUN uv run --frozen --no-sync datamodel-codegen
 
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /bin/uv
 
