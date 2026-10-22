@@ -16,7 +16,7 @@ codegen = [
 dev = [
     "httpx>=0.28.1",
     "pytest",
-    "ruff>=0.16.10",
+    "ruff>=0.17.1",
 ]
 
 # Pydantic request/response models are generated from the repository's OpenAPI
