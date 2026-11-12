@@ -17,7 +17,7 @@ COPY csharp/Bench/ Bench/
 RUN dotnet publish Api/Api.csproj -c Release -o /out/api
 RUN dotnet publish Bench/Bench.csproj -c Release -o /out/bench
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
+FROM mcr.microsoft.com/dotnet/aspnet:11.0-alpine
 # Accent stripping relies on Unicode normalization (FormD), which needs ICU:
 # the alpine runtime image ships in globalization-invariant mode without it.
 RUN apk add --no-cache icu-libs
