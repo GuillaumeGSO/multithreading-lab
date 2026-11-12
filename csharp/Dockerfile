@@ -1,6 +1,6 @@
 # Build stage — the repo layout is mirrored (/build/openapi.yaml + /build/csharp)
 # so Api.csproj's ../../openapi.yaml resolves to the API contract.
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0-alpine AS build
 WORKDIR /build/csharp
 
 # Restore layer — cached until any csproj changes
