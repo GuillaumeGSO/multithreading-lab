@@ -21,6 +21,7 @@ from common import (
     is_list_empty_or_full_of_none,
     load_base,
     logger,
+    pool_counts,
 )
 
 # pos_index[key][pos][char] → frozenset of words with that char at that 1-based position
@@ -97,11 +98,7 @@ class IndexedStrategy:
             query_set = set(letters)
             query_arr: list[int] | None = None
             if strict:
-                query_arr = [0] * 26
-                for c in letters:
-                    i = ord(c) - 97
-                    if 0 <= i < 26:
-                        query_arr[i] += 1
+                query_arr = pool_counts(letters)
             for word, normalized, word_freq in base:
                 if candidates is not None and word not in candidates:
                     continue

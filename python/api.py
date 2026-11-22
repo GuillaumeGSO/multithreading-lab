@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse, Response
+from pydantic import field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from generated.models import (
@@ -20,6 +21,28 @@ from generated.models import (
 )
 from modes import resolve_mode
 from seek_words import Hint
+
+
+class _LangNotNull:
+    """`lang` is a $ref to an enum with a default, which the generator types as
+    `Lang | None`. The contract does not make it nullable, so reject an explicit
+    null here rather than silently falling back to the default."""
+
+    @field_validator("lang", mode="before", check_fields=False)
+    @classmethod
+    def _reject_null_lang(cls, v):
+        if v is None:
+            raise ValueError("must not be null")
+        return v
+
+
+class FileRequest(_LangNotNull, SearchFileRequest):
+    pass
+
+
+class ManyRequest(_LangNotNull, SearchManyRequest):
+    pass
+
 
 # SEARCH_MODE (baseline | parallel | indexed, default parallel) picks the
 # implementation; see modes.py. An unknown value fails here, at startup.
@@ -97,8 +120,10 @@ async def validation_error(_: Request, exc: RequestValidationError) -> JSONRespo
 @app.exception_handler(StarletteHTTPException)
 async def http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
     # 404/405/413 and the like keep their status, in the contract's error shape.
+    # Headers are kept too: a 405 must carry `Allow` (RFC 9110 §15.5.6).
     return JSONResponse(status_code=exc.status_code,
-                        content=ErrorResponse(error=str(exc.detail)).model_dump())
+                        content=ErrorResponse(error=str(exc.detail)).model_dump(),
+                        headers=exc.headers)
 
 
 @app.exception_handler(ValueError)
@@ -131,7 +156,7 @@ def _to_hints(hints) -> list[Hint]:
 
 
 @app.post("/search/file", response_model=SearchResponse)
-def search_file(req: SearchFileRequest) -> SearchResponse:
+def search_file(req: FileRequest) -> SearchResponse:
     words = list(_MODE.search_file(
         lang=req.lang or "fr",
         word_length=req.word_length,
@@ -143,7 +168,7 @@ def search_file(req: SearchFileRequest) -> SearchResponse:
 
 
 @app.post("/search/many", response_model=SearchResponse)
-def search_many(req: SearchManyRequest) -> SearchResponse:
+def search_many(req: ManyRequest) -> SearchResponse:
     words = list(_MODE.search_many(
         lang=req.lang or "fr",
         letters=req.letters,

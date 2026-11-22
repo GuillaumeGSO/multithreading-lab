@@ -14,3 +14,6 @@ nest/src/generated/
 # .NET build output (obj/ also holds the generated Contracts.g.cs).
 csharp/**/bin/
 csharp/**/obj/
+
+# Schemathesis run cache (contract fuzzing).
+.schemathesis/

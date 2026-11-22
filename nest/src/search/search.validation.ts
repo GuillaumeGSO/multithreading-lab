@@ -2,6 +2,8 @@
 // The generated types (src/generated/api.d.ts) are compile-time only, so the
 // untrusted JSON body is checked here before it reaches the worker pool. Any
 // violation becomes a BadRequestException, answered as a 400 ErrorResponse.
+// Optional fields may be absent but never null: only Hint.letter is
+// `nullable: true` in the contract.
 import { BadRequestException } from '@nestjs/common';
 import { SearchFileRequest, SearchManyRequest } from './search.types';
 
@@ -26,19 +28,19 @@ function isIntIn(v: unknown, min: number, max: number): v is number {
 }
 
 function checkLang(lang: unknown): void {
-  if (lang !== undefined && lang !== null && !LANGS.includes(lang as string)) {
+  if (lang !== undefined && !LANGS.includes(lang as string)) {
     fail(`lang: must be one of ${LANGS.join(', ')}`);
   }
 }
 
 function checkOptionalBool(v: unknown, field: string): void {
-  if (v !== undefined && v !== null && typeof v !== 'boolean') {
+  if (v !== undefined && typeof v !== 'boolean') {
     fail(`${field}: must be a boolean`);
   }
 }
 
 function checkHints(hints: unknown): void {
-  if (hints === undefined || hints === null) return;
+  if (hints === undefined) return;
   if (!Array.isArray(hints)) fail('hints: must be an array');
   if (hints.length > MAX_HINTS) fail(`hints: at most ${MAX_HINTS} items`);
   hints.forEach((h: unknown, i) => {
@@ -60,7 +62,7 @@ export function validateFileRequest(body: unknown): SearchFileRequest {
     fail(`wordLength: must be an integer between ${MIN_WORD_LENGTH} and ${MAX_WORD_LENGTH}`);
   }
   const letters = body.letters;
-  if (letters !== undefined && letters !== null) {
+  if (letters !== undefined) {
     if (!Array.isArray(letters) || !letters.every((c) => typeof c === 'string')) {
       fail('letters: must be an array of strings');
     }

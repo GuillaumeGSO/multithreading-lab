@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -93,11 +94,51 @@ func decodeBody(w http.ResponseWriter, r *http.Request, v any) (map[string]json.
 	if json.Unmarshal(body, &keys) != nil || json.Unmarshal(body, v) != nil {
 		return nil, badRequest("malformed JSON body")
 	}
+	if err := rejectNulls(keys); err != nil {
+		return nil, err
+	}
 	return keys, nil
 }
 
-func validateLang(lang api.Lang) error {
-	if lang != "" && !lang.Valid() {
+// isNull reports whether a raw JSON value is the literal null.
+func isNull(raw json.RawMessage) bool {
+	return string(bytes.TrimSpace(raw)) == "null"
+}
+
+// rejectNulls enforces the contract's nullability. encoding/json decodes null
+// into a field as "leave the zero value", so without this check `"letters": null`
+// would satisfy a required field. Only Hint.letter is nullable in openapi.yaml.
+func rejectNulls(keys map[string]json.RawMessage) error {
+	for name, raw := range keys {
+		if isNull(raw) {
+			return badRequest("%s: must not be null", name)
+		}
+	}
+	rawHints, ok := keys["hints"]
+	if !ok {
+		return nil
+	}
+	var hints []map[string]json.RawMessage
+	if json.Unmarshal(rawHints, &hints) != nil {
+		return badRequest("hints: must be an array of objects")
+	}
+	for i, h := range hints {
+		if h == nil {
+			return badRequest("hints[%d]: must not be null", i)
+		}
+		for name, raw := range h {
+			if name != "letter" && isNull(raw) {
+				return badRequest("hints[%d].%s: must not be null", i, name)
+			}
+		}
+	}
+	return nil
+}
+
+// validateLang checks lang when the request sets it. Presence comes from keys,
+// not from the zero value, so an explicit "lang": "" is rejected, not defaulted.
+func validateLang(lang api.Lang, keys map[string]json.RawMessage) error {
+	if _, ok := keys["lang"]; ok && !lang.Valid() {
 		return badRequest("lang: must be one of fr, en")
 	}
 	return nil
@@ -119,7 +160,7 @@ func validateFileRequest(req api.SearchFileRequest, keys map[string]json.RawMess
 	if _, ok := keys["wordLength"]; !ok {
 		return badRequest("wordLength: required")
 	}
-	if err := validateLang(req.Lang); err != nil {
+	if err := validateLang(req.Lang, keys); err != nil {
 		return err
 	}
 	if req.WordLength < minWordLength || req.WordLength > maxWordLength {
@@ -135,7 +176,7 @@ func validateManyRequest(req api.SearchManyRequest, keys map[string]json.RawMess
 	if _, ok := keys["letters"]; !ok {
 		return badRequest("letters: required")
 	}
-	if err := validateLang(req.Lang); err != nil {
+	if err := validateLang(req.Lang, keys); err != nil {
 		return err
 	}
 	if utf8.RuneCountInString(req.Letters) > maxLetters {

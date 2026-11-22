@@ -55,5 +55,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           # Links the package to this repo on GHCR.
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          # Supply chain: an SBOM and SLSA build provenance attached to each image.
+          sbom: true
+          provenance: mode=max
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}

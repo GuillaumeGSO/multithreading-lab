@@ -79,6 +79,7 @@ EQUIV_FILE = [
     dict(word_length=8, letters=list("maisonre"), strict=True),                  # strict + pool
     dict(word_length=9, letters=list("guillaume"), hints=[Hint(1, "g"), Hint(3, "i", excluded=True)]),  # mixed
     dict(word_length=99, letters=list("abc")),                                   # missing file -> []
+    dict(word_length=5, letters=["00", ""] + list("elisa"), strict=True),        # malformed elements skipped
 ]
 
 

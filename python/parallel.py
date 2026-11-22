@@ -23,8 +23,9 @@ from common import (
     is_list_empty_or_full_of_none,
     is_search_by_hint,
     load_base,
+    pool_counts,
 )
-from strategy_scan import _build_avail_arr, is_search_by_content
+from strategy_scan import is_search_by_content
 
 
 def split_degree() -> int:
@@ -70,7 +71,7 @@ def search_in_file_parallel(
     # Pool built once and shared read-only across the worker threads.
     avail = [c for c in letters if c]
     avail_set = set(avail)
-    avail_arr = _build_avail_arr(avail) if strict else None
+    avail_arr = pool_counts(avail) if strict else None
     n = threads if threads is not None else split_degree()
     n = max(1, min(n, max(1, len(entries))))
 

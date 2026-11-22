@@ -18,6 +18,7 @@ from common import (
     is_list_empty_or_full_of_none,
     is_search_by_hint,
     load_base,
+    pool_counts,
 )
 
 
@@ -41,16 +42,6 @@ def is_search_by_content(normalized_word: str, avail_set: set,
     return True
 
 
-def _build_avail_arr(avail: list[str]) -> list[int]:
-    """26-int letter-frequency array for the query pool, built once per search call."""
-    arr = [0] * 26
-    for c in avail:
-        i = ord(c) - 97
-        if 0 <= i < 26:
-            arr[i] += 1
-    return arr
-
-
 class ScanStrategy:
     name = "scan"
 
@@ -66,7 +57,7 @@ class ScanStrategy:
         # Build the available-letter pool once for the whole scan.
         avail = [c for c in letters if c]
         avail_set = set(avail)
-        avail_arr = _build_avail_arr(avail) if strict else None
+        avail_arr = pool_counts(avail) if strict else None
 
         for word, normalized_word, word_freq in load_base(lang, word_length):
             if is_empty_hint:  # letters non-empty here (guaranteed by the guard above)

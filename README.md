@@ -158,7 +158,9 @@ multithreading-lab/
 ├── openapi.yaml          # API contract, single source of truth (spec-first)
 ├── assets/               # Word lists: assets/{lang}/{length}.txt
 ├── benchmarks/           # In-process benchmark (no HTTP): rounds → compare.html, summary.md
+├── docs/adr/             # Architecture decision records
 ├── load-tests/           # Artillery load test per SEARCH_MODE → compare-report.html, summary.md
+├── schemathesis.toml     # Contract fuzzing config (run against every service in CI)
 ├── python/               # FastAPI + uvicorn --workers 2 (Python 3.13)
 ├── java/                 # Spring Boot 4 + virtual threads (Java 25)
 ├── go/                   # net/http + goroutines
@@ -203,8 +205,10 @@ The root [`openapi.yaml`](openapi.yaml) is the single source of truth. Each impl
 generates its models from it, serves it unchanged, and contains no hand-written OpenAPI
 metadata. The wire format is camelCase JSON (`wordLength`, `letters`, `hints[].position`).
 The contract also bounds every input: `lang` is `fr` or `en`, `wordLength` and hint
-positions are 1–31, and requests carry at most 32 letters and 31 hints. Anything else is
-answered with `400` and `{"error": "..."}`.
+positions are 1–31, and requests carry at most 32 letters and 31 hints. Only `Hint.letter`
+is nullable, and booleans are never coerced from numbers or strings. Anything else is
+answered with `400` and `{"error": "..."}`; a body over 64 KiB with `413`, a body that is not
+JSON with `415`, and a known path called with the wrong method with `405` and an `Allow` header.
 
 | Implementation | Model generation | Generated output | Committed? |
 |---|---|---|---|
@@ -219,6 +223,30 @@ answered with `400` and `{"error": "..."}`.
 Each implementation has a unit suite for the search logic, HTTP-level tests for request
 validation, and tests asserting that every `SEARCH_MODE` returns exactly the baseline's
 words. The Python suite is the correctness reference.
+
+On top of the hand-written tests, CI **fuzzes every running service against the contract**
+with [Schemathesis](https://schemathesis.readthedocs.io) ([`schemathesis.toml`](schemathesis.toml)):
+about 600 generated requests per service, checking that nothing answers 5xx, every response
+matches its schema, and every schema-invalid request is rejected. The first run found real
+bugs that the five hand-written suites had missed:
+
+| Found | Implementation | Fix |
+|---|---|---|
+| `letters: ["00"]` in strict mode answered 500 | Python | elements that are not one character are skipped, as elsewhere |
+| A GET with a `multipart/form-data` Content-Type answered 500 | Java | multipart parsing disabled (the API is JSON only) |
+| `"strict": null`, `"letters": null`… accepted as "absent" | Python, Java, Go, Nest, C# | explicit nulls rejected; only `Hint.letter` is nullable |
+| `"strict": 0` read as `false`, `"lang": 0` read as `fr` | Python, Java, C# | strict JSON types |
+| `"lang": ""` silently defaulted to `fr` | Go | presence checked, not the zero value |
+| 405 without `Allow` (Python), or 404/400 instead of 405 (Nest) | Python, Nest | 405 with `Allow`, per RFC 9110 |
+| 413 and 415 returned but not in the contract | all | both documented in `openapi.yaml` |
+
+```bash
+docker compose up -d --build --wait
+uvx schemathesis run http://localhost:8003/openapi.json --url http://localhost:8003
+```
+
+Pull requests also run [oasdiff](https://github.com/oasdiff/oasdiff) to block breaking changes
+to `openapi.yaml`.
 
 | Implementation | Command |
 |---|---|
@@ -293,11 +321,17 @@ from a positional index while the others scanned, and the scan itself was optimi
 languages and not others. Those results mostly measured the algorithm differences. The
 current setup runs the same algorithm and mode everywhere, and reports the index separately.
 
+## Design decisions
+
+The main trade-offs are recorded as short architecture decision records in
+[`docs/adr/`](docs/adr/README.md): spec-first contract, one algorithm and one meaning per
+mode, the 2-CPU budget, committing Go's generated code, contract fuzzing, and removing the
+C++ implementation.
+
 ## Possible next steps
 
-- Run the unit suites, spec linting ([Spectral](https://github.com/stoplightio/spectral)) and a
-  `docker compose` smoke test in CI.
-- Contract-test every service against `openapi.yaml` with
-  [Schemathesis](https://schemathesis.readthedocs.io).
-- Detect breaking spec changes on pull requests with [oasdiff](https://github.com/oasdiff/oasdiff).
+- Observability: structured request logs with a request ID, and RED metrics
+  (rate, errors, duration) on a `/metrics` endpoint, the same in every service.
 - Run the load generator on a separate machine, to remove it from the measurement.
+- An open-loop load profile that finds each service's saturation point, rather than a fixed
+  10 requests per second.

@@ -1,0 +1,24 @@
+# Contract tests: fuzz every service against openapi.yaml (CI job "contract-fuzz").
+#   uvx schemathesis run http://localhost:<port>/openapi.json --url http://localhost:<port>
+# The schema is fetched from the service itself, so this also checks that it
+# serves the contract verbatim.
+
+[generation]
+# Reproducible in CI: derandomized generation, same cases on every run.
+deterministic = true
+# Examples per operation; the coverage phase adds boundary cases on top.
+max-examples = 200
+
+[checks]
+enabled = true
+
+# Schema-invalid input is rejected with 400, or with the contract's 413 (over the
+# 64 KiB body limit) or 415 (not JSON) when those checks run before parsing.
+[checks.negative_data_rejection]
+expected-statuses = [400, 413, 415]
+
+# "letters and hints cannot both be empty" is a cross-field rule the schema does
+# not express (it is documented in the 400 description), so a schema-valid
+# request such as {"wordLength": 1} is correctly answered 400.
+[checks.positive_data_acceptance]
+enabled = false

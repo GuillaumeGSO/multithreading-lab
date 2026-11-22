@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Scalar.AspNetCore;
 using WordSearch.Api;
@@ -55,6 +56,36 @@ app.UseStatusCodePages(async ctx =>
     var status = ctx.HttpContext.Response.StatusCode;
     var reason = Microsoft.AspNetCore.WebUtilities.ReasonPhrases.GetReasonPhrase(status);
     await ctx.HttpContext.Response.WriteAsJsonAsync(new ErrorResponse { Error = reason });
+});
+
+// Explicit nulls and integer enums are rejected before binding (see
+// RequestValidation.CheckRawJson).
+// The body is buffered so the binder can read it again; an oversized body still
+// fails while it is read, and the middleware above answers 413.
+app.Use(async (ctx, next) =>
+{
+    if (HttpMethods.IsPost(ctx.Request.Method) && ctx.Request.HasJsonContentType())
+    {
+        ctx.Request.EnableBuffering();
+        string? invalid = null;
+        try
+        {
+            using var doc = await JsonDocument.ParseAsync(ctx.Request.Body, cancellationToken: ctx.RequestAborted);
+            invalid = RequestValidation.CheckRawJson(doc.RootElement);
+        }
+        catch (JsonException)
+        {
+            // Malformed JSON: the binder rejects it with its own 400.
+        }
+        ctx.Request.Body.Position = 0;
+        if (invalid != null)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await ctx.Response.WriteAsJsonAsync(new ErrorResponse { Error = invalid });
+            return;
+        }
+    }
+    await next(ctx);
 });
 
 // The API contract (openapi.yaml) is served verbatim; nothing is generated from code.

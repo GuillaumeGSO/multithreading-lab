@@ -84,7 +84,9 @@ no OpenAPI annotation is written by hand.
   `useTags`, `useBeanValidation`, no nullable wrapper, no documentation annotations.
   The spec's constraints become `@NotNull` / `@Min` / `@Max` / `@Size` on the models
   and `@Valid` on the request bodies, enforced by `spring-boot-starter-validation`.
-  `JsonConfig` turns off Jackson's lenient coercions (number → string, 5.5 → 5).
+  `JsonConfig` turns off Jackson's lenient coercions (number → string, 5.5 → 5, 0 → false)
+  and rejects explicit `null` everywhere except `Hint.letter`, the one nullable field.
+  Multipart parsing is disabled: the API only accepts JSON.
 - **Spec and docs** — `maven-resources-plugin` copies `openapi.yaml` onto the classpath.
   `OpenApiController` serves it unchanged at `/openapi.yaml`, converts it to JSON at
   `/openapi.json`, and serves a Swagger UI page at `/docs`. The UI assets come from the

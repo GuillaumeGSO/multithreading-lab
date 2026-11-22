@@ -42,8 +42,10 @@ Nothing about the contract is hand-written here: no model classes, no `.WithSumm
   `Hint` is mapped onto the algorithm's own `Search.Hint` record.
 - **Validation** — NSwag runs with `GenerateDataAnnotations`, so the spec's bounds become
   `[Range]` / `[MaxLength]` / `[StringLength]` / `[Required]`. `RequestValidation`
-  checks them, including each hint, and an unknown `lang` fails JSON binding. Both answer
-  `400` with `ErrorResponse`. Unreadable JSON also answers `400` (`ThrowOnBadRequest` +
+  checks them, including each hint, and an unknown `lang` fails JSON binding. The
+  generated DTOs type every optional field as nullable, so a middleware first checks the
+  raw JSON (`RequestValidation.CheckRawJson`): an explicit `null` (except `Hint.letter`) or
+  an integer `lang` is rejected. All of these answer `400` with `ErrorResponse`. Unreadable JSON also answers `400` (`ThrowOnBadRequest` +
   a small middleware), bodies over 64 KiB `413`, and any other failure a generic `500`.
 - **Spec and docs** — `OpenApiSpec` loads `openapi.yaml` (`OPENAPI_PATH`) once at
   startup. It is served unchanged at `/openapi.yaml`, converted to JSON (YamlDotNet) at
