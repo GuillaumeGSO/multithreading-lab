@@ -86,6 +86,21 @@ class Hint:
         return f"position:{self.position}, letter:{self.letter}, excluded:{self.excluded}"
 
 
+def pool_counts(letters) -> list[int]:
+    """26-int a–z frequency array for a query's letter pool, built once per search.
+
+    Each element of `letters` is one character; an empty element or one of several
+    characters can never match a single letter, so it is skipped (never an error).
+    """
+    arr = [0] * 26
+    for c in letters:
+        if c is not None and len(c) == 1:
+            i = ord(c) - 97
+            if 0 <= i < 26:
+                arr[i] += 1
+    return arr
+
+
 def is_list_empty_or_full_of_none(lst):
     if not lst:
         return True

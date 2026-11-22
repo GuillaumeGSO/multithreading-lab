@@ -56,6 +56,17 @@ class SearchControllerTest {
                 Arguments.of("/search/many", "{\"letters\":123}"),
                 Arguments.of("/search/file", "{\"wordLength\":5.5,\"letters\":[\"a\"]}"),
                 Arguments.of("/search/file", "{\"wordLength\":5}"),
+                // null for a non-nullable field (only Hint.letter is nullable)
+                Arguments.of("/search/file", "{\"wordLength\":5,\"letters\":[\"a\"],\"strict\":null}"),
+                Arguments.of("/search/file", "{\"wordLength\":5,\"letters\":null,\"hints\":[" + PIN + "]}"),
+                Arguments.of("/search/file", "{\"wordLength\":5,\"letters\":[null]}"),
+                Arguments.of("/search/file", "{\"lang\":null,\"wordLength\":5,\"letters\":[\"a\"]}"),
+                Arguments.of("/search/many", "{\"letters\":null}"),
+                Arguments.of("/search/many", "{\"letters\":\"abc\",\"hints\":null}"),
+                Arguments.of("/search/many", "{\"letters\":\"abc\",\"hints\":[{\"position\":1,\"excluded\":null}]}"),
+                // booleans are JSON booleans, never coerced
+                Arguments.of("/search/file", "{\"wordLength\":5,\"letters\":[\"a\"],\"strict\":0}"),
+                Arguments.of("/search/many", "{\"letters\":\"abc\",\"hints\":[{\"position\":1,\"excluded\":\"true\"}]}"),
                 Arguments.of("/search/file", "{not json"),
                 Arguments.of("/search/many", "{not json"));
     }
@@ -97,5 +108,23 @@ class SearchControllerTest {
         assertTrue(file.body().contains("\"count\":"), file.body());
         var many = post("/search/many", "{\"lang\":\"en\",\"letters\":\"" + "a".repeat(32) + "\"}");
         assertEquals(200, many.statusCode(), many.body());
+    }
+
+    @Test
+    void nullHintLetterIsAccepted() throws Exception {
+        var res = post("/search/file", "{\"wordLength\":5,\"letters\":[\"e\",\"l\",\"i\",\"s\",\"a\"],"
+                + "\"hints\":[{\"position\":1,\"letter\":null}]}");
+        assertEquals(200, res.statusCode(), res.body());
+    }
+
+    @Test
+    void multipartContentTypeOnGetIsNotAServerError() throws Exception {
+        // Found by contract fuzzing: multipart parsing used to run before routing.
+        var request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/health"))
+                .header("Content-Type", "multipart/form-data")
+                .GET()
+                .build();
+        var res = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, res.statusCode(), res.body());
     }
 }

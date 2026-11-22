@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using WordSearch.Api.Contracts;
 
 namespace WordSearch.Api;
@@ -19,7 +20,39 @@ public static class RequestValidation
     public static string? Validate(SearchManyRequest req) =>
         CheckLang(req.Lang) ?? CheckObject(req, prefix: null) ?? CheckHints(req.Hints);
 
-    // The enum converter also accepts integers, so an undefined value can get through.
+    /// <summary>
+    /// The first violation that binding hides, or null when there is none. Checked
+    /// on the raw JSON because the generated DTOs cannot tell them apart:
+    ///   * every optional field is typed nullable, so `"strict": null` would bind
+    ///     like an absent field (only Hint.letter is nullable in the contract);
+    ///   * the enum converter also reads integers, so `"lang": 0` would bind as fr.
+    /// </summary>
+    public static string? CheckRawJson(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object) return null; // left to the binder
+        foreach (var field in root.EnumerateObject())
+        {
+            if (field.Value.ValueKind == JsonValueKind.Null) return $"{field.Name}: must not be null";
+            if (field.Name == "lang" && field.Value.ValueKind != JsonValueKind.String)
+                return "lang: must be one of fr, en";
+            if (field.Value.ValueKind != JsonValueKind.Array) continue;
+            var i = 0;
+            foreach (var item in field.Value.EnumerateArray())
+            {
+                var path = $"{field.Name}[{i++}]";
+                if (item.ValueKind == JsonValueKind.Null) return $"{path}: must not be null";
+                if (field.Name != "hints" || item.ValueKind != JsonValueKind.Object) continue;
+                foreach (var prop in item.EnumerateObject())
+                {
+                    if (prop.Name != "letter" && prop.Value.ValueKind == JsonValueKind.Null)
+                        return $"{path}.{prop.Name}: must not be null";
+                }
+            }
+        }
+        return null;
+    }
+
+    // Integers are refused by CheckRawJson; this guards the bound value as well.
     private static string? CheckLang(Lang? lang) =>
         lang is { } l && !Enum.IsDefined(l) ? "lang: must be one of fr, en" : null;
 

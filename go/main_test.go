@@ -36,6 +36,7 @@ func TestInvalidRequestsAre400(t *testing.T) {
 		{"/search/file", `{"lang":"../../etc","wordLength":5,"letters":["a"]}`},
 		{"/search/file", `{"lang":"/etc","wordLength":5,"letters":["a"]}`},
 		{"/search/many", `{"lang":"xx","letters":"abc"}`},
+		{"/search/many", `{"lang":"","letters":"abc"}`},
 		{"/search/file", `{"wordLength":0,"letters":["a"]}`},
 		{"/search/file", `{"wordLength":-1,"letters":["a"]}`},
 		{"/search/file", `{"wordLength":32,"letters":["a"]}`},
@@ -46,6 +47,12 @@ func TestInvalidRequestsAre400(t *testing.T) {
 		{"/search/many", `{"hints":[` + pin + `]}`},
 		{"/search/many", `{"letters":123}`},
 		{"/search/file", `{"wordLength":5}`},
+		// null is not a valid value for any non-nullable field (only Hint.letter is).
+		{"/search/many", `{"letters":null}`},
+		{"/search/file", `{"wordLength":5,"letters":["a"],"strict":null}`},
+		{"/search/file", `{"wordLength":5,"letters":["a"],"hints":null}`},
+		{"/search/file", `{"wordLength":5,"letters":["a"],"hints":[null]}`},
+		{"/search/file", `{"wordLength":5,"letters":["a"],"hints":[{"position":1,"excluded":null}]}`},
 		{"/search/file", `{not json`},
 		{"/search/many", `{not json`},
 	}
@@ -66,6 +73,8 @@ func TestValidRequestsAtTheBoundsAre200(t *testing.T) {
 	ok := []struct{ path, body string }{
 		{"/search/file", `{"lang":"fr","wordLength":5,"letters":["e","l","i","s","a"],"hints":[{"position":1,"letter":"s"}]}`},
 		{"/search/many", `{"lang":"en","letters":"` + strings.Repeat("a", 32) + `"}`},
+		// Hint.letter is the one nullable field.
+		{"/search/file", `{"wordLength":5,"letters":["e","l","i","s","a"],"hints":[{"position":1,"letter":null}]}`},
 	}
 	for _, c := range ok {
 		if rec := post(t, c.path, c.body); rec.Code != http.StatusOK {

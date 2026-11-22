@@ -117,6 +117,12 @@ type SearchResponse struct {
 	Words []string `json:"words"`
 }
 
+// PayloadTooLarge defines model for PayloadTooLarge.
+type PayloadTooLarge = ErrorResponse
+
+// UnsupportedMediaType defines model for UnsupportedMediaType.
+type UnsupportedMediaType = ErrorResponse
+
 // SearchFileJSONRequestBody defines body for SearchFile for application/json ContentType.
 type SearchFileJSONRequestBody = SearchFileRequest
 

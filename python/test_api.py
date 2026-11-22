@@ -94,3 +94,51 @@ def test_unknown_route_uses_error_shape():
     res = client.get("/nope")
     assert res.status_code == 404
     assert isinstance(res.json()["error"], str)
+
+
+@pytest.mark.parametrize("method,path,allowed", [
+    ("delete", "/health", "GET"),
+    ("get", "/search/file", "POST"),
+    ("put", "/search/many", "POST"),
+])
+def test_wrong_method_is_405_with_allow_header(method, path, allowed):
+    # RFC 9110 §15.5.6: a 405 must list the supported methods in `Allow`.
+    res = client.request(method.upper(), path)
+    assert res.status_code == 405
+    assert allowed in res.headers["allow"]
+    assert "error" in res.json()
+
+
+def test_multi_char_letter_elements_never_match():
+    # Each element is one character; an empty or multi-character element can
+    # never match a letter. It is skipped, never a 500 (found by Schemathesis).
+    res = client.post("/search/file", json={"wordLength": 5, "letters": ["00"], "strict": True})
+    assert res.status_code == 200
+    assert res.json() == {"words": [], "count": 0}
+    body = {"wordLength": 5, "letters": ["", "00", *"elisa"], "strict": True}
+    clean = {**body, "letters": list("elisa")}
+    assert client.post("/search/file", json=body).json() == \
+        client.post("/search/file", json=clean).json()
+
+
+@pytest.mark.parametrize("path,body", [
+    ("/search/file", {"wordLength": 5, "letters": ["a"], "strict": None}),
+    ("/search/file", {"wordLength": 5, "letters": None}),
+    ("/search/file", {"wordLength": 5, "letters": ["a"], "lang": None}),
+    ("/search/many", {"letters": "abc", "hints": None}),
+    ("/search/many", {"letters": "abc", "hints": [{"position": 1, "excluded": None}]}),
+    # Booleans are JSON booleans, never coerced from 0/1/"true".
+    ("/search/file", {"wordLength": 5, "letters": ["a"], "strict": 0}),
+    ("/search/many", {"letters": "abc", "hints": [{"position": 1, "excluded": "true"}]}),
+])
+def test_null_or_wrong_type_is_400(path, body):
+    # Only Hint.letter is `nullable: true` in the contract.
+    res = client.post(path, json=body)
+    assert res.status_code == 400
+    assert "error" in res.json()
+
+
+def test_null_hint_letter_is_accepted():
+    res = client.post("/search/file", json={"wordLength": 5, "letters": list("elisa"),
+                                            "hints": [{"position": 1, "letter": None}]})
+    assert res.status_code == 200

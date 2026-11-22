@@ -22,6 +22,23 @@ jobs:
       - name: Lint openapi.yaml (Spectral)
         run: npx --yes @stoplight/spectral-cli@6 lint openapi.yaml --fail-severity=warn
 
+  breaking:
+    name: OpenAPI breaking changes
+    # Clients depend on the contract: a pull request may extend it, never break it.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Base branch's openapi.yaml
+        run: |
+          git fetch --depth=1 origin "${{ github.base_ref }}"
+          git show FETCH_HEAD:openapi.yaml > /tmp/openapi.base.yaml
+      - uses: oasdiff/oasdiff-action/breaking@main
+        with:
+          base: /tmp/openapi.base.yaml
+          revision: openapi.yaml
+          fail-on: ERR
+
   python:
     runs-on: ubuntu-latest
     defaults:
@@ -118,6 +135,19 @@ jobs:
               -d '{"wordLength":5,"letters":["a"],"hints":[{"position":0,"letter":"a"}]}' "localhost:$port/search/file")
             echo "port $port: valid=$ok invalid=$bad"
             [ "$ok" = 200 ] && [ "$bad" = 400 ] || fail=1
+          done
+          exit $fail
+      - uses: astral-sh/setup-uv@v7
+      # Fuzz every running service against openapi.yaml (schemathesis.toml):
+      # no 5xx, every response matches the schema, invalid input is rejected.
+      - name: Contract fuzzing (Schemathesis)
+        run: |
+          fail=0
+          for port in 8007 8002 8003 8006 8005; do
+            echo "::group::port $port"
+            uvx schemathesis==4.34.0 run "http://localhost:$port/openapi.json" \
+              --url "http://localhost:$port" || fail=1
+            echo "::endgroup::"
           done
           exit $fail
       - name: Logs on failure

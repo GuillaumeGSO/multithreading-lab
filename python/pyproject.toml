@@ -34,6 +34,11 @@ use-field-description = true
 use-schema-description = true
 use-standard-collections = true
 use-union-operator = true
+# Fields with a default are still non-nullable unless the spec says `nullable: true`
+# (otherwise `"strict": null` would be accepted; only Hint.letter is nullable).
+strict-nullable = true
+# JSON booleans only: Pydantic's lax mode would otherwise accept 0/1/"true".
+strict-types = ["bool"]
 disable-timestamp = true
 formatters = ["builtin"]
 

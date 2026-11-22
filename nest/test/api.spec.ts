@@ -26,6 +26,12 @@ const INVALID: Array<[string, unknown]> = [
   ['/search/many', { hints: [PIN] }],
   ['/search/many', { letters: 123 }],
   ['/search/file', { wordLength: 5 }],
+  // null is not a valid value for any optional field (only Hint.letter is nullable).
+  ['/search/file', { wordLength: 5, letters: ['a'], strict: null }],
+  ['/search/file', { wordLength: 5, letters: null, hints: [PIN] }],
+  ['/search/file', { lang: null, wordLength: 5, letters: ['a'] }],
+  ['/search/many', { letters: 'abc', hints: null }],
+  ['/search/many', { letters: 'abc', hints: [{ position: 1, excluded: null }] }],
 ];
 
 describe('HTTP API validation', () => {
@@ -63,6 +69,23 @@ describe('HTTP API validation', () => {
     const res = await post('/search/many', JSON.stringify({ letters: 'a'.repeat(70000) }));
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
     expect(res.statusCode).toBeLessThan(500);
+    expect(typeof res.json().error).toBe('string');
+  });
+
+  it.each([
+    ['DELETE', '/health', 'GET'],
+    ['GET', '/search/file', 'POST'],
+    ['PUT', '/search/many', 'POST'],
+  ] as const)('%s %s is a 405 listing %s in Allow', async (method, url, allowed) => {
+    const res = await app.inject({ method, url });
+    expect(res.statusCode).toBe(405);
+    expect(String(res.headers.allow)).toContain(allowed);
+    expect(typeof res.json().error).toBe('string');
+  });
+
+  it('an unknown path is still a 404 ErrorResponse', async () => {
+    const res = await app.inject({ method: 'GET', url: '/nope' });
+    expect(res.statusCode).toBe(404);
     expect(typeof res.json().error).toBe('string');
   });
 

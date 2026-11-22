@@ -44,8 +44,14 @@ Wire format is camelCase (`wordLength`, `letters`, `hints`, `Hint.position|lette
 - Generators read `../openapi.yaml`; Dockerfiles mirror the repo layout (`/build/openapi.yaml` +
   `/build/<lang>`) so the same relative path works in images. Runtime images get the spec at
   `/app/openapi.yaml` (`OPENAPI_PATH`).
-- Errors are the contract's `ErrorResponse` (`{"error": "..."}`, HTTP 400); search endpoints
-  return 200 (Nest needs `@HttpCode(200)`).
+- Errors are the contract's `ErrorResponse` (`{"error": "..."}`, HTTP 400; 413 over 64 KiB;
+  415 when the body is not JSON); search endpoints return 200 (Nest needs `@HttpCode(200)`).
+  A known path with the wrong method is 405 with an `Allow` header.
+- Validation is strict everywhere: an explicit `null` is rejected for every field except
+  `Hint.letter` (the only `nullable: true`), and booleans/enums are never coerced from
+  numbers or strings. Each generator needs help here (Python `strict-nullable`/`strict-types`
+  plus a `lang` validator, Java Jackson null/coercion config, Go and C# raw-JSON checks, Nest
+  manual validation); keep them in step.
 - `benchmarks/cases.json` and `load-tests/queries.csv` use the same camelCase names as the wire
   format (`letters` is an array for file cases, a string for many cases).
 - Version string must be `1.0.0` in `openapi.yaml`.
@@ -59,12 +65,14 @@ multithreading-lab/
 ├── openapi.yaml        # API contract — single source of truth
 ├── assets/             # Shared word lists
 ├── benchmarks/         # In-process benchmark (no HTTP), rounds + compare.html + summary.md
+├── docs/adr/           # Architecture decision records
 ├── load-tests/         # Artillery; one artillery.yml, environments select the target
 ├── python/             # FastAPI/uvicorn --workers 2; scan + positional-index dispatcher
 ├── java/               # Spring Boot 4, virtual threads; scan + positional-index dispatcher
 ├── go/                 # net/http, goroutines; scan only
 ├── nest/               # NestJS/Fastify, worker_threads pool; scan only
 ├── csharp/             # ASP.NET Core Minimal API, Task.WhenAll/ThreadPool; scan + positional-index dispatcher
+├── schemathesis.toml   # Contract fuzzing config (CI smoke job)
 ├── docker-compose.yml  # Python=8007, Java=8002, Go=8003, Nest=8006, C#=8005
 └── CLAUDE.md
 ```
@@ -147,7 +155,9 @@ languages mirror these expected results.
 - Each language's suite, plus `ruff check` for Python and `gofmt`, `go vet` and a regenerate-and-diff of
   `go/api/api.gen.go` for Go.
 - A Docker smoke test: `docker compose up --wait` on the health checks, then one valid and one
-  invalid request per service.
+  invalid request per service, then **Schemathesis contract fuzzing** of every service
+  (`schemathesis.toml`: no 5xx, responses match the schema, schema-invalid input rejected).
+- On pull requests, **oasdiff** fails on breaking changes to `openapi.yaml`.
 
 Keep it green: run the matching local command before changing a language, and regenerate Go's
 `api.gen.go` whenever `openapi.yaml` changes. Dependabot (`.github/dependabot.yml`) opens weekly

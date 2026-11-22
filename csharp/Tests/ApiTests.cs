@@ -32,6 +32,7 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
         { "/search/file", """{"lang":"/etc","wordLength":5,"letters":["a"]}""" },
         { "/search/many", """{"lang":"xx","letters":"abc"}""" },
         { "/search/many", """{"lang":5,"letters":"abc"}""" },
+        { "/search/many", """{"lang":0,"letters":"abc"}""" },
         { "/search/file", """{"wordLength":0,"letters":["a"]}""" },
         { "/search/file", """{"wordLength":-1,"letters":["a"]}""" },
         { "/search/file", """{"wordLength":32,"letters":["a"]}""" },
@@ -43,6 +44,16 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
         { "/search/many", """{"letters":123}""" },
         { "/search/file", """{"wordLength":5,"hints":[null]}""" },
         { "/search/file", """{"wordLength":5}""" },
+        // null for a non-nullable field (only Hint.letter is nullable)
+        { "/search/file", """{"wordLength":5,"letters":["a"],"strict":null}""" },
+        { "/search/file", """{"wordLength":5,"letters":null,"hints":[{"position":1,"letter":"a"}]}""" },
+        { "/search/file", """{"wordLength":5,"letters":[null]}""" },
+        { "/search/file", """{"lang":null,"wordLength":5,"letters":["a"]}""" },
+        { "/search/many", """{"letters":null}""" },
+        { "/search/many", """{"letters":"abc","hints":null}""" },
+        { "/search/many", """{"letters":"abc","hints":[{"position":1,"excluded":null}]}""" },
+        // booleans are JSON booleans, never coerced
+        { "/search/file", """{"wordLength":5,"letters":["a"],"strict":0}""" },
         { "/search/file", "{not json" },
         { "/search/many", "{not json" },
     };
@@ -80,5 +91,13 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
         var many = await Post("/search/many", "{\"lang\":\"en\",\"letters\":\"" + Repeat("a", 32) + "\"}");
         Assert.Equal(HttpStatusCode.OK, many.StatusCode);
+    }
+
+    [Fact]
+    public async Task NullHintLetterIsAccepted()
+    {
+        var res = await Post("/search/file",
+            """{"wordLength":5,"letters":["e","l","i","s","a"],"hints":[{"position":1,"letter":null}]}""");
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
     }
 }
