@@ -81,9 +81,12 @@ accent stripping (`é` → `e`) relies on Unicode normalization (`FormD`), which
 
 ## Deploying to Azure Container Apps
 
-`.github/workflows/deploy-csharp.yml` deploys the published image automatically after every
-successful image publish on `master`. To deploy a specific build by hand, run the workflow
-manually with the image tag (for example `sha-1a2b3c4`).
+`.github/workflows/deploy-csharp.yml` rolls an Azure Container App to a published image. It
+runs **only manually** (Actions → Deploy C# → Run workflow) with the image tag (for example
+`sha-1a2b3c4`). Automatic deploys after every image publish on `master` were switched off: the
+Azure deployment was a test on a trial subscription that has run out of credit, so Azure
+disabled it and every deploy failed. The workflow and the setup below are kept so it can be
+revived on an active subscription.
 
 One-time setup:
 

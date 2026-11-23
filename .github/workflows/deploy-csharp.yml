@@ -1,17 +1,18 @@
 name: Deploy C#
 
-# Rolls the Azure Container App to the C# image that the Images workflow just
-# published (ghcr.io/<owner>/multithreading-lab-csharp:sha-<short>). The immutable
-# sha tag is what creates a new revision; `latest` would not.
+# Rolls the Azure Container App to a published C# image
+# (ghcr.io/<owner>/multithreading-lab-csharp:sha-<short>). The immutable sha tag is
+# what creates a new revision; `latest` would not.
+#
+# Manual only: the Azure deployment was an experiment on a trial subscription that
+# has since run out of credit, so it no longer runs after every Images publish. To
+# resume automatic deploys, add back a `workflow_run` trigger on [Images] (master,
+# completed) and only deploy when that run succeeded.
 #
 # Required repository variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
 # AZURE_SUBSCRIPTION_ID, AZURE_RESOURCE_GROUP, AZURE_CONTAINERAPP_NAME.
 # Auth is OIDC (federated credential on the `azure-prod` environment), no secret.
 on:
-  workflow_run:
-    workflows: [Images]
-    types: [completed]
-    branches: [master]
   workflow_dispatch:
     inputs:
       tag:
@@ -29,7 +30,6 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to Azure Container Apps
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment: azure-prod
     timeout-minutes: 15
@@ -39,14 +39,9 @@ jobs:
     steps:
       - name: Image reference
         id: image
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            tag="${{ inputs.tag }}"
-          else
-            sha="${{ github.event.workflow_run.head_sha }}"
-            tag="sha-${sha:0:7}"
-          fi
-          echo "ref=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/multithreading-lab-csharp:$tag" >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ inputs.tag }}
+        run: echo "ref=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/multithreading-lab-csharp:$TAG" >> "$GITHUB_OUTPUT"
 
       - uses: azure/login@v3
         with:
