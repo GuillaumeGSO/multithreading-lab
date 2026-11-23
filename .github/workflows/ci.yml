@@ -35,7 +35,7 @@ jobs:
         run: |
           git fetch --depth=1 origin "${{ github.base_ref }}"
           git show FETCH_HEAD:openapi.yaml > openapi.base.yaml
-      - uses: oasdiff/oasdiff-action/breaking@main
+      - uses: oasdiff/oasdiff-action/breaking@14ca7009a63c417dfe27b7c44359c4bcccaf8eee # v0.2.1
         with:
           base: openapi.base.yaml
           revision: openapi.yaml
