@@ -21,8 +21,13 @@ Artillery load tests for comparing all language implementations against the same
 Node.js is required, plus Artillery installed globally:
 
 ```bash
-npm install -g artillery
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install -g artillery
 ```
+
+`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` skips the Chromium download for Artillery's optional
+browser engine. These scenarios are HTTP-only and never use it, and the download fails on
+platforms Playwright does not support (e.g. macOS 13: "Playwright does not support chromium
+on mac13").
 
 > Artillery is installed globally rather than as a local `node_modules`
 > dependency because this repo lives on an exFAT volume, which cannot host a
