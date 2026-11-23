@@ -13,8 +13,9 @@ comparing concurrency models on this workload, on one machine. The
 
 ## Results
 
-Measured on 2026-10-08 on a 4-core, 8 GB laptop, with Docker Desktop given 3 CPUs and 4 GB.
-Every service ran alone under its 2-CPU limit. Full reports:
+In-process benchmark measured on 2026-10-08, load test re-measured on 2026-11-23 with 3 rounds,
+on a 4-core, 8 GB laptop with Docker Desktop given 3 CPUs and 4 GB. Every service ran alone
+under its 2-CPU limit. Full reports:
 [in-process benchmark](https://guillaumegso.github.io/multithreading-lab/benchmarks/compare.html)
 ([source](benchmarks/compare.html), [summary](benchmarks/summary.md)) and
 [load test](https://guillaumegso.github.io/multithreading-lab/load-tests/compare-report.html)
@@ -40,16 +41,18 @@ All five return the same number of words for every one of the 122 cases.
 
 ### Over HTTP: Artillery at a constant 10 requests per second
 
-Median and 95th-percentile latency, in ms, for `/search/many`, the heavier endpoint. This is
-one round per mode, so treat the differences as indicative; `ROUNDS=3` gives ranges.
+Median and 95th-percentile latency, in ms, for `/search/many`, the heavier endpoint. Each value
+is the median of 3 rounds, with the min–max range in parentheses; failures are summed over the
+3 rounds (about 1,230 requests per round). As for the benchmark, a difference only counts when
+the ranges do not overlap.
 
-| Language | `baseline` p50 | `baseline` p95 | `parallel` p50 | `parallel` p95 | failed requests (`parallel`) |
+| Language | `baseline` p50 | `baseline` p95 | `parallel` p50 | `parallel` p95 | failures (`baseline` / `parallel`) |
 |---|---:|---:|---:|---:|---:|
-| Python | 5,168 | 12,460 | 1,064 | 15,219 | 600 |
-| Java | 10.9 | 74.4 | 7.0 | 18.0 | 0 |
-| Go | 4.0 | 10.1 | 4.0 | 8.9 | 0 |
-| Node/NestJS | 7.9 | 22.9 | 7.9 | 22.9 | 0 |
-| C# | 7.0 | 19.9 | 5.0 | 12.1 | 0 |
+| Python | 699 (321–9,801) | 4,867 (2,466–28,862) | 7,710 (1,300–8,868) | 26,116 (17,859–28,291) | 868 / 1,160 |
+| Java | 7.9 (7.0–10.9) | 64.7 (16.9–508) | 7.0 (7.0–7.9) | 16.9 (16.9–2,369) | 0 / 0 |
+| Go | 5.0 (4.0–7.0) | 13.1 (10.1–187) | 4.0 (4.0–4.0) | 7.9 (7.0–21.1) | 0 / 0 |
+| Node/NestJS | 8.9 (7.9–8.9) | 24.8 (16.9–36.2) | 7.0 (7.0–7.0) | 16.9 (16.0–21.1) | 0 / 0 |
+| C# | 8.9 (7.0–10.1) | 19.9 (18.0–23.8) | 6.0 (5.0–6.0) | 10.9 (10.9–16.9) | 0 / 0 |
 
 ### What it shows
 
@@ -65,12 +68,14 @@ one round per mode, so treat the differences as indicative; `ROUNDS=3` gives ran
   slower than its single-threaded scan: the threads cannot run the scan in parallel, so they
   only add switching.
 - **Interpreted Python is far slower on this loop.** Its scan is 60–70 times slower than the
-  others. Under HTTP load it cannot keep up with 10 requests per second: latencies reach
-  seconds, and in `parallel` mode 600 requests time out.
-- **Per-request parallelism mostly helps the tail under load.** At 10 requests per second the
-  other four answer `/search/many` in 4–11 ms at the median, which is mostly framework and
-  JSON work on top of a 1–2 ms search. `parallel` cuts Java's p95 from 74 to 18 ms and C#'s
-  from 20 to 12 ms; Go and Node barely change.
+  others. Under HTTP load it cannot keep up with 10 requests per second in either mode:
+  latencies reach seconds, rounds vary by an order of magnitude, and about a quarter of the
+  requests time out in `baseline` and a third in `parallel`.
+- **Per-request parallelism helps the tail a little under load.** At 10 requests per second
+  the other four answer `/search/many` in 4–9 ms at the median, which is mostly framework and
+  JSON work on top of a 1–2 ms search. `parallel` lowers every p95 median, but only C#'s drop
+  (20 to 11 ms) is clear of the noise across rounds. Java's p95 has occasional rounds in the
+  hundreds of milliseconds or seconds in both modes, so its spread hides any gain.
 - **The positional index only pays off where the scan is slow.** With a pinned hint, Python's
   index is 5–24 times faster than its scan. In Java and C# it is about 2–5 times slower: all three
   implementations still walk every word to keep results in order, which costs more than the
