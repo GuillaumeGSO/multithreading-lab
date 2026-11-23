@@ -29,13 +29,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Written inside the workspace: the oasdiff action runs in a container that
+      # mounts only the workspace, so a file in the runner's /tmp is not visible.
       - name: Base branch's openapi.yaml
         run: |
           git fetch --depth=1 origin "${{ github.base_ref }}"
-          git show FETCH_HEAD:openapi.yaml > /tmp/openapi.base.yaml
+          git show FETCH_HEAD:openapi.yaml > openapi.base.yaml
       - uses: oasdiff/oasdiff-action/breaking@main
         with:
-          base: /tmp/openapi.base.yaml
+          base: openapi.base.yaml
           revision: openapi.yaml
           fail-on: ERR
 
