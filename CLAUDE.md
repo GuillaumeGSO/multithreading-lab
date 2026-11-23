@@ -34,7 +34,7 @@ Wire format is camelCase (`wordLength`, `letters`, `hints`, `Hint.position|lette
 | Java | openapi-generator-maven-plugin, `spring`, `interfaceOnly` | `java/target/generated-sources/openapi` (no) | any Maven build |
 | Go | oapi-codegen v2 (models + std-http `ServerInterface`) | `go/api/api.gen.go` (**yes**) | `cd go && go generate ./...` |
 | NestJS | openapi-typescript (`--default-non-nullable false`) | `nest/src/generated/api.d.ts` (no) | `npm run generate` (auto on build/test) |
-| C# | NSwag.MSBuild (`Net100`), DTOs only | `csharp/Api/obj/Generated/Contracts.g.cs` (no) | any `dotnet build` |
+| C# | NSwag.MSBuild (`Net110`), DTOs only | `csharp/Api/obj/Generated/Contracts.g.cs` (no) | any `dotnet build` |
 
 **Rules:**
 - Change the contract **only** in `openapi.yaml`, then regenerate; never hand-edit generated code.

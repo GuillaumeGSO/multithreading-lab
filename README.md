@@ -163,7 +163,7 @@ multithreading-lab/
 ├── java/                 # Spring Boot 4 + virtual threads (Java 25)
 ├── go/                   # net/http + goroutines
 ├── nest/                 # NestJS/Fastify + worker_threads pool (Node 26)
-├── csharp/               # ASP.NET Core Minimal API + ThreadPool (.NET 10)
+├── csharp/               # ASP.NET Core Minimal API + ThreadPool (.NET 11)
 └── docker-compose.yml    # One service per implementation, 2 CPUs / 512 MB each
 ```
 
