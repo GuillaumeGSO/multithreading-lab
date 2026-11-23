@@ -29,7 +29,7 @@ if command -v artillery > /dev/null 2>&1; then
 elif [ -x "$SCRIPT_DIR/node_modules/.bin/artillery" ]; then
   ARTILLERY=("$SCRIPT_DIR/node_modules/.bin/artillery")
 else
-  echo "artillery not found — run 'npm install' in load-tests/ or 'npm install -g artillery'" >&2
+  echo "artillery not found — run 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install -g artillery'" >&2
   exit 1
 fi
 
