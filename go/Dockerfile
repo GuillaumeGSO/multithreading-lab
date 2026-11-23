@@ -1,5 +1,5 @@
 # Build stage — compile a static binary.
-FROM golang:1.26-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /build
 COPY go/go.mod go/go.sum ./
 RUN go mod download
