@@ -166,7 +166,7 @@ multithreading-lab/
 ├── docs/adr/             # Architecture decision records
 ├── load-tests/           # Artillery load test per SEARCH_MODE → compare-report.html, summary.md
 ├── schemathesis.toml     # Contract fuzzing config (run against every service in CI)
-├── python/               # FastAPI + uvicorn --workers 2 (Python 3.13)
+├── python/               # FastAPI + uvicorn --workers 2 (Python 3.15)
 ├── java/                 # Spring Boot 4 + virtual threads (Java 25)
 ├── go/                   # net/http + goroutines
 ├── nest/                 # NestJS/Fastify + worker_threads pool (Node 26)
