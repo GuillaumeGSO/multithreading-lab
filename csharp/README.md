@@ -1,13 +1,13 @@
-# C# / .NET 10 implementation
+# C# / .NET 11 implementation
 
-ASP.NET Core 10 Minimal API. Uses `Task.WhenAll` + `Task.Run` (ThreadPool) for CPU-bound
+ASP.NET Core 11 Minimal API. Uses `Task.WhenAll` + `Task.Run` (ThreadPool) for CPU-bound
 parallelism. A positional index is available as a separate `indexed` mode.
 
 Port: **8005**
 
 ## Local dev
 
-Requires the .NET 10 SDK.
+Requires the .NET 11 SDK.
 
 ```bash
 cd csharp/Api
@@ -25,8 +25,8 @@ The repository's [`openapi.yaml`](../openapi.yaml) is the only definition of the
 Nothing about the contract is hand-written here: no model classes, no `.WithSummary` /
 `.WithDescription`, no `AddOpenApi` document generation.
 
-- **DTOs** — [NSwag](https://github.com/RicoSuter/NSwag) (`NSwag.MSBuild` 14.7.1, its
-  `Net100` tool) runs as the `GenerateContracts` MSBuild target before every build in
+- **DTOs** — [NSwag](https://github.com/RicoSuter/NSwag) (`NSwag.MSBuild` 14.8.0, its
+  `Net110` tool) runs as the `GenerateContracts` MSBuild target before every build in
   which the spec changed. It writes `obj/Generated/Contracts.g.cs` (namespace
   `WordSearch.Api.Contracts`): `SearchFileRequest`, `SearchManyRequest`,
   `SearchResponse`, `Hint`, `HealthResponse`, `ErrorResponse`. Properties are PascalCase
