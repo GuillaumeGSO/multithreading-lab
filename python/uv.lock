@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform != 'emscripten'",
@@ -107,7 +107,7 @@ wheels = [
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.99.0"
+version = "0.100.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argcomplete" },
@@ -121,9 +121,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/e9/f6170a43786497f5fc0889d9820b112d0432ded0e89d499a70c7cd8b1d80/datamodel_code_generator-0.99.0.tar.gz", hash = "sha256:bc921db4cf4a02b74692c33237831014d9281e7e0c18c491ad091cc3ea395af5", size = 11436585, upload-time = "2026-11-20T07:09:39.093Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/68/5e/92cce124e030123004145afe5c3527604fc6c7edd3c8095070693a1f9e7b/datamodel_code_generator-0.100.0.tar.gz", hash = "sha256:3ce827baa887fc362711c7b9876cd5b2e3754a38e54f639f85495963ffaa3351", size = 12522365, upload-time = "2026-11-22T06:27:21.21Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/c6/6d1449df1d8798b3acdd2e334c55db89ee4e2afdf7764a526b55d9e28d2c/datamodel_code_generator-0.99.0-py3-none-any.whl", hash = "sha256:21c2938ea94cac3be3ccd6ed993cdb191343d20459d34eef4f854a1af006d6da", size = 2543845, upload-time = "2026-11-20T07:09:36.851Z" },
+    { url = "https://files.pythonhosted.org/packages/42/4d/e2e798279027b848842ca59f5703f01102a298c465652348c1d6308f56e9/datamodel_code_generator-0.100.0-py3-none-any.whl", hash = "sha256:741cf80bc55d0d9633da9d022418dec25f5195b538a31fe615b76c4e5e93ca8d", size = 2562338, upload-time = "2026-11-22T06:27:19.051Z" },
 ]
 
 [[package]]
@@ -454,7 +454,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-codegen = [{ name = "datamodel-code-generator", specifier = ">=0.99.0" }]
+codegen = [{ name = "datamodel-code-generator", specifier = ">=0.100.0" }]
 dev = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pytest" },
